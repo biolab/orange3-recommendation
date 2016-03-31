@@ -1,1 +1,1 @@
-from .BRISMF import *
+from .brismf import *
