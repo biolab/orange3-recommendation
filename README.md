@@ -8,10 +8,15 @@ it **supports GPU acceleration**. All features can be combined with powerful dat
 from the Orange data mining framework.
 
     Using gpu device 0: GeForce GTX TITAN Black (CNMeM is disabled)
-    USAGE : NMF.py <matrixDim> <latentFactors> <iter>
     ---
-    Time taken by Theano: 1.798s
-    Time taken by CPU: 50.011s
+    Settings:
+        - Size: 5000x5000
+        - Iterations: 10
+
+    Times:
+        - GPU (Theano): 1.798s
+        - CPU: 50.011s
+
 Installation
 ------------
 
