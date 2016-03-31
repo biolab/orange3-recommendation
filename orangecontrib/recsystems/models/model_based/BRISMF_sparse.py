@@ -44,7 +44,7 @@ class BRISMFLearner(Learner):
                                                     self.alpha,
                                                     self.beta)
 
-        return self
+        return BRISMFModel(self)
 
     def matrix_factorization(self, R, K, steps, alpha, beta):
 
@@ -176,9 +176,8 @@ def test_BRISMF():
     import time
     start = time.time()
     learner = BRISMFLearner()
-    model = learner.fit(X=data_sparse, Y=None, W=None)
+    recommender = learner.fit(X=ratings_matrix, Y=None, W=None)
 
-    recommender = BRISMFModel(model)
     prediction = recommender.predict(user=1, sort=False, top=None)
     print('Time: %.3fs\n' % (time.time() - start))
 

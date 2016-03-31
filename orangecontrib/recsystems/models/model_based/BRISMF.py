@@ -1,12 +1,14 @@
 from Orange.base import Model, Learner
 
 import numpy as np
-from numpy import linalg as LA
-from scipy import sparse
+import theano
+import theano.tensor as T
+import lasagne
 
 import warnings
+import time
 
-__all__ = ['BRISMFLearner', 'BRISMFModel']
+__all__ = ['BRISMFLearner']
 
 class BRISMFLearner(Learner):
 
@@ -39,14 +41,14 @@ class BRISMFLearner(Learner):
         X = self.prepare_data(X)
 
         # Factorize matrix
-        self.P, self.Q, self.bias = self.matrix_factorization(
+        self.P, self.Q, self.bias = self.god_factorization(
                                                     X,
                                                     self.K,
                                                     self.steps,
                                                     self.alpha,
                                                     self.beta)
 
-        return self
+        return BRISMFModel(self)
 
     def prepare_data(self, X):
 
@@ -123,6 +125,81 @@ class BRISMFLearner(Learner):
         return P, Q, bias
 
 
+    def god_factorization(self, R, K, steps, alpha, beta):
+
+        # Initialize factorized matrices randomly
+        num_users, num_items = R.shape
+        P = np.random.rand(num_users, K)  # User and features
+        Q = np.random.rand(num_items, K)  # Item and features
+
+        # Local means (array)
+        mean_user_rating = np.mean(R, axis=1)  # Rows
+        mean_item_rating = np.mean(R, axis=0)  # Columns
+
+        # Global mean
+        global_mean_users = np.mean(mean_user_rating)
+        global_mean_items = np.mean(mean_item_rating)
+
+        # Compute bias and deltas
+        deltaUser = mean_user_rating - global_mean_users
+        deltaItem = mean_item_rating - global_mean_items
+        bias_items = np.full((num_users, num_items), global_mean_items)
+        bias = ((bias_items + deltaItem).T + deltaUser).T
+
+        # Prepare Theano variables for inputs and targets
+        input_var = T.tensor4('inputs')
+        target_var = T.ivector('targets')
+
+        # Create a loss expression for training, i.e., a scalar objective we want
+        # to minimize (for our multi-class problem, it is the cross-entropy loss):
+        prediction = lasagne.layers.get_output(network)
+        loss = lasagne.objectives.categorical_crossentropy(prediction,
+                                                           target_var)
+        loss = loss.mean()
+
+        # Create update expressions for training, i.e., how to modify the
+        # parameters at each training step. Here, we'll use Stochastic Gradient
+        # Descent (SGD) with Nesterov momentum, but Lasagne offers plenty more.
+        params = lasagne.layers.get_all_params(network, trainable=True)
+        updates = lasagne.updates.nesterov_momentum(
+            loss, params, learning_rate=0.001, momentum=0.9)
+
+        # Create a loss expression for validation/testing. The crucial difference
+        # here is that we do a deterministic forward pass through the network,
+        # disabling dropout layers.
+        test_prediction = lasagne.layers.get_output(network, deterministic=True)
+        test_loss = lasagne.objectives.categorical_crossentropy(test_prediction,
+                                                                target_var)
+        test_loss = test_loss.mean()
+        # As a bonus, also create an expression for the classification accuracy:
+        test_acc = T.mean(T.eq(T.argmax(test_prediction, axis=1), target_var),
+                          dtype=theano.config.floatX)
+
+        # Compile a function performing a training step on a mini-batch (by giving
+        # the updates dictionary) and returning the corresponding training loss:
+        train_fn = theano.function([input_var, target_var], loss,
+                                   updates=updates)
+
+
+        for epoch in range(num_epochs):
+            print("Stating epoch {} of {}:".format(epoch + 1, num_epochs))
+
+            train_err = 0
+            train_batches = 0
+
+            val_err = 0
+            val_acc = 0
+            val_batches = 0
+
+            start_time = time.time()
+            train_err += train_fn(inputs, targets)
+
+            print("\tEpoch {} took {:.3f}s".format(epoch + 1,
+                                                   time.time()-start_time))
+            print("\t\t- Training loss:\t\t{:.6f}".format(
+                                                    train_err/train_batches))
+
+
 class BRISMFModel(Model):
 
     def predict(self, user, sort=True, top=None):
@@ -177,10 +254,10 @@ def test_BRISMF():
 
     import time
     start = time.time()
-    learner = BRISMFLearner()
-    model = learner.fit(X=ratings_matrix, Y=None, W=None)
 
-    recommender = BRISMFModel(model)
+    learner = BRISMFLearner()
+    recommender = learner.fit(X=ratings_matrix, Y=None, W=None)
+
     prediction = recommender.predict(user=1, sort=False, top=None)
     print('Time: %.3fs\n' % (time.time() - start))
 

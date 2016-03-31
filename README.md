@@ -4,9 +4,14 @@ Orange3 RecommenderSystems Add-on
 Orange3 RecommenderSystems extends [Orange3](http://orange.biolab.si), a data mining software
 package, with common functionality for make recommendations. It provides access
 to publicly available data, like MovieLens, Yahoo! Music, Flixster,... Further,
-it provides tools for GPU acceleration. All features can be combined with powerful data mining techniques
+it **supports GPU acceleration**. All features can be combined with powerful data mining techniques
 from the Orange data mining framework.
 
+    Using gpu device 0: GeForce GTX TITAN Black (CNMeM is disabled)
+    USAGE : NMF.py <matrixDim> <latentFactors> <iter>
+    ---
+    Time taken by Theano: 1.798s
+    Time taken by CPU: 50.011s
 Installation
 ------------
 
