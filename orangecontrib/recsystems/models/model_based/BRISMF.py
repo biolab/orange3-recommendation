@@ -41,7 +41,7 @@ class BRISMFLearner(Learner):
         X = self.prepare_data(X)
 
         # Factorize matrix
-        self.P, self.Q, self.bias = self.god_factorization(
+        self.P, self.Q, self.bias = self.matrix_factorization(
                                                     X,
                                                     self.K,
                                                     self.steps,
@@ -97,6 +97,7 @@ class BRISMFLearner(Learner):
                            np.dot(P[i, :], Q[j, :])
 
                 eij = R[i, j] - rij_pred
+
                 for k in range(K):
                     P[i][k] += alpha * (2 * eij * Q[j][k] - beta * P[i][k])
                     Q[j][k] += alpha * (2 * eij * P[i][k] - beta * Q[j][k])
@@ -258,7 +259,7 @@ def test_BRISMF():
     learner = BRISMFLearner()
     recommender = learner.fit(X=ratings_matrix, Y=None, W=None)
 
-    prediction = recommender.predict(user=1, sort=False, top=None)
+    prediction = recommender.predict(user=4, sort=False, top=None)
     print('Time: %.3fs\n' % (time.time() - start))
 
     print(ratings_matrix)

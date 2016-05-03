@@ -1,6 +1,8 @@
 from Orange.base import Model, Learner
 
 import numpy as np
+from numpy import linalg as LA
+
 import theano
 import theano.tensor as T
 import lasagne
@@ -41,12 +43,12 @@ class BRISMFLearner(Learner):
         X = self.prepare_data(X)
 
         # Factorize matrix
-        self.P, self.Q, self.bias = self.god_factorization(
-                                                    X,
-                                                    self.K,
-                                                    self.steps,
-                                                    self.alpha,
-                                                    self.beta)
+        self.P, self.Q, self.bias = self.matrix_factorization(
+                                                        X,
+                                                        self.K,
+                                                        self.steps,
+                                                        self.alpha,
+                                                        self.beta)
 
         return BRISMFModel(self)
 
@@ -82,9 +84,9 @@ class BRISMFLearner(Learner):
         bias_items = np.full((num_users, num_items), global_mean_items)
         bias = ((bias_items + deltaItem).T + deltaUser).T
 
-
         # Get non-zero elements
         indices = np.array(np.nonzero(R > 0)).T
+        error = 0
 
         # Factorize matrix using SGD
         for step in range(steps):
@@ -96,108 +98,30 @@ class BRISMFLearner(Learner):
                            deltaUser[i] + \
                            np.dot(P[i, :], Q[j, :])
 
-                eij = R[i, j] - rij_pred
-                for k in range(K):
-                    P[i][k] += alpha * (2 * eij * Q[j][k] - beta * P[i][k])
-                    Q[j][k] += alpha * (2 * eij * P[i][k] - beta * Q[j][k])
+                eij = rij_pred - R[i, j]
+
+                tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
+                tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
+                P[i] -= tempP
+                Q[j] -= tempQ
+
+
 
             # Compute error
-            e = 0
             for i, j in indices:
-                if R[i, j] > 0:
-                    rij_pred = global_mean_items + \
-                               deltaItem[j] + \
-                               deltaUser[i] + \
-                               np.dot(P[i, :], Q[j, :])
+                rij_pred = global_mean_items + \
+                           deltaItem[j] + \
+                           deltaUser[i] + \
+                           np.dot(P[i, :], Q[j, :])
+                error += abs(rij_pred - R[i, j])
 
-                    e += pow(R[i, j] - rij_pred, 2)
-                    for k in range(K):
-                        e += (beta/2) * (pow(P[i][k], 2) + pow(Q[j][k], 2))
-
-            #print(e)
-            if e < 0.001:
-                print('Converged')
-                break
-        print('ERROR: ' + str(e))
-        #nR = np.dot(P, Q) + bias
-        #print(nR)
+            error = error / len(indices)
+            if error < 0.001:
+               print('Converged')
+               break
+        print('ERROR: ' + str(error))
 
         return P, Q, bias
-
-
-    def god_factorization(self, R, K, steps, alpha, beta):
-
-        # Initialize factorized matrices randomly
-        num_users, num_items = R.shape
-        P = np.random.rand(num_users, K)  # User and features
-        Q = np.random.rand(num_items, K)  # Item and features
-
-        # Local means (array)
-        mean_user_rating = np.mean(R, axis=1)  # Rows
-        mean_item_rating = np.mean(R, axis=0)  # Columns
-
-        # Global mean
-        global_mean_users = np.mean(mean_user_rating)
-        global_mean_items = np.mean(mean_item_rating)
-
-        # Compute bias and deltas
-        deltaUser = mean_user_rating - global_mean_users
-        deltaItem = mean_item_rating - global_mean_items
-        bias_items = np.full((num_users, num_items), global_mean_items)
-        bias = ((bias_items + deltaItem).T + deltaUser).T
-
-        # Prepare Theano variables for inputs and targets
-        input_var = T.tensor4('inputs')
-        target_var = T.ivector('targets')
-
-        # Create a loss expression for training, i.e., a scalar objective we want
-        # to minimize (for our multi-class problem, it is the cross-entropy loss):
-        prediction = lasagne.layers.get_output(network)
-        loss = lasagne.objectives.categorical_crossentropy(prediction,
-                                                           target_var)
-        loss = loss.mean()
-
-        # Create update expressions for training, i.e., how to modify the
-        # parameters at each training step. Here, we'll use Stochastic Gradient
-        # Descent (SGD) with Nesterov momentum, but Lasagne offers plenty more.
-        params = lasagne.layers.get_all_params(network, trainable=True)
-        updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.001, momentum=0.9)
-
-        # Create a loss expression for validation/testing. The crucial difference
-        # here is that we do a deterministic forward pass through the network,
-        # disabling dropout layers.
-        test_prediction = lasagne.layers.get_output(network, deterministic=True)
-        test_loss = lasagne.objectives.categorical_crossentropy(test_prediction,
-                                                                target_var)
-        test_loss = test_loss.mean()
-        # As a bonus, also create an expression for the classification accuracy:
-        test_acc = T.mean(T.eq(T.argmax(test_prediction, axis=1), target_var),
-                          dtype=theano.config.floatX)
-
-        # Compile a function performing a training step on a mini-batch (by giving
-        # the updates dictionary) and returning the corresponding training loss:
-        train_fn = theano.function([input_var, target_var], loss,
-                                   updates=updates)
-
-
-        for epoch in range(num_epochs):
-            print("Stating epoch {} of {}:".format(epoch + 1, num_epochs))
-
-            train_err = 0
-            train_batches = 0
-
-            val_err = 0
-            val_acc = 0
-            val_batches = 0
-
-            start_time = time.time()
-            train_err += train_fn(inputs, targets)
-
-            print("\tEpoch {} took {:.3f}s".format(epoch + 1,
-                                                   time.time()-start_time))
-            print("\t\t- Training loss:\t\t{:.6f}".format(
-                                                    train_err/train_batches))
 
 
 class BRISMFModel(Model):
@@ -257,13 +181,13 @@ def test_BRISMF():
 
     learner = BRISMFLearner()
     recommender = learner.fit(X=ratings_matrix, Y=None, W=None)
-
-    prediction = recommender.predict(user=1, sort=False, top=None)
     print('Time: %.3fs\n' % (time.time() - start))
 
     print(ratings_matrix)
     print('')
-    print(prediction[:, 1].T)
+    for i in range(0, 5):
+        prediction = recommender.predict(user=i, sort=False, top=None)
+        print(prediction[:, 1].T)
     #correct = np.array([4,  1,  3,  1])
     #np.testing.assert_almost_equal(
     #    np.round(np.round(prediction[:, 1])), np.round(correct))
