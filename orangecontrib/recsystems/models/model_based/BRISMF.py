@@ -1,9 +1,20 @@
 from Orange.base import Model, Learner
 
 import numpy as np
-import theano
-import theano.tensor as T
-import lasagne
+from numpy import linalg as LA
+
+from scipy import sparse
+
+#import theano
+#import theano.tensor as T
+
+import math
+import random
+
+try:
+    from numba import jit
+except ImportError:
+    jit = lambda x: x
 
 import warnings
 import time
@@ -38,15 +49,15 @@ class BRISMFLearner(Learner):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        X = self.prepare_data(X)
+        #X = self.prepare_data(X)
 
         # Factorize matrix
         self.P, self.Q, self.bias = self.matrix_factorization(
-                                                    X,
-                                                    self.K,
-                                                    self.steps,
-                                                    self.alpha,
-                                                    self.beta)
+                                                                X,
+                                                                self.K,
+                                                                self.steps,
+                                                                self.alpha,
+                                                                self.beta)
 
         return BRISMFModel(self)
 
@@ -61,6 +72,7 @@ class BRISMFLearner(Learner):
 
         return X
 
+
     def matrix_factorization(self, R, K, steps, alpha, beta):
 
         # Initialize factorized matrices randomly
@@ -68,19 +80,39 @@ class BRISMFLearner(Learner):
         P = np.random.rand(num_users, K)  # User and features
         Q = np.random.rand(num_items, K)  # Item and features
 
-        # Local means (array)
-        mean_user_rating = np.mean(R, axis=1)  # Rows
-        mean_item_rating = np.mean(R, axis=0)  # Columns
 
-        # Global mean
-        global_mean_users = np.mean(mean_user_rating)
-        global_mean_items = np.mean(mean_item_rating)
+        # Check if R is a sparse matrix
+        if isinstance(R, sparse.csr_matrix) or \
+                isinstance(R, sparse.csc_matrix):
+            start2 = time.time()
+            # Local means (array)
+            mean_user_rating = np.ravel(R.mean(axis=1))  # Rows
+            mean_item_rating = np.ravel(R.mean(axis=0))  # Columns
 
-        # Compute bias and deltas
+            # Global mean
+            global_mean_users = mean_user_rating.mean()
+            global_mean_items = mean_item_rating.mean()
+            print('- Time mean (sparse): %.3fs\n' % (time.time() - start2))
+
+        else:  # Dense matrix
+            start2 = time.time()
+            # Local means (array)
+            mean_user_rating = np.mean(R, axis=1)  # Rows
+            mean_item_rating = np.mean(R, axis=0)  # Columns
+
+            # Global mean
+            global_mean_users = np.mean(mean_user_rating)
+            global_mean_items = np.mean(mean_item_rating)
+            print('- Time mean (dense): %.3fs\n' % (time.time() - start2))
+
+
+        # Compute bias and deltas (Common - Dense/Sparse matrices)
         deltaUser = mean_user_rating - global_mean_users
         deltaItem = mean_item_rating - global_mean_items
-        bias_items = np.full((num_users, num_items), global_mean_items)
-        bias = ((bias_items + deltaItem).T + deltaUser).T
+        bias = {'dItems': deltaItem,
+                'dUsers': deltaUser,
+                'gMeanItems': global_mean_items,
+                'gMeanUsers': global_mean_users}
 
 
         # Get non-zero elements
@@ -91,121 +123,49 @@ class BRISMFLearner(Learner):
 
             # Compute predictions
             for i, j in indices:
-                rij_pred = global_mean_items + \
-                           deltaItem[j] + \
-                           deltaUser[i] + \
-                           np.dot(P[i, :], Q[j, :])
+                    if R[i, j] > 0:
+                        rij_pred = global_mean_items + \
+                                   deltaItem[j] + \
+                                   deltaUser[i] + \
+                                   np.dot(P[i, :], Q[j, :])
 
-                eij = R[i, j] - rij_pred
+                        eij = rij_pred - R[i, j]
 
-                for k in range(K):
-                    P[i][k] += alpha * (2 * eij * Q[j][k] - beta * P[i][k])
-                    Q[j][k] += alpha * (2 * eij * P[i][k] - beta * Q[j][k])
+                        tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
+                        tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
+                        P[i] -= tempP
+                        Q[j] -= tempQ
 
-            # Compute error
-            e = 0
-            for i, j in indices:
+
+
+        # Compute error
+        counter=0
+        error=0
+        for i in range(0, num_users):
+            for j in range(0, num_items):
                 if R[i, j] > 0:
+                    counter +=1
                     rij_pred = global_mean_items + \
                                deltaItem[j] + \
                                deltaUser[i] + \
                                np.dot(P[i, :], Q[j, :])
+                    error += (rij_pred - R[i, j])**2
 
-                    e += pow(R[i, j] - rij_pred, 2)
-                    for k in range(K):
-                        e += (beta/2) * (pow(P[i][k], 2) + pow(Q[j][k], 2))
-
-            #print(e)
-            if e < 0.001:
-                print('Converged')
-                break
-        print('ERROR: ' + str(e))
-        #nR = np.dot(P, Q) + bias
-        #print(nR)
+        error = math.sqrt(error/counter)
+        print('- RMSE: %.3f' % error)
 
         return P, Q, bias
 
 
-    def god_factorization(self, R, K, steps, alpha, beta):
-
-        # Initialize factorized matrices randomly
-        num_users, num_items = R.shape
-        P = np.random.rand(num_users, K)  # User and features
-        Q = np.random.rand(num_items, K)  # Item and features
-
-        # Local means (array)
-        mean_user_rating = np.mean(R, axis=1)  # Rows
-        mean_item_rating = np.mean(R, axis=0)  # Columns
-
-        # Global mean
-        global_mean_users = np.mean(mean_user_rating)
-        global_mean_items = np.mean(mean_item_rating)
-
-        # Compute bias and deltas
-        deltaUser = mean_user_rating - global_mean_users
-        deltaItem = mean_item_rating - global_mean_items
-        bias_items = np.full((num_users, num_items), global_mean_items)
-        bias = ((bias_items + deltaItem).T + deltaUser).T
-
-        # Prepare Theano variables for inputs and targets
-        input_var = T.tensor4('inputs')
-        target_var = T.ivector('targets')
-
-        # Create a loss expression for training, i.e., a scalar objective we want
-        # to minimize (for our multi-class problem, it is the cross-entropy loss):
-        prediction = lasagne.layers.get_output(network)
-        loss = lasagne.objectives.categorical_crossentropy(prediction,
-                                                           target_var)
-        loss = loss.mean()
-
-        # Create update expressions for training, i.e., how to modify the
-        # parameters at each training step. Here, we'll use Stochastic Gradient
-        # Descent (SGD) with Nesterov momentum, but Lasagne offers plenty more.
-        params = lasagne.layers.get_all_params(network, trainable=True)
-        updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.001, momentum=0.9)
-
-        # Create a loss expression for validation/testing. The crucial difference
-        # here is that we do a deterministic forward pass through the network,
-        # disabling dropout layers.
-        test_prediction = lasagne.layers.get_output(network, deterministic=True)
-        test_loss = lasagne.objectives.categorical_crossentropy(test_prediction,
-                                                                target_var)
-        test_loss = test_loss.mean()
-        # As a bonus, also create an expression for the classification accuracy:
-        test_acc = T.mean(T.eq(T.argmax(test_prediction, axis=1), target_var),
-                          dtype=theano.config.floatX)
-
-        # Compile a function performing a training step on a mini-batch (by giving
-        # the updates dictionary) and returning the corresponding training loss:
-        train_fn = theano.function([input_var, target_var], loss,
-                                   updates=updates)
-
-
-        for epoch in range(num_epochs):
-            print("Stating epoch {} of {}:".format(epoch + 1, num_epochs))
-
-            train_err = 0
-            train_batches = 0
-
-            val_err = 0
-            val_acc = 0
-            val_batches = 0
-
-            start_time = time.time()
-            train_err += train_fn(inputs, targets)
-
-            print("\tEpoch {} took {:.3f}s".format(epoch + 1,
-                                                   time.time()-start_time))
-            print("\t\t- Training loss:\t\t{:.6f}".format(
-                                                    train_err/train_batches))
-
-
 class BRISMFModel(Model):
 
+    # Predict top-best items for a user
     def predict(self, user, sort=True, top=None):
         """ Sort recomendations for user """
-        bias = self.domain.bias[user, :]
+
+        bias = self.domain.bias['gMeanItems'] + \
+                    self.domain.bias['dUsers'][user] + \
+                    self.domain.bias['dItems']
         base_pred = np.dot(self.domain.P[user], self.domain.Q.T)
         predictions = bias + base_pred
 
@@ -230,6 +190,27 @@ class BRISMFModel(Model):
 
 
 
+# Create a random but realistic dataset
+def random_dataset(ratings, max_users, max_items, sparse_mat=False):
+    MIN_RATING = 1
+    MAX_RATING = 5
+
+    ratings_mat = np.random.randint(MIN_RATING, MAX_RATING + 1, ratings)
+    users = np.random.randint(0, max_users, ratings)
+    items = np.random.randint(0, max_items, ratings)
+
+    # Fill array with zeros
+    ratings_matrix = np.zeros((max_users, max_items))
+
+    # Put ratings
+    indices = np.column_stack((users, items))
+    ratings_matrix[indices[:, 0], indices[:, 1]] += ratings_mat
+
+    if sparse_mat:
+        ratings_matrix = sparse.csr_matrix(ratings_matrix)
+
+    return ratings_matrix
+
 
 def test_BRISMF():
     ratings_matrix = np.array([
@@ -252,19 +233,53 @@ def test_BRISMF():
         [0, 1, 5, 4],
     ])
 
+    #MOVIELENS 100K
+    # RATINGS = 100000;
+    # MAX_USERS = 1000;
+    # MAX_ITEMS = 1700;
 
-    import time
+    # MOVIELENS 1M
+    # RATINGS = 1000209;
+    # MAX_USERS = 6040;
+    # MAX_ITEMS = 3706;
+
+    # NETFLIX
+    # RATINGS = 3;
+    # MAX_USERS = 480000;
+    # MAX_ITEMS = 17000;
+
+    # SIMPLE TEST
+    RATINGS = 150;
+    MAX_USERS = 100;
+    MAX_ITEMS = 25;
+
+    ratings_matrix = random_dataset(ratings=RATINGS,
+                                     max_users=MAX_USERS,
+                                     max_items=MAX_ITEMS,
+                                     sparse_mat=False)
+
+    # Convert to sparse
+    #ratings_matrix = sparse.csc_matrix(ratings_matrix)
+    print(ratings_matrix)
+
     start = time.time()
 
     learner = BRISMFLearner()
     recommender = learner.fit(X=ratings_matrix, Y=None, W=None)
 
-    prediction = recommender.predict(user=4, sort=False, top=None)
-    print('Time: %.3fs\n' % (time.time() - start))
+    # print('- Sparsity: %.2f%%\n' % ((RATINGS * 100) / (MAX_USERS * MAX_ITEMS)))
+    print('- Time: %.3fs\n' % (time.time() - start))
 
-    print(ratings_matrix)
+
+
+    """
     print('')
-    print(prediction[:, 1].T)
+    num_users, num_items = ratings_matrix.shape
+    for i in range(0, num_users):
+        prediction = recommender.predict(user=i, sort=False, top=None)
+        print(prediction[:, 1].T)
+    """
+
     #correct = np.array([4,  1,  3,  1])
     #np.testing.assert_almost_equal(
     #    np.round(np.round(prediction[:, 1])), np.round(correct))
