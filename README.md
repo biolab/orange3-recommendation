@@ -26,6 +26,39 @@ Last results
         
         * Too slow (x4-5), I don't know why. (CSR<CSC<COO)
     
+Bugs and problems
+-----------------
+        
+        
+        1. EVERYTHING CORRECT BUT ON RETURNING TO THE MAIN THREAD, THE MODEL PROPERTIES ARE LOST
+        ----------------------------------------------------------------------------------------
+        
+        Code:
+            data = Orange.data.Table('ratings.tab')
+            learner = brismf.BRISMFLearner()
+            
+            # learner(data) returns a 'model' but "magically" 'recomender' doesn't 
+            # have the 'model' attributes. I've traced it and everything is okay
+            # except when it returns to this line. Thus, the 'model' attributes are
+            # "magically" lost.
+            recommender = learner(data)
+            
+            # THIS LINES THROWS AN ERROR BECAUSE 'recommender' doesn't have the
+            # 'model' attributes
+            prediction = recommender.predict(user=0, sort=False, top=None)
+            print(prediction[:, 1].T)
+        
+        Extras:
+            - On BRISMFLearner(Learner), 'fit' function returns BRISMFModel(self) -> Correct object
+            - Main thread, 'recommender = learner(data)' -> Incorrect object
+        
+        
+        2. WHEN I IMPORT ORANGE INTO IPYTHON, HOW DO I ADD MY ADDON TO THE EXISTING ORANGE?
+        ("SOLUTION": The current option is to copy the addon to the library manually)
+        
+        Terminal inputs:
+            -> import Orange -> Okay.
+            -> learner = Orange.recsystems.model based.BRISMFLearner() -> Error 'recsystems' doesn't exist (Obvious)
     
     
     
