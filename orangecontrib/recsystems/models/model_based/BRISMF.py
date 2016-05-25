@@ -58,8 +58,8 @@ class BRISMFLearner(Learner):
                                                                 self.steps,
                                                                 self.alpha,
                                                                 self.beta)
-
-        return BRISMFModel(self)
+        m = BRISMFModel(self)
+        return m
 
     def prepare_data(self, X):
 
@@ -71,7 +71,6 @@ class BRISMFLearner(Learner):
         #X = sparse.csr_matrix(X)
 
         return X
-
 
     def matrix_factorization(self, R, K, steps, alpha, beta):
 
