@@ -26,9 +26,9 @@ Last results
         
         * Too slow (x4-5), I don't know why. (CSR<CSC<COO)
     
+    
 Bugs and problems
------------------
-        
+-----------------        
         
         1. EVERYTHING CORRECT BUT ON RETURNING TO THE MAIN THREAD, THE MODEL PROPERTIES ARE LOST
         ----------------------------------------------------------------------------------------
@@ -61,7 +61,14 @@ Bugs and problems
             -> learner = Orange.recsystems.model based.BRISMFLearner() -> Error 'recsystems' doesn't exist (Obvious)
     
     
-    
+        
+RANDOM CHANGES
+--------------
+
+    1. I've temporarily removed the CLiMF module because it had no sense to have several modules with the same problems.
+       Therefore, when the problems of BRISMF are solved, I will commit CLiMF module again.
+
+
 
 Installation
 ------------
