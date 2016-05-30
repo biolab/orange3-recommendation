@@ -23,17 +23,17 @@ class BRISMFLearner(Learner):
         K: int, optional
             The number of latent factors.
 
-        steps: int, optional
+        steps: int, optional (default = 100)
             The number of epochs of stochastic gradient descent.
 
-        alpha: float, optional
+        alpha: float, optional (default = 0.005)
             The learning rate of stochastic gradient descent.
 
-        beta: float, optional (default = 1.0)
+        beta: float, optional (default = 0.02)
             The regularization parameter.
 
-        verbose: boolean, optional
-            The regularization parameter.
+        verbose: boolean, optional (default = False)
+            Prints information about the process.
     """
 
     def __init__(self,
@@ -284,4 +284,4 @@ class BRISMFModel(Model):
         return predictions
 
     def __str__(self):
-        return 'BRISMF {}'.format('---> return model')
+        return 'BRISMF {}'.format('--> return model')
