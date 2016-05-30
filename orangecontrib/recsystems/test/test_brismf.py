@@ -9,15 +9,14 @@ class TestBRISMF(unittest.TestCase):
     def test_BRISMF1(self):
         import Orange
         data = Orange.data.Table(
-            '/Users/salvacarrion/Documents/Programming_projects/PyCharm/orange3-recommendersystems/orangecontrib/recsystems/datasets/movies-small.tab')
+            '/Users/salvacarrion/Documents/Programming_projects/PyCharm/orange3-recommendersystems/orangecontrib/recsystems/datasets/ratings-small.tab')
 
-        learner = brismf.BRISMFLearner()
+        learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
         recommender = learner(data)
-        asd = 23
-        prediction = recommender.predict(user=0, sort=False, top=None)
+
+        prediction = recommender.predict(user=1, sort=False, top=None)
         print(prediction[:, 1].T)
 
-        asd = 243
 
     """
     def test_BRISMF2(self):
