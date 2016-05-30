@@ -79,8 +79,10 @@ This module has two classes: **BRISMFLearner** and **BRISMFModel**
             The regularization parameter.
 
         verbose: boolean, optional (default = False)
-            Prits information about the process.
+            Prints information about the process.
 ```
+
+Functions...
 
 
 **BRISMFModel**
@@ -95,4 +97,4 @@ This model receives a learner and provides and interface to make the
                 'delta items', 'delta users', 'global mean items' and
                 'global mean users'
 ```
-
+Functions...
