@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Regression (regression) &mdash; Recommender Systems 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="Recommender Systems 1.0.0 documentation" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-Orange.regression">
+<span id="regression-regression"></span><h1>Regression (<code class="docutils literal"><span class="pre">regression</span></code>)<a class="headerlink" href="#module-Orange.regression" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="linear-regression">
+<span id="index-0"></span><h2>Linear Regression<a class="headerlink" href="#linear-regression" title="Permalink to this headline">¶</a></h2>
+<p>Linear regression is a statistical regression method which tries to
+predict a value of a continuous response (class) variable based on
+the values of several predictors. The model assumes that the response
+variable is a linear combination of the predictors, the task of
+linear regression is therefore to fit the unknown coefficients.</p>
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">Orange.regression.linear</span> <span class="k">import</span> <span class="n">LinearRegressionLearner</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mpg</span> <span class="o">=</span> <span class="n">Orange</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Table</span><span class="p">(</span><span class="s1">&#39;auto-mpg&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mean_</span> <span class="o">=</span> <span class="n">LinearRegressionLearner</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">mean_</span><span class="p">(</span><span class="n">mpg</span><span class="p">[</span><span class="mi">40</span><span class="p">:</span><span class="mi">110</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="go">LinearModel LinearRegression(copy_X=True, fit_intercept=True, normalize=False)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mpg</span><span class="p">[</span><span class="mi">20</span><span class="p">]</span>
+<span class="go">Value(&#39;mpg&#39;, 25.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="p">(</span><span class="n">mpg</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="go">Value(&#39;mpg&#39;, 24.6)</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="Orange.regression.linear.LinearRegressionLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.linear.</code><code class="descname">LinearRegressionLearner</code><span class="sig-paren">(</span><em>preprocessors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.linear.LinearRegressionLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for <cite>sklearn.linear_model.base.LinearRegression</cite>. The following is its documentation:</p>
+<p>Ordinary least squares Linear Regression.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Orange.regression.linear.RidgeRegressionLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.linear.</code><code class="descname">RidgeRegressionLearner</code><span class="sig-paren">(</span><em>alpha=1.0</em>, <em>fit_intercept=True</em>, <em>normalize=False</em>, <em>copy_X=True</em>, <em>max_iter=None</em>, <em>tol=0.001</em>, <em>solver='auto'</em>, <em>preprocessors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.linear.RidgeRegressionLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for <cite>sklearn.linear_model.ridge.Ridge</cite>. The following is its documentation:</p>
+<p>Linear least squares with l2 regularization.</p>
+<p>This model solves a regression model where the loss function is
+the linear least squares function and regularization is given by
+the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
+This estimator has built-in support for multi-variate regression
+(i.e., when y is a 2d-array of shape [n_samples, n_targets]).</p>
+<p>Read more in the <span class="xref std std-ref">User Guide</span>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Orange.regression.linear.LassoRegressionLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.linear.</code><code class="descname">LassoRegressionLearner</code><span class="sig-paren">(</span><em>alpha=1.0</em>, <em>fit_intercept=True</em>, <em>normalize=False</em>, <em>precompute=False</em>, <em>copy_X=True</em>, <em>max_iter=1000</em>, <em>tol=0.0001</em>, <em>warm_start=False</em>, <em>positive=False</em>, <em>preprocessors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.linear.LassoRegressionLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for <cite>sklearn.linear_model.coordinate_descent.Lasso</cite>. The following is its documentation:</p>
+<p>Linear Model trained with L1 prior as regularizer (aka the Lasso)</p>
+<p>The optimization objective for Lasso is:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n_samples</span><span class="p">))</span> <span class="o">*</span> <span class="o">||</span><span class="n">y</span> <span class="o">-</span> <span class="n">Xw</span><span class="o">||^</span><span class="mi">2</span><span class="n">_2</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="o">||</span><span class="n">w</span><span class="o">||</span><span class="n">_1</span>
+</pre></div>
+</div>
+<p>Technically the Lasso model is optimizing the same objective function as
+the Elastic Net with <code class="docutils literal"><span class="pre">l1_ratio=1.0</span></code> (no L2 penalty).</p>
+<p>Read more in the <span class="xref std std-ref">User Guide</span>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Orange.regression.linear.SGDRegressionLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.linear.</code><code class="descname">SGDRegressionLearner</code><span class="sig-paren">(</span><em>loss='squared_loss'</em>, <em>alpha=0.0001</em>, <em>epsilon=0.1</em>, <em>eta0=0.01</em>, <em>l1_ratio=0.15</em>, <em>penalty='l2'</em>, <em>power_t=0.25</em>, <em>learning_rate='invscaling'</em>, <em>n_iter=5</em>, <em>fit_intercept=True</em>, <em>preprocessors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.linear.SGDRegressionLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for <cite>sklearn.linear_model.stochastic_gradient.SGDRegressor</cite>. The following is its documentation:</p>
+<p>Linear model fitted by minimizing a regularized empirical loss with SGD</p>
+<p>SGD stands for Stochastic Gradient Descent: the gradient of the loss is
+estimated each sample at a time and the model is updated along the way with
+a decreasing strength schedule (aka learning rate).</p>
+<p>The regularizer is a penalty added to the loss function that shrinks model
+parameters towards the zero vector using either the squared euclidean norm
+L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
+parameter update crosses the 0.0 value because of the regularizer, the
+update is truncated to 0.0 to allow for learning sparse models and achieve
+online feature selection.</p>
+<p>This implementation works with data represented as dense numpy arrays of
+floating point values for the features.</p>
+<p>Read more in the <span class="xref std std-ref">User Guide</span>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Orange.regression.linear.LinearModel">
+<em class="property">class </em><code class="descclassname">Orange.regression.linear.</code><code class="descname">LinearModel</code><span class="sig-paren">(</span><em>skl_model</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.linear.LinearModel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="mean">
+<span id="index-1"></span><h2>Mean<a class="headerlink" href="#mean" title="Permalink to this headline">¶</a></h2>
+<p><em>Mean model</em> predicts the same value (usually the distribution mean) for all
+data instances. Its accuracy can serve as a baseline for other regression
+models.</p>
+<p>The model learner (<a class="reference internal" href="#Orange.regression.MeanLearner" title="Orange.regression.MeanLearner"><code class="xref py py-class docutils literal"><span class="pre">MeanLearner</span></code></a>) computes the mean of the given data or
+distribution. The model is stored as an instance of <code class="xref py py-class docutils literal"><span class="pre">MeanModel</span></code>.</p>
+<div class="section" id="id1">
+<h3>Example<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">Orange.data</span> <span class="k">import</span> <span class="n">Table</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">Orange.regression</span> <span class="k">import</span> <span class="n">MeanLearner</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="s1">&#39;auto-mpg&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">learner</span> <span class="o">=</span> <span class="n">MeanLearner</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">learner</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+<span class="go">MeanModel(23.51457286432161)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span>
+<span class="go">array([ 23.51457286,  23.51457286,  23.51457286,  23.51457286])</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="Orange.regression.MeanLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.</code><code class="descname">MeanLearner</code><span class="sig-paren">(</span><em>preprocessors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.MeanLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit a regression model that returns the average response (class) value.</p>
+<dl class="method">
+<dt id="Orange.regression.MeanLearner.fit_storage">
+<code class="descname">fit_storage</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.MeanLearner.fit_storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a <code class="xref py py-obj docutils literal"><span class="pre">MeanModel</span></code> by computing the mean value of the given
+data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>Orange.data.Table</em>) &#8211; data table</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">regression model, which always returns mean value</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-obj docutils literal"><span class="pre">MeanModel</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="random-forest">
+<span id="index-2"></span><h2>Random Forest<a class="headerlink" href="#random-forest" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="Orange.regression.RandomForestRegressionLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.</code><code class="descname">RandomForestRegressionLearner</code><span class="sig-paren">(</span><em>n_estimators=10</em>, <em>criterion='mse'</em>, <em>max_depth=None</em>, <em>min_samples_split=2</em>, <em>min_samples_leaf=1</em>, <em>min_weight_fraction_leaf=0.0</em>, <em>max_features='auto'</em>, <em>max_leaf_nodes=None</em>, <em>bootstrap=True</em>, <em>oob_score=False</em>, <em>n_jobs=1</em>, <em>random_state=None</em>, <em>verbose=0</em>, <em>preprocessors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.RandomForestRegressionLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for <cite>sklearn.ensemble.forest.RandomForestRegressor</cite>. The following is its documentation:</p>
+<p>A random forest regressor.</p>
+<p>A random forest is a meta estimator that fits a number of classifying
+decision trees on various sub-samples of the dataset and use averaging
+to improve the predictive accuracy and control over-fitting.
+The sub-sample size is always the same as the original
+input sample size but the samples are drawn with replacement if
+<cite>bootstrap=True</cite> (default).</p>
+<p>Read more in the <span class="xref std std-ref">User Guide</span>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="simple-random-forest">
+<span id="index-3"></span><h2>Simple Random Forest<a class="headerlink" href="#simple-random-forest" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="Orange.regression.SimpleRandomForestLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.</code><code class="descname">SimpleRandomForestLearner</code><span class="sig-paren">(</span><em>n_estimators=10</em>, <em>min_instances=2</em>, <em>max_depth=1024</em>, <em>max_majority=1.0</em>, <em>skip_prob='sqrt'</em>, <em>seed=42</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.SimpleRandomForestLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A random forest regressor, optimized for speed. Trees in the forest
+are constructed with <code class="xref py py-obj docutils literal"><span class="pre">SimpleTreeLearner</span></code> classification trees.</p>
+<dl class="docutils">
+<dt>n_estimators</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional (default = 10)</span><dd>Number of trees in the forest.</dd>
+<dt>min_instances</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional (default = 2)</span><dd>Minimal number of data instances in leaves. When growing the three,
+new nodes are not introduced if they would result in leaves
+with fewer instances than min_instances. Instance count is weighed.</dd>
+<dt>max_depth</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional (default = 1024)</span><dd>Maximal depth of tree.</dd>
+<dt>max_majority</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">float, optional (default = 1.0)</span><dd>Maximal proportion of majority class. When this is
+exceeded, induction stops (only used for classification).</dd>
+<dt>skip_prob</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">string, optional (default = &#8220;sqrt&#8221;)</span><dd><p class="first">Data attribute will be skipped with probability <code class="docutils literal"><span class="pre">skip_prob</span></code>.</p>
+<ul class="last simple">
+<li>if float, then skip attribute with this probability.</li>
+<li>if &#8220;sqrt&#8221;, then <cite>skip_prob = 1 - sqrt(n_features) / n_features</cite></li>
+<li>if &#8220;log2&#8221;, then <cite>skip_prob = 1 - log2(n_features) / n_features</cite></li>
+</ul>
+</dd>
+<dt>seed</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional (default = 42)</span><dd>Random seed.</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="regression-tree">
+<span id="index-4"></span><h2>Regression Tree<a class="headerlink" href="#regression-tree" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="Orange.regression.TreeRegressionLearner">
+<em class="property">class </em><code class="descclassname">Orange.regression.</code><code class="descname">TreeRegressionLearner</code><span class="sig-paren">(</span><em>criterion='mse'</em>, <em>splitter='best'</em>, <em>max_depth=None</em>, <em>min_samples_split=2</em>, <em>min_samples_leaf=1</em>, <em>max_features=None</em>, <em>random_state=None</em>, <em>max_leaf_nodes=None</em>, <em>preprocessors=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Orange.regression.TreeRegressionLearner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for <cite>sklearn.tree.tree.DecisionTreeRegressor</cite>. The following is its documentation:</p>
+<p>A decision tree regressor.</p>
+<p>Read more in the <span class="xref std std-ref">User Guide</span>.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Regression (<code class="docutils literal"><span class="pre">regression</span></code>)</a><ul>
+<li><a class="reference internal" href="#linear-regression">Linear Regression</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#mean">Mean</a><ul>
+<li><a class="reference internal" href="#id1">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#random-forest">Random Forest</a></li>
+<li><a class="reference internal" href="#simple-random-forest">Simple Random Forest</a></li>
+<li><a class="reference internal" href="#regression-tree">Regression Tree</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/reference/2regression.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Salva Carrión.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="../_sources/reference/2regression.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
