@@ -52,7 +52,7 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
 
     from orangecontrib.recsystems.models import brismf
     
-Recommend items for set users:
+Recommend items for set of users:
 
     import Orange
 
