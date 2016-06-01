@@ -243,7 +243,43 @@ class BRISMFModel(Model):
 
 
     # Predict top-best items for a user
-    def predict(self, user, sort=True, top=None):
+    def predict(self, indices):
+        """This function receives the index of a user and returns its
+        recomendations.
+
+        Args:
+            user: int
+                Index of the user to which make the predictions.
+
+            sort: boolean, optional
+                If True, the returned array with the ratings will be sorted in
+                descending order.
+
+            top: int, optional
+                Return just the first k recommendations.
+
+        Returns:
+            Array with the recommendations for a given user.
+
+        """
+
+        #indices = np.array(np.nonzero(tuples > 0)).T
+        asd = 2
+        bias = self.bias['gMeanItems'] + \
+                    self.bias['dUsers'][indices[:, 0]] + \
+                    self.bias['dItems'][indices[:, 1]]
+
+        tempP = self.P[indices[:, 0]]
+        tempQ = self.Q[indices[:, 1]]
+
+        #base_pred = np.multiply(tempP, tempQ)
+        base_pred = np.einsum('ij,ij->i', tempP, tempQ)
+        predictions = bias + base_pred
+
+        return predictions
+
+    # Predict top-best items for a user
+    def predict_items(self, user, sort=True, top=None):
         """This function receives the index of a user and returns its
         recomendations.
 
@@ -263,8 +299,8 @@ class BRISMFModel(Model):
 
         """
         bias = self.bias['gMeanItems'] + \
-                    self.bias['dUsers'][user] + \
-                    self.bias['dItems']
+               self.bias['dUsers'][user] + \
+               self.bias['dItems']
         base_pred = np.dot(self.P[user], self.Q.T)
         predictions = bias + base_pred
 
@@ -282,6 +318,7 @@ class BRISMFModel(Model):
             return predictions[:top]
 
         return predictions
+
 
     def __str__(self):
         return 'BRISMF {}'.format('--> return model')

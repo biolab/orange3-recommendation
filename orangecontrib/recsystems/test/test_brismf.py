@@ -6,20 +6,60 @@ from recsystems.models import brismf
 
 class TestBRISMF(unittest.TestCase):
 
+    """
     def test_BRISMF1(self):
         import Orange
-        data = Orange.data.Table(
-            '/Users/salvacarrion/Documents/Programming_projects/PyCharm/orange3-recommendersystems/orangecontrib/recsystems/datasets/ratings-small.tab')
+
+        filename = '/Users/salvacarrion/Documents/Programming_projects/' \
+                    'PyCharm/orange3-recommendersystems/orangecontrib/' \
+                    'recsystems/datasets/ratings-small.tab'
+
+        data = Orange.data.Table(filename)
 
         learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
         recommender = learner(data)
 
-        prediction = recommender.predict(user=1, sort=False, top=None)
+
+        prediction = recommender.predict_items(user=1, sort=False, top=None)
+        print(prediction[:, 1].T)
+    """
+
+
+    def test_BRISMF2(self):
+        import Orange
+
+        filename = '/Users/salvacarrion/Documents/Programming_projects/' \
+                    'PyCharm/orange3-recommendersystems/orangecontrib/' \
+                    'recsystems/datasets/ratings-small.tab'
+
+        data = Orange.data.Table(filename)
+
+        learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
+        recommender = learner(data)
+
+        indices = np.array([1, 5])
+
+        prediction = recommender(indices)
         print(prediction[:, 1].T)
 
-
     """
-    def test_BRISMF2(self):
+
+       def test_BRISMF4(self):
+        import Orange
+        from Orange.evaluation.testing import CrossValidation
+
+        filename = '/Users/salvacarrion/Documents/Programming_projects/' \
+                   'PyCharm/orange3-recommendersystems/orangecontrib/' \
+                   'recsystems/datasets/ratings-small.tab'
+
+        data = Orange.data.Table(filename)
+
+        learners = [brismf.BRISMFLearner(K=2, steps=100)]
+        res = CrossValidation(data, learners)
+        asd = 3
+
+
+    def test_BRISMF4_WRONG(self):
         ratings_matrix = np.array([
             [2, 0, 0, 4, 5, 0],
             [5, 0, 4, 0, 0, 1],
