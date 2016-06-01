@@ -248,23 +248,15 @@ class BRISMFModel(Model):
         recomendations.
 
         Args:
-            user: int
-                Index of the user to which make the predictions.
+            indices: matrix
+                Matrix that contains pairs user-item
 
-            sort: boolean, optional
-                If True, the returned array with the ratings will be sorted in
-                descending order.
-
-            top: int, optional
-                Return just the first k recommendations.
 
         Returns:
             Array with the recommendations for a given user.
 
         """
 
-        #indices = np.array(np.nonzero(tuples > 0)).T
-        asd = 2
         bias = self.bias['gMeanItems'] + \
                     self.bias['dUsers'][indices[:, 0]] + \
                     self.bias['dItems'][indices[:, 1]]
@@ -278,18 +270,14 @@ class BRISMFModel(Model):
 
         return predictions
 
-    # Predict top-best items for a user
-    def predict_items(self, user, sort=True, top=None):
+    # Predict top-best items for users
+    def predict_items(self, users, top=None):
         """This function receives the index of a user and returns its
         recomendations.
 
         Args:
             user: int
                 Index of the user to which make the predictions.
-
-            sort: boolean, optional
-                If True, the returned array with the ratings will be sorted in
-                descending order.
 
             top: int, optional
                 Return just the first k recommendations.
@@ -298,11 +286,16 @@ class BRISMFModel(Model):
             Array with the recommendations for a given user.
 
         """
-        bias = self.bias['gMeanItems'] + \
-               self.bias['dUsers'][user] + \
-               self.bias['dItems']
-        base_pred = np.dot(self.P[user], self.Q.T)
+        bias = self.bias['gMeanItems'] + self.bias['dUsers'][users]
+        tempB = np.tile(np.array(self.bias['dItems']), (len(users), 1))
+        bias = bias[:, np.newaxis] + tempB
+
+        base_pred = np.dot(self.P[users], self.Q.T)
         predictions = bias + base_pred
+
+        """
+        So far this is been removed because it makes the code more complicated
+         and there is no need to add this.
 
         # Sort predictions
         if sort:
@@ -312,10 +305,12 @@ class BRISMFModel(Model):
 
         # Join predictions and indices
         predictions = np.array((indices, predictions[indices])).T
+        """
 
         # Return top-k recommendations
         if top != None:
-            return predictions[:top]
+            return predictions[:, :top]
+
 
         return predictions
 

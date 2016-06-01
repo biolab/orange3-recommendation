@@ -52,7 +52,7 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
 
     from orangecontrib.recsystems.models import brismf
     
-Recommend items for a user:
+Recommend items for set users:
 
     import Orange
 
@@ -61,16 +61,26 @@ Recommend items for a user:
     learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
     recommender = learner(data)
 
-    prediction = recommender.predict_items(user=1, sort=False, top=None)
-    print(prediction[:, 1].T)
+    indices_users = np.array([0, 1, 2, 3, 4])
+    prediction = recommender.predict_items(indices_users)
+    print(prediction)
     
+    
+    >   [[5 3 0 1]
+         [4 0 0 1]
+         [1 1 0 5]
+         [1 0 0 4]
+         [0 1 5 4]]
+    >    - Time mean (dense): 0.001s
+       
+    >    - RMSE: 0.052
+    >    [[ 5.0871884   3.0028073  -2.02109583  1.09584045]
+         [ 4.0159966   1.02711254  0.77697579  1.0235315 ]
+         [ 1.06961718  1.00407018  0.43729543  5.05828816]
+         [ 1.00851939  0.38358066  1.23864854  4.01044684]
+         [ 2.65224422  0.93723289  4.92663325  3.98136032]]
 
-    >   [0.46595242  0.40092525  0.23869106  0.43917838  0.40014543  0.47886861
-         0.4958955   0.56123877  0.49768542  0.5279589   0.46288913  0.34375892
-         0.42346417  0.39698852  0.58667468  0.49516489  0.33460744  0.71041034
-         0.50779647  0.28443737]
-
-Rating of (user, item):
+Rating pairs (user, item):
 
     import Orange
 
@@ -79,11 +89,21 @@ Rating of (user, item):
     learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
     recommender = learner(data)
     
-    indices = np.array([1, 5])  # Pairs (user, item)
+    
+    (OLD FORMAT) ----------------------------->
+    indices = np.array([[0, 0], [4, 3], [0, 1]])  # Pairs (user, item)
     prediction = recommender(indices)  # Equivalent to recommender.predict(...)
     print(prediction)
     
-    > 0.48718586
+    > [ 5.20604847  3.66934749  2.14537758]
+    ------------------------------------------
+    
+    (NEW FORMAT (DEMO); not coded yet!) -------------->
+    prediction = recommender(data[:3])  # Recommend first 3 tuples X (U_id, I_id)
+    :: return -> [0.39698852  0.58667468  0.49516489]  # DEMO: NOT REAL!
+    
+    
+    
 
 
 Evaluation:
