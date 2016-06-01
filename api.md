@@ -52,6 +52,56 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
 
     from orangecontrib.recsystems.models import brismf
     
+Recommend items for a user:
+
+    import Orange
+
+    data = Orange.data.Table('ratings.tab')
+
+    learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
+    recommender = learner(data)
+
+    prediction = recommender.predict_items(user=1, sort=False, top=None)
+    print(prediction[:, 1].T)
+    
+
+    >   [0.46595242  0.40092525  0.23869106  0.43917838  0.40014543  0.47886861
+         0.4958955   0.56123877  0.49768542  0.5279589   0.46288913  0.34375892
+         0.42346417  0.39698852  0.58667468  0.49516489  0.33460744  0.71041034
+         0.50779647  0.28443737]
+
+Rating of (user, item):
+
+    import Orange
+
+    data = Orange.data.Table('ratings.tab')
+
+    learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
+    recommender = learner(data)
+    
+    indices = np.array([1, 5])  # Pairs (user, item)
+    prediction = recommender(indices)  # Equivalent to recommender.predict(...)
+    print(prediction)
+    
+    > 0.48718586
+
+
+Evaluation:
+
+    from recsystems.models import brismf
+    from Orange.evaluation.testing import CrossValidation
+    
+    data = Orange.data.Table('ratings.tab')
+    
+    learners = [brismf.BRISMFLearner(K=2, steps=100)]
+    
+    res = Orange.evaluation.CrossValidation(data, learners, k=5)
+    rmse = Orange.evaluation.RMSE(res)
+    r2 = Orange.evaluation.R2(res)
+    
+    print("Learner  RMSE  R2")
+    for i in range(len(learners)):
+        print("{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
     
 BRISMF
 ------
