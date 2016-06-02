@@ -37,6 +37,7 @@ class TestBRISMF(unittest.TestCase):
         self.assertAlmostEqual(0, 0)
     """
 
+    """
     def test_BRISMF_pairs(self):
         print('\n\nPAIRS TEST:')
         print('----------------------------')
@@ -68,20 +69,42 @@ class TestBRISMF(unittest.TestCase):
         self.assertAlmostEqual(0, 0)
 
     """
-        def test_BRISMF_CV(self):
-            import Orange
-            from Orange.evaluation.testing import CrossValidation
 
-            filename = '/Users/salvacarrion/Documents/Programming_projects/' \
-                       'PyCharm/orange3-recommendersystems/orangecontrib/' \
-                       'recsystems/datasets/ratings-small.tab'
 
-            data = Orange.data.Table(filename)
+    def test_BRISMF_CV(self):
+        import Orange
+        from Orange.evaluation.testing import CrossValidation
 
-            learners = [brismf.BRISMFLearner(K=2, steps=100)]
-            res = CrossValidation(data, learners)
-            asd = 3
+        filename = '/Users/salvacarrion/Documents/Programming_projects/' \
+                   'PyCharm/orange3-recommendersystems/orangecontrib/' \
+                   'recsystems/datasets/users-movies-toy.tab'
+
+        data = Orange.data.Table(filename)
+        #subdata = data[:3]
+        learners = [brismf.BRISMFLearner(K=2, steps=100)]
+        res = CrossValidation(data, learners)
+        asd = 3
+
     """
+    def test_BRISMF_input_data(self):
+        import Orange
+        from Orange.evaluation.testing import CrossValidation
+
+        filename = '/Users/salvacarrion/Documents/Programming_projects/' \
+                   'PyCharm/orange3-recommendersystems/orangecontrib/' \
+                   'recsystems/datasets/users-movies-toy.tab'
+
+        data = Orange.data.Table(filename)
+
+        learner = brismf.BRISMFLearner(K=2, steps=100)
+
+        #newData = learner.build_sparse_matrix(data)
+        recommender = learner(data)
+
+        prediction = recommender(data[:3])
+        print(prediction)
+    """
+
 
 if __name__ == "__main__":
     unittest.main()

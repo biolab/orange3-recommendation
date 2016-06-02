@@ -55,8 +55,47 @@ class BRISMFLearner(Learner):
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
 
+    def format_data(self, data):
+        col_attributes = [a for a in data.domain.attributes + data.domain.metas
+                          if a.attributes.get("col")]
 
-    def fit(self, X, Y=None, W=None):
+        col_attribute = col_attributes[0] if len(
+            col_attributes) == 1 else print("warning")
+        print(col_attribute)
+
+        row_attributes = [a for a in data.domain.attributes + data.domain.metas
+                          if a.attributes.get("row")]
+
+        row_attribute = row_attributes[0] if len(
+            row_attributes) == 1 else print("warning")
+        print(row_attribute)
+
+        # Get indices of the columns
+        idx_items = data.domain.metas.index(col_attribute)
+        idx_users = data.domain.metas.index(row_attribute)
+
+        # Get values of the columns
+        users = data.metas[:, idx_users]
+        items = data.metas[:, idx_items]
+
+        # Remove repeated elements
+        set_users = set(users)
+        set_items = set(items)
+        shape = (len(set_users), len(set_items))
+
+        # Build dictionary to know the indices of the key
+        dict_users = dict(zip(set_users, range(0, shape[0])))
+        dict_items = dict(zip(set_items, range(0, shape[1])))
+
+        col_indices_users = [dict_users[x] for x in users]
+        col_indices_items = [dict_items[x] for x in items]
+
+        data.X = np.column_stack((col_indices_users, col_indices_items))
+
+        return data, shape
+
+
+    def fit_storage(self, data):
         """This function calls the factorization method.
 
         Args:
@@ -67,23 +106,31 @@ class BRISMFLearner(Learner):
             Model object (BRISMFModel).
 
         """
+
+
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
         # Optional, can be manage through preprocessors.
-        X = self.prepare_data(X)
+        data, shape = self.format_data(data)
+        #X = self.prepare_data(data.X)
+
+        # build sparse matrix
+        R = self.build_sparse_matrix(data.X[:, 0], data.X[:, 1], data.Y, shape)
+
 
         # Factorize matrix
         self.P, self.Q, self.bias = self.matrix_factorization(
-                                                                X,
-                                                                self.K,
-                                                                self.steps,
-                                                                self.alpha,
-                                                                self.beta,
-                                                                self.verbose)
+            R,
+            self.K,
+            self.steps,
+            self.alpha,
+            self.beta,
+            self.verbose)
         return BRISMFModel(P=self.P, Q=self.Q, bias=self.bias)
+
 
     def prepare_data(self, X):
         """Function to remove NaNs from the data (preprocessor)
@@ -104,6 +151,12 @@ class BRISMFLearner(Learner):
         #X = sparse.csr_matrix(X)
 
         return X
+
+
+    def build_sparse_matrix(self, row, col, data, shape):
+        mtx = sparse.csr_matrix((data, (row, col)), shape=shape)
+        return mtx
+
 
     def matrix_factorization(self, R, K, steps, alpha, beta, verbose=False):
         """ Factorize either a dense matrix or a sparse matrix into two low-rank
@@ -256,7 +309,7 @@ class BRISMFModel(Model):
             Array with the recommendations for a given user.
 
         """
-
+        asd = 23
         bias = self.bias['gMeanItems'] + \
                     self.bias['dUsers'][indices[:, 0]] + \
                     self.bias['dItems'][indices[:, 1]]
