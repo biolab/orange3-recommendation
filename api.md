@@ -52,7 +52,7 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
 
     from orangecontrib.recsystems.models import brismf
     
-Recommend items for set of users:
+**Recommend items for set of users:**
 
     import Orange
 
@@ -80,7 +80,7 @@ Recommend items for set of users:
          [ 1.00851939  0.38358066  1.23864854  4.01044684]
          [ 2.65224422  0.93723289  4.92663325  3.98136032]]
 
-Rating pairs (user, item):
+**Rating pairs (user, item):**
 
     import Orange
 
@@ -106,7 +106,7 @@ Rating pairs (user, item):
     
 
 
-Evaluation:
+**Evaluation:**
 
     from recsystems.models import brismf
     from Orange.evaluation.testing import CrossValidation
