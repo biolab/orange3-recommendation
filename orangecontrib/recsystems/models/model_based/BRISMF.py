@@ -91,8 +91,9 @@ class BRISMFLearner(Learner):
         col_indices_items = [dict_items[x] for x in items]
 
         data.X = np.column_stack((col_indices_users, col_indices_items))
+        data.attributes['shape'] = shape
 
-        return data, shape
+        return data
 
 
     def fit_storage(self, data):
@@ -114,11 +115,14 @@ class BRISMFLearner(Learner):
                           "estimator", stacklevel=2)
 
         # Optional, can be manage through preprocessors.
-        data, shape = self.format_data(data)
+        data = self.format_data(data)
         #X = self.prepare_data(data.X)
 
         # build sparse matrix
-        R = self.build_sparse_matrix(data.X[:, 0], data.X[:, 1], data.Y, shape)
+        R = self.build_sparse_matrix(data.X[:, 0],
+                                     data.X[:, 1],
+                                     data.Y,
+                                     data.attributes['shape'])
 
 
         # Factorize matrix
@@ -296,7 +300,7 @@ class BRISMFModel(Model):
 
 
     # Predict top-best items for a user
-    def predict(self, indices):
+    def predict_storage(self, data):
         """This function receives the index of a user and returns its
         recomendations.
 
@@ -311,11 +315,11 @@ class BRISMFModel(Model):
         """
         asd = 23
         bias = self.bias['gMeanItems'] + \
-                    self.bias['dUsers'][indices[:, 0]] + \
-                    self.bias['dItems'][indices[:, 1]]
+                    self.bias['dUsers'][data.X[:, 0]] + \
+                    self.bias['dItems'][data.X[:, 1]]
 
-        tempP = self.P[indices[:, 0]]
-        tempQ = self.Q[indices[:, 1]]
+        tempP = self.P[data.X[:, 0]]
+        tempQ = self.Q[data.X[:, 1]]
 
         #base_pred = np.multiply(tempP, tempQ)
         base_pred = np.einsum('ij,ij->i', tempP, tempQ)
