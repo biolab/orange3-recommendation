@@ -89,18 +89,10 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
     learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
     recommender = learner(data)
     
-    
-    (OLD FORMAT) ----------------------------->
-    indices = np.array([[0, 0], [4, 3], [0, 1]])  # Pairs (user, item)
-    prediction = recommender(indices)  # Equivalent to recommender.predict(...)
+    prediction = recommender(data[:3])  # Recommend first 3 tuples X (U_id, I_id)
     print(prediction)
     
     > [ 5.20604847  3.66934749  2.14537758]
-    ------------------------------------------
-    
-    (NEW FORMAT (DEMO); not coded yet!) -------------->
-    prediction = recommender(data[:3])  # Recommend first 3 tuples X (U_id, I_id)
-    :: return -> [0.39698852  0.58667468  0.49516489]  # DEMO: NOT REAL!
     
     
     
