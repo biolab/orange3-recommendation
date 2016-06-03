@@ -77,13 +77,24 @@ class TestBRISMF(unittest.TestCase):
 
         filename = '/Users/salvacarrion/Documents/Programming_projects/' \
                    'PyCharm/orange3-recommendersystems/orangecontrib/' \
-                   'recsystems/datasets/users-movies-toy.tab'
+                   'recsystems/datasets/users-movies-toy2.tab'
 
         data = Orange.data.Table(filename)
         #subdata = data[:3]
         learners = [brismf.BRISMFLearner(K=2, steps=100)]
+
+        # I need to know the shape of the matrix.
+        # It's computed in 'learner(data)' but CV splits the set before calling it
+        # Therefore train set and test set have different shapes.
         res = CrossValidation(data, learners)
-        asd = 3
+        rmse = Orange.evaluation.RMSE(res)
+        r2 = Orange.evaluation.R2(res)
+
+        print("Learner  RMSE  R2")
+        for i in range(len(learners)):
+            print(
+                "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
+
 
     """
     def test_BRISMF_input_data(self):

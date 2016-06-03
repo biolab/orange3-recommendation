@@ -122,6 +122,10 @@ Evaluation:
     print("Learner  RMSE  R2")
     for i in range(len(learners)):
         print("{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
+        
+        
+    > Learner  RMSE  R2
+      BRISMF  2.80 -2.21
     
 BRISMF
 ------

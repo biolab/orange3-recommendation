@@ -61,37 +61,45 @@ class BRISMFLearner(Learner):
 
         col_attribute = col_attributes[0] if len(
             col_attributes) == 1 else print("warning")
-        print(col_attribute)
+        #print(col_attribute)
 
         row_attributes = [a for a in data.domain.attributes + data.domain.metas
                           if a.attributes.get("row")]
 
         row_attribute = row_attributes[0] if len(
             row_attributes) == 1 else print("warning")
-        print(row_attribute)
+        #print(row_attribute)
 
         # Get indices of the columns
-        idx_items = data.domain.metas.index(col_attribute)
-        idx_users = data.domain.metas.index(row_attribute)
+        idx_items = data.domain.variables.index(col_attribute)
+        idx_users = data.domain.variables.index(row_attribute)
+
+        users = len(data.domain.variables[idx_users].values)
+        items = len(data.domain.variables[idx_items].values)
+        shape = (users, items)
+
 
         # Get values of the columns
-        users = data.metas[:, idx_users]
-        items = data.metas[:, idx_items]
-
-        # Remove repeated elements
-        set_users = set(users)
-        set_items = set(items)
-        shape = (len(set_users), len(set_items))
-
-        # Build dictionary to know the indices of the key
-        dict_users = dict(zip(set_users, range(0, shape[0])))
-        dict_items = dict(zip(set_items, range(0, shape[1])))
-
-        col_indices_users = [dict_users[x] for x in users]
-        col_indices_items = [dict_items[x] for x in items]
-
-        data.X = np.column_stack((col_indices_users, col_indices_items))
+        # users = data.metas[:, idx_users]
+        # items = data.metas[:, idx_items]
+        #
+        # # Remove repeated elements
+        # set_users = set(users)
+        # set_items = set(items)
+        # shape = (len(set_users), len(set_items))
+        #
+        # # Build dictionary to know the indices of the key
+        # dict_users = dict(zip(set_users, range(0, shape[0])))
+        # dict_items = dict(zip(set_items, range(0, shape[1])))
+        #
+        # col_indices_users = [dict_users[x] for x in users]
+        # col_indices_items = [dict_items[x] for x in items]
+        #
+        # data.X = np.column_stack((col_indices_users, col_indices_items))
         data.attributes['shape'] = shape
+
+        # Convert to interger
+        data.X = data.X.astype(int)
 
         return data
 
@@ -313,7 +321,11 @@ class BRISMFModel(Model):
             Array with the recommendations for a given user.
 
         """
-        asd = 23
+
+        # Convert indices to integer
+        data.X = data.X.astype(int)
+
+
         bias = self.bias['gMeanItems'] + \
                     self.bias['dUsers'][data.X[:, 0]] + \
                     self.bias['dItems'][data.X[:, 1]]
@@ -326,6 +338,7 @@ class BRISMFModel(Model):
         predictions = bias + base_pred
 
         return predictions
+
 
     # Predict top-best items for users
     def predict_items(self, users, top=None):
