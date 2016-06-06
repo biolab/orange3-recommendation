@@ -42,7 +42,8 @@ Why does the RMSE of the test set differ so much from the train set? Maybe not e
   
   Description:
   
-    K=15; iter=250
+    K=15; iter=250  
+    (I've also tried other tunnings like: K={2,3,4,5,10,20,25,...} and iters={10,20,50,100,150,200,250,300,500,...} obtaining similar results.)
     
     ALL DATA:
     [[ 0.8282175   2.46078204  3.95383569  4.85108628  2.88379429]
