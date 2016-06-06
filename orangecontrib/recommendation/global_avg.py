@@ -10,9 +10,9 @@ import math
 import warnings
 import time
 
-__all__ = ['BRISMFLearner']
+__all__ = ['GlobalAvgLearner']
 
-class BRISMFLearner(Learner):
+class GlobalAvgLearner(Learner):
     """ Biased Regularized Incremental Simultaneous Matrix Factorization
 
     This model uses stochastic gradient descent to find the ratings of two
@@ -36,7 +36,7 @@ class BRISMFLearner(Learner):
             Prints information about the process.
     """
 
-    name = 'BRISMF'
+    name = 'Global average'
 
     def __init__(self,
                  K=2,
@@ -153,7 +153,7 @@ class BRISMFLearner(Learner):
                                                                 self.beta,
                                                                 self.verbose)
 
-        return BRISMFModel(P=self.P,
+        return GlobalAvgModel(P=self.P,
                            Q=self.Q,
                            bias=self.bias)
 
@@ -302,7 +302,7 @@ class BRISMFLearner(Learner):
         return P, Q, bias
 
 
-class BRISMFModel(Model):
+class GlobalAvgModel(Model):
 
     def __init__(self, P, Q, bias):
         """This model receives a learner and provides and interface to make the
