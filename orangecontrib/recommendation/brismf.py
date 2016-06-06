@@ -51,24 +51,34 @@ class BRISMFLearner(Learner):
         self.Q = None
         self.bias = None
         self.verbose = verbose
+        self.shape = None
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
 
     def format_data(self, data):
+        """Transforms the raw data read by Orange into something that this
+        class can use
+
+        Args:
+            data: Orange.data.Table
+
+        Returns:
+            data
+
+        """
+
         col_attributes = [a for a in data.domain.attributes + data.domain.metas
                           if a.attributes.get("col")]
 
         col_attribute = col_attributes[0] if len(
             col_attributes) == 1 else print("warning")
-        #print(col_attribute)
 
         row_attributes = [a for a in data.domain.attributes + data.domain.metas
                           if a.attributes.get("row")]
 
         row_attribute = row_attributes[0] if len(
             row_attributes) == 1 else print("warning")
-        #print(row_attribute)
 
         # Get indices of the columns
         idx_items = data.domain.variables.index(col_attribute)
@@ -76,9 +86,10 @@ class BRISMFLearner(Learner):
 
         users = len(data.domain.variables[idx_users].values)
         items = len(data.domain.variables[idx_items].values)
-        shape = (users, items)
+        self.shape = (users, items)
 
 
+        # ***** In the case of using 'strings' instead of 'discrete'
         # Get values of the columns
         # users = data.metas[:, idx_users]
         # items = data.metas[:, idx_items]
@@ -96,9 +107,8 @@ class BRISMFLearner(Learner):
         # col_indices_items = [dict_items[x] for x in items]
         #
         # data.X = np.column_stack((col_indices_users, col_indices_items))
-        data.attributes['shape'] = shape
 
-        # Convert to interger
+        # Convert to integer
         data.X = data.X.astype(int)
 
         return data
@@ -108,7 +118,7 @@ class BRISMFLearner(Learner):
         """This function calls the factorization method.
 
         Args:
-            X: Matrix
+            X: Numpy array
                 Data to fit.
 
         Returns:
@@ -124,48 +134,50 @@ class BRISMFLearner(Learner):
 
         # Optional, can be manage through preprocessors.
         data = self.format_data(data)
-        #X = self.prepare_data(data.X)
 
         # build sparse matrix
         R = self.build_sparse_matrix(data.X[:, 0],
                                      data.X[:, 1],
                                      data.Y,
-                                     data.attributes['shape'])
+                                     self.shape)
 
 
         # Factorize matrix
         self.P, self.Q, self.bias = self.matrix_factorization(
-            R,
-            self.K,
-            self.steps,
-            self.alpha,
-            self.beta,
-            self.verbose)
-        return BRISMFModel(P=self.P, Q=self.Q, bias=self.bias)
+                                                                R,
+                                                                self.K,
+                                                                self.steps,
+                                                                self.alpha,
+                                                                self.beta,
+                                                                self.verbose)
 
-
-    def prepare_data(self, X):
-        """Function to remove NaNs from the data (preprocessor)
-
-        Args:
-            X: Matrix (data to fit).
-
-        Returns:
-            X (matrix)
-
-        """
-
-        # Convert NaNs to zero
-        where_are_NaNs = np.isnan(X)
-        X[where_are_NaNs] = 0
-
-        # Transform dense matrix into sparse matrix
-        #X = sparse.csr_matrix(X)
-
-        return X
+        return BRISMFModel(P=self.P,
+                           Q=self.Q,
+                           bias=self.bias)
 
 
     def build_sparse_matrix(self, row, col, data, shape):
+        """ Given the indices of the rows, columns and its corresponding value
+        this builds an sparse matrix of size 'shape'
+
+        Args:
+            row: Array of integers
+               Indices of the rows for their corresponding value
+
+            col: Array of integers
+               Indices of the columns for their corresponding value
+
+            data: Array
+               Array with the values that correspond to the pair (row, col)
+
+            shape: (int, int)
+               Tuple of integers with the shape of the matrix
+
+        Returns:
+            Compressed Sparse Row matrix
+
+        """
+
         mtx = sparse.csr_matrix((data, (row, col)), shape=shape)
         return mtx
 
@@ -218,7 +230,7 @@ class BRISMFLearner(Learner):
             global_mean_items = mean_item_rating.mean()
 
             if verbose:
-                print('- Time mean (sparse): %.3fs\n' % (time.time() - start2))
+                print('- Time mean (sparse): %.3fs' % (time.time() - start2))
 
         else:  # Dense matrix
             start2 = time.time()
@@ -231,7 +243,7 @@ class BRISMFLearner(Learner):
             global_mean_items = np.mean(mean_item_rating)
 
             if verbose:
-                print('- Time mean (dense): %.3fs\n' % (time.time() - start2))
+                print('- Time mean (dense): %.3fs' % (time.time() - start2))
 
 
         # Compute bias and deltas (Common - Dense/Sparse matrices)
@@ -295,8 +307,8 @@ class BRISMFModel(Model):
         predictions for a given user.
 
         Args:
-            P: Matrix
-            Q: Matrix
+            P: Matrix (users x Latent_factors)
+            Q: Matrix (items x Latent_factors)
             bias: dictionary
                 'delta items', 'delta users', 'global mean items' and
                 'global mean users'
@@ -305,57 +317,72 @@ class BRISMFModel(Model):
         self.P = P
         self.Q = Q
         self.bias = bias
+        self.shape = (len(self.P), len(self.Q))
 
 
-    # Predict top-best items for a user
-    def predict_storage(self, data):
-        """This function receives the index of a user and returns its
-        recomendations.
+    def predict(self, X, Y=None):
+        """This function receives an array of indexes [[idx_user, idx_item]] and
+        returns the prediction for these pairs.
 
-        Args:
-            indices: matrix
-                Matrix that contains pairs user-item
+            Args:
+                X: Matrix (2xN)
+                    Matrix that contains pairs of the type user-item
 
+            Returns:
+                Array with the recommendations for a given user.
 
-        Returns:
-            Array with the recommendations for a given user.
-
-        """
-
-        # Convert indices to integer
-        data.X = data.X.astype(int)
-
+            """
 
         bias = self.bias['gMeanItems'] + \
-                    self.bias['dUsers'][data.X[:, 0]] + \
-                    self.bias['dItems'][data.X[:, 1]]
+               self.bias['dUsers'][X[:, 0]] + \
+               self.bias['dItems'][X[:, 1]]
 
-        tempP = self.P[data.X[:, 0]]
-        tempQ = self.Q[data.X[:, 1]]
+        tempP = self.P[X[:, 0]]
+        tempQ = self.Q[X[:, 1]]
 
-        #base_pred = np.multiply(tempP, tempQ)
+        # base_pred = np.multiply(tempP, tempQ)
         base_pred = np.einsum('ij,ij->i', tempP, tempQ)
         predictions = bias + base_pred
 
         return predictions
 
 
-    # Predict top-best items for users
-    def predict_items(self, users, top=None):
-        """This function receives the index of a user and returns its
-        recomendations.
+    def predict_storage(self, data):
+        """ Convert data.X variables to integer and calls predict(data.X)
 
         Args:
-            user: int
-                Index of the user to which make the predictions.
-
-            top: int, optional
-                Return just the first k recommendations.
+            data: Orange.data.Table
 
         Returns:
             Array with the recommendations for a given user.
 
         """
+
+        # Convert indices to integer and call predict()
+        return self.predict(data.X.astype(int), data.Y)
+
+
+    def predict_items(self, users=None, top=None):
+        """This function returns all the predictions for a set of items.
+        If users is set to 'None', it will return all the predictions for all
+        the users (matrix of size [num_users x num_items]).
+
+        Args:
+            user: array, optional
+                Array with the indices of the users to which make the
+                predictions.
+
+            top: int, optional
+                Return just the first k recommendations.
+
+        Returns:
+            Array with the recommendations for requested users.
+
+        """
+
+        if users is None:
+            users = np.asarray(range(0, len(self.bias['dUsers'])))
+
         bias = self.bias['gMeanItems'] + self.bias['dUsers'][users]
         tempB = np.tile(np.array(self.bias['dItems']), (len(users), 1))
         bias = bias[:, np.newaxis] + tempB

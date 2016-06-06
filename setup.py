@@ -23,12 +23,12 @@ if __name__ == '__main__':
     setup(
         name="Orange3 Recommender Systems",
         packages=['orangecontrib',
-                  'orangecontrib.recsystems'],
+                  'orangecontrib.recommendation'],
                   # 'orangecontrib.recsystems.tutorials',
                   # 'orangecontrib.recsystems.widgets'],
         package_data={
-            'orangecontrib.recsystems': ['tutorials/*.ows'],
-            'orangecontrib.recsystems.widgets': ['icons/*'],
+            'orangecontrib.recommendation': ['tutorials/*.ows'],
+            'orangecontrib.recommendation.widgets': ['icons/*'],
         },
         install_requires=['Orange'],
         entry_points=ENTRY_POINTS,

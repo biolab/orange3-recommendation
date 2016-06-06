@@ -1,7 +1,7 @@
-import Orange
-from scipy import sparse
 import numpy as np
+from scipy import sparse
 
+import Orange
 
 data = Orange.data.Table("housing.tab")
 
@@ -21,17 +21,16 @@ print("Learner  RMSE  R2")
 for i in range(len(learners)):
     print("{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
-
-from recsystems.models import brismf
+from recommendation import brismf
 from Orange.evaluation.testing import CrossValidation
 
 filename_dense = '/Users/salvacarrion/Documents/Programming_projects/' \
            'PyCharm/orange3-recommendersystems/orangecontrib/' \
-           'recsystems/datasets/ratings-small.tab'
+           'recommendation/datasets/ratings-small.tab'
 
 filename_sparse = '/Users/salvacarrion/Documents/Programming_projects/' \
                   'PyCharm/orange3-recommendersystems/orangecontrib/' \
-                  'recsystems/datasets/ratings.csv'
+                  'recommendation/datasets/ratings.csv'
 
 data = Orange.data.Table(filename_dense)
 
