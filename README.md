@@ -37,13 +37,14 @@ RECENT CHANGES
 
 PROBLEMS 
 --------
-** Cross-validation:**
- Why does the RMSE of the test set differ so much from the train set? Maybe not enough data?
+**Cross-validation:**
+Why does the RMSE of the test set differ so much from the train set? Maybe not enough data?
   
   Description:
   
     K=15; iter=250
     
+    ALL DATA:
     [[ 0.8282175   2.46078204  3.95383569  4.85108628  2.88379429]
      [ 0.43211647  1.8775157   4.98789311  3.91862161  3.19273916]
      [ 0.93497338  2.46234349  5.03923615  4.93385974  1.94505918]
@@ -56,6 +57,9 @@ PROBLEMS
     ['Albert', 'Breza', 'Cene', 'Dana', 'Julija', 'Ksenija', 'Maja', 'Nika']
     ['Cvetje', 'HarrySally', 'Matrix', 'Prometheus', 'Titanic']
     
+    
+    
+    CROSS-VALIDATION:
     [[ 0.92794013  3.48098995  3.95795022  4.9295335   2.88224542]
      [ 3.08274976  1.87949542  4.93226844  3.92975878  3.49271992]
      [ 0.92849458  2.47898806  0.33549003  0.90604663  1.98075489]
