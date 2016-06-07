@@ -3,26 +3,30 @@ from Orange.base import Model, Learner
 import numpy as np
 from scipy import sparse
 
-__all__ = ['ItemAvgLearner']
+import time
 
-class ItemAvgLearner(Learner):
-    """ Item average
+__all__ = ['UserItemBaselineLearner']
 
-    This is a simple model that only works with the average of the ratings of
-    each movie.
+class UserItemBaselineLearner(Learner):
+    """ User-Item Baseline
+
+    This model takes the bias of users and items plus the global average to make
+    the recommendations
 
     Attributes:
         verbose: boolean, optional (default = False)
             Prints information about the process.
     """
 
-    name = 'Item average'
+    name = 'User-Item Baseline'
 
     def __init__(self,
                  preprocessors=None,
                  verbose=False):
         self.verbose = verbose
         self.shape = None
+        self.bias = None
+        self.global_average = None
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
@@ -72,7 +76,7 @@ class ItemAvgLearner(Learner):
             data: Orange.data.Table
 
         Returns:
-            Model object (ItemAvgModel).
+            Model object (UserItemBaselineModel).
 
         """
 
@@ -85,8 +89,12 @@ class ItemAvgLearner(Learner):
                                      data.Y,
                                      self.shape)
 
-        return ItemAvgModel(items_average=np.ravel(R.mean(axis=0)),
-                            shape=self.shape)
+        # Compute bias and averages
+        self.bias = self.compute_bias(R, self.verbose)
+        self.global_average = np.mean(data.Y)
+
+        return UserItemBaselineModel(bias=self.bias,
+                                     global_average=self.global_average)
 
 
     def build_sparse_matrix(self, row, col, data, shape):
@@ -115,24 +123,83 @@ class ItemAvgLearner(Learner):
         return mtx
 
 
-class ItemAvgModel(Model):
+    def compute_bias(self, R, verbose=False):
+        """ Compute averages and biases of the matrix R
 
-    def __init__(self, items_average, shape):
+        Args:
+            R: Matrix
+                Matrix with the user-item ratings (Zeros are equivalent to unknown data)
+
+            verbose: boolean, optional
+                If true, it outputs information about the process.
+
+        Returns:
+            bias (dictionary, 'delta items' , 'delta users', 'global mean items' and 'global mean users')
+
+        """
+
+        # Check if R is a sparse matrix
+        if isinstance(R, sparse.csr_matrix) or \
+                isinstance(R, sparse.csc_matrix):
+            start2 = time.time()
+            # Local means (array)
+            mean_user_rating = np.ravel(R.mean(axis=1))  # Rows
+            mean_item_rating = np.ravel(R.mean(axis=0))  # Columns
+
+            # Global mean
+            global_mean_users = mean_user_rating.mean()
+            global_mean_items = mean_item_rating.mean()
+
+            if verbose:
+                print('- Time mean (sparse): %.3fs' % (time.time() - start2))
+
+        else:  # Dense matrix
+            start2 = time.time()
+            # Local means (array)
+            mean_user_rating = np.mean(R, axis=1)  # Rows
+            mean_item_rating = np.mean(R, axis=0)  # Columns
+
+            # Global mean
+            global_mean_users = np.mean(mean_user_rating)
+            global_mean_items = np.mean(mean_item_rating)
+
+            if verbose:
+                print('- Time mean (dense): %.3fs' % (time.time() - start2))
+
+
+        # Compute bias and deltas (Common - Dense/Sparse matrices)
+        deltaUser = mean_user_rating - global_mean_users
+        deltaItem = mean_item_rating - global_mean_items
+        bias = {'dItems': deltaItem,
+                'dUsers': deltaUser,
+                'gMeanItems': global_mean_items,
+                'gMeanUsers': global_mean_users}
+
+        return bias
+
+
+class UserItemBaselineModel(Model):
+
+    def __init__(self, bias, global_average):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
 
         Args:
-            items_average: Array
-            shape: (int, int)
+            bias: dictionary
+                'delta items', 'delta users', 'global mean items' and
+                'global mean users'
+
+            global_average: float
 
        """
-        self.items_average = items_average
-        self.shape = shape
+        self.bias = bias
+        self.global_average = global_average
+        self.shape = (len(bias['dUsers']), len(bias['dItems']))
 
 
     def predict(self, X):
-        """This function receives an array of indexes like [[idx_item]] or
-         [[idx_user, idx_item]] and returns the prediction for these pairs.
+        """This function receives an array of indexes [[idx_user, idx_item]] and
+        returns the prediction for these pairs.
 
             Args:
                 X: Matrix (2xN)
@@ -143,10 +210,11 @@ class ItemAvgModel(Model):
 
             """
 
-        if X.shape[1] > 1:
-            X = X[:, 1]
+        predictions = self.global_average + \
+                      self.bias['dUsers'][X[:, 0]] + \
+                      self.bias['dItems'][X[:, 1]]
 
-        return self.items_average[X]
+        return predictions
 
 
     def predict_storage(self, data):
@@ -182,19 +250,18 @@ class ItemAvgModel(Model):
 
         """
 
-        # Get shape of the matrix
-        num_users, num_items = self.shape
+        if users is None:
+            users = np.asarray(range(0, len(self.bias['dUsers'])))
 
-        if users is not None:
-            num_users = len(users)
+        bias = self.global_average + self.bias['dUsers'][users]
+        tempB = np.tile(np.array(self.bias['dItems']), (len(users), 1))
+        predictions = bias[:, np.newaxis] + tempB
 
         # Return top-k recommendations
         if top is not None:
-            num_items = top
+            return predictions[:, :top]
 
-        tempItemsAvg = self.items_average[:num_items]
-        return np.array([tempItemsAvg,] * num_users)
-
+        return predictions
 
     def __str__(self):
         return self.name

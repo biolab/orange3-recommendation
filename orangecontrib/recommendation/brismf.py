@@ -52,6 +52,7 @@ class BRISMFLearner(Learner):
         self.P = None
         self.Q = None
         self.bias = None
+        self.global_average = None
         self.verbose = verbose
         self.shape = None
 
@@ -142,19 +143,22 @@ class BRISMFLearner(Learner):
                                      data.Y,
                                      self.shape)
 
+        # Compute global average
+        self.global_average = np.mean(data.Y)
 
         # Factorize matrix
-        self.P, self.Q, self.bias = self.matrix_factorization(
-                                                                R,
+        self.P, self.Q, self.bias = self.matrix_factorization(R,
                                                                 self.K,
                                                                 self.steps,
                                                                 self.alpha,
                                                                 self.beta,
                                                                 self.verbose)
 
+
         return BRISMFModel(P=self.P,
                            Q=self.Q,
-                           bias=self.bias)
+                           bias=self.bias,
+                           global_average=self.global_average)
 
 
     def build_sparse_matrix(self, row, col, data, shape):
@@ -269,7 +273,7 @@ class BRISMFLearner(Learner):
                     if R[i, j] > 0:  # This makes sparse matrices really slow
                         #masked
 
-                        rij_pred = global_mean_items + \
+                        rij_pred = self.global_average + \
                                    deltaItem[j] + \
                                    deltaUser[i] + \
                                    np.dot(P[i, :], Q[j, :])
@@ -303,21 +307,26 @@ class BRISMFLearner(Learner):
 
 class BRISMFModel(Model):
 
-    def __init__(self, P, Q, bias):
+    def __init__(self, P, Q, bias, global_average):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
 
         Args:
             P: Matrix (users x Latent_factors)
+
             Q: Matrix (items x Latent_factors)
+
             bias: dictionary
                 'delta items', 'delta users', 'global mean items' and
                 'global mean users'
+
+            global_average: float
 
        """
         self.P = P
         self.Q = Q
         self.bias = bias
+        self.global_average = global_average
         self.shape = (len(self.P), len(self.Q))
 
 
@@ -334,7 +343,7 @@ class BRISMFModel(Model):
 
             """
 
-        bias = self.bias['gMeanItems'] + \
+        bias = self.global_average + \
                self.bias['dUsers'][X[:, 0]] + \
                self.bias['dItems'][X[:, 1]]
 
@@ -384,7 +393,7 @@ class BRISMFModel(Model):
         if users is None:
             users = np.asarray(range(0, len(self.bias['dUsers'])))
 
-        bias = self.bias['gMeanItems'] + self.bias['dUsers'][users]
+        bias = self.global_average + self.bias['dUsers'][users]
         tempB = np.tile(np.array(self.bias['dItems']), (len(users), 1))
         bias = bias[:, np.newaxis] + tempB
 

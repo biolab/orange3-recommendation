@@ -1,14 +1,7 @@
 from Orange.base import Model, Learner
 
 import numpy as np
-from numpy import linalg as LA
-
 from scipy import sparse
-
-import math
-
-import warnings
-import time
 
 __all__ = ['UserAvgLearner']
 
