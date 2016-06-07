@@ -19,7 +19,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('/Users/salvacarrion/Documents/Programming_projects/PyCharm/orange3-recommendersystems/orangecontrib'))
+sys.path.insert(0, os.path.abspath('/Users/salvacarrion/Documents/Programming_projects/PyCharm/orange3-recommendersystems/'))
 
 # -- General configuration ------------------------------------------------
 

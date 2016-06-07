@@ -7,7 +7,7 @@ Reference
 Available classes and methods.
 
 .. toctree::
-   :maxdepth: 2
+	:maxdepth: 2
 	
-   reference/recsystems
+	reference/recommendation
 
