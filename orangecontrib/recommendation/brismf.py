@@ -120,8 +120,7 @@ class BRISMFLearner(Learner):
         """This function calls the factorization method.
 
         Args:
-            X: Numpy array
-                Data to fit.
+            data: Orange.data.Table
 
         Returns:
             Model object (BRISMFModel).
@@ -322,7 +321,7 @@ class BRISMFModel(Model):
         self.shape = (len(self.P), len(self.Q))
 
 
-    def predict(self, X, Y=None):
+    def predict(self, X):
         """This function receives an array of indexes [[idx_user, idx_item]] and
         returns the prediction for these pairs.
 
@@ -361,7 +360,7 @@ class BRISMFModel(Model):
         """
 
         # Convert indices to integer and call predict()
-        return self.predict(data.X.astype(int), data.Y)
+        return self.predict(data.X.astype(int))
 
 
     def predict_items(self, users=None, top=None):
@@ -370,7 +369,7 @@ class BRISMFModel(Model):
         the users (matrix of size [num_users x num_items]).
 
         Args:
-            user: array, optional
+            users: array, optional
                 Array with the indices of the users to which make the
                 predictions.
 
@@ -392,24 +391,9 @@ class BRISMFModel(Model):
         base_pred = np.dot(self.P[users], self.Q.T)
         predictions = bias + base_pred
 
-        """
-        So far this is been removed because it makes the code more complicated
-         and there is no need to add this.
-
-        # Sort predictions
-        if sort:
-            indices = np.argsort(predictions)[::-1]  # Descending order
-        else:
-            indices = np.arange(0, len(predictions))
-
-        # Join predictions and indices
-        predictions = np.array((indices, predictions[indices])).T
-        """
-
         # Return top-k recommendations
-        if top != None:
+        if top is not None:
             return predictions[:, :top]
-
 
         return predictions
 

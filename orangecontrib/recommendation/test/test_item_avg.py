@@ -1,20 +1,21 @@
 import unittest
 
 import numpy as np
-from orangecontrib.recommendation import BRISMFLearner
+from orangecontrib.recommendation import ItemAvgLearner
 from sklearn.metrics import mean_squared_error
 import math
 import Orange
 
-class TestBRISMF(unittest.TestCase):
+class TestItemAvg(unittest.TestCase):
 
-    def test_BRISMF_predict_items(self):
+
+    def test_ItemAvg_predict_items(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=50, verbose=False)
+        learner = ItemAvgLearner(verbose=False)
         recommender = learner(data)
 
         # Compute predictions
@@ -26,16 +27,16 @@ class TestBRISMF(unittest.TestCase):
         print('-> RMSE (predict items): %.3f' % rmse)
 
         # Check correctness
-        self.assertLessEqual(rmse, 1)
+        self.assertGreaterEqual(rmse, 0)
 
 
-    def test_BRISMF_input_data(self):
+    def test_ItemAvg_input_data(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=50, verbose=False)
+        learner = ItemAvgLearner(verbose=False)
         recommender = learner(data)
 
         # Compute predictions
@@ -46,16 +47,16 @@ class TestBRISMF(unittest.TestCase):
         print('-> RMSE (input data): %.3f' % rmse)
 
         # Check correctness
-        self.assertLessEqual(rmse, 1)
+        self.assertGreaterEqual(rmse, 0)
 
 
-    def test_BRISMF_pairs(self):
+    def test_ItemAvg_pairs(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=50, verbose=False)
+        learner = ItemAvgLearner(verbose=False)
         recommender = learner(data)
 
         # Create indices to test
@@ -73,18 +74,18 @@ class TestBRISMF(unittest.TestCase):
         self.assertEqual(len(y_pred), sample_size)
 
 
-    def test_BRISMF_CV(self):
+    def test_ItemAvg_CV(self):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
         data = Orange.data.Table(filename)
 
-        brismf = BRISMFLearner(K=5, steps=250, beta=0.02, verbose=False)
-        learners = [brismf]
+        items_avg = ItemAvgLearner(verbose=False)
+        learners = [items_avg]
 
         """
-        learner = BRISMFLearner(K=5, steps=250, beta=0.02, verbose=False)
+        learner = ItemAvgLearner(verbose=False)
         recommender = learner(data)
         prediction = recommender.predict_items()
         print(prediction)
@@ -106,6 +107,7 @@ class TestBRISMF(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertIsInstance(rmse, np.ndarray)
+
 
 if __name__ == "__main__":
     unittest.main()

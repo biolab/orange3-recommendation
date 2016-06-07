@@ -39,19 +39,8 @@ class UserAvgLearner(Learner):
     name = 'User average'
 
     def __init__(self,
-                 K=2,
-                 steps=100,
-                 alpha=0.005,
-                 beta=0.02,
                  preprocessors=None,
                  verbose=False):
-        self.K = K
-        self.steps = steps
-        self.alpha = alpha
-        self.beta = beta
-        self.P = None
-        self.Q = None
-        self.bias = None
         self.verbose = verbose
         self.shape = None
 
@@ -90,26 +79,6 @@ class UserAvgLearner(Learner):
         items = len(data.domain.variables[idx_items].values)
         self.shape = (users, items)
 
-
-        # ***** In the case of using 'strings' instead of 'discrete'
-        # Get values of the columns
-        # users = data.metas[:, idx_users]
-        # items = data.metas[:, idx_items]
-        #
-        # # Remove repeated elements
-        # set_users = set(users)
-        # set_items = set(items)
-        # shape = (len(set_users), len(set_items))
-        #
-        # # Build dictionary to know the indices of the key
-        # dict_users = dict(zip(set_users, range(0, shape[0])))
-        # dict_items = dict(zip(set_items, range(0, shape[1])))
-        #
-        # col_indices_users = [dict_users[x] for x in users]
-        # col_indices_items = [dict_items[x] for x in items]
-        #
-        # data.X = np.column_stack((col_indices_users, col_indices_items))
-
         # Convert to integer
         data.X = data.X.astype(int)
 
@@ -120,19 +89,12 @@ class UserAvgLearner(Learner):
         """This function calls the factorization method.
 
         Args:
-            X: Numpy array
-                Data to fit.
+            data: Orange.data.Table
 
         Returns:
-            Model object (BRISMFModel).
+            Model object (ItemAvgModel).
 
         """
-
-
-        if self.alpha == 0:
-            warnings.warn("With alpha=0, this algorithm does not converge "
-                          "well. You are advised to use the LinearRegression "
-                          "estimator", stacklevel=2)
 
         # Optional, can be manage through preprocessors.
         data = self.format_data(data)
@@ -143,19 +105,8 @@ class UserAvgLearner(Learner):
                                      data.Y,
                                      self.shape)
 
-
-        # Factorize matrix
-        self.P, self.Q, self.bias = self.matrix_factorization(
-                                                                R,
-                                                                self.K,
-                                                                self.steps,
-                                                                self.alpha,
-                                                                self.beta,
-                                                                self.verbose)
-
-        return UserAvgModel(P=self.P,
-                           Q=self.Q,
-                           bias=self.bias)
+        return UserAvgModel(users_average=np.ravel(R.mean(axis=1)),
+                            shape=self.shape)
 
 
     def build_sparse_matrix(self, row, col, data, shape):
@@ -184,150 +135,27 @@ class UserAvgLearner(Learner):
         return mtx
 
 
-    def matrix_factorization(self, R, K, steps, alpha, beta, verbose=False):
-        """ Factorize either a dense matrix or a sparse matrix into two low-rank
-         matrices which represents user and item factors.
-
-        Args:
-            R: Matrix
-                Matrix to factorize. (Zeros are equivalent to unknown data)
-
-            K: int
-                The number of latent factors.
-
-            steps: int
-                The number of epochs of stochastic gradient descent.
-
-            alpha: float
-                The learning rate of stochastic gradient descent.
-
-            beta: float
-                The regularization parameter.
-
-            verbose: boolean, optional
-                If true, it outputs information about the process.
-
-        Returns:
-            P (matrix, UxK), Q (matrix, KxI) and bias (dictionary, 'delta items'
-            , 'delta users', 'global mean items' and 'global mean users')
-
-        """
-
-        # Initialize factorized matrices randomly
-        num_users, num_items = R.shape
-        P = np.random.rand(num_users, K)  # User and features
-        Q = np.random.rand(num_items, K)  # Item and features
-
-
-        # Check if R is a sparse matrix
-        if isinstance(R, sparse.csr_matrix) or \
-                isinstance(R, sparse.csc_matrix):
-            start2 = time.time()
-            # Local means (array)
-            mean_user_rating = np.ravel(R.mean(axis=1))  # Rows
-            mean_item_rating = np.ravel(R.mean(axis=0))  # Columns
-
-            # Global mean
-            global_mean_users = mean_user_rating.mean()
-            global_mean_items = mean_item_rating.mean()
-
-            if verbose:
-                print('- Time mean (sparse): %.3fs' % (time.time() - start2))
-
-        else:  # Dense matrix
-            start2 = time.time()
-            # Local means (array)
-            mean_user_rating = np.mean(R, axis=1)  # Rows
-            mean_item_rating = np.mean(R, axis=0)  # Columns
-
-            # Global mean
-            global_mean_users = np.mean(mean_user_rating)
-            global_mean_items = np.mean(mean_item_rating)
-
-            if verbose:
-                print('- Time mean (dense): %.3fs' % (time.time() - start2))
-
-
-        # Compute bias and deltas (Common - Dense/Sparse matrices)
-        deltaUser = mean_user_rating - global_mean_users
-        deltaItem = mean_item_rating - global_mean_items
-        bias = {'dItems': deltaItem,
-                'dUsers': deltaUser,
-                'gMeanItems': global_mean_items,
-                'gMeanUsers': global_mean_users}
-
-        # Get non-zero elements
-        #indices = R.nonzero()
-        indices = np.array(np.nonzero(R > 0)).T
-
-        # Factorize matrix using SGD
-        for step in range(steps):
-
-            # Compute predictions
-            for i, j in indices:
-
-                    # Try to remove this (try indexing)
-                    if R[i, j] > 0:  # This makes sparse matrices really slow
-                        #masked
-
-                        rij_pred = global_mean_items + \
-                                   deltaItem[j] + \
-                                   deltaUser[i] + \
-                                   np.dot(P[i, :], Q[j, :])
-
-                        eij = rij_pred - R[i, j]
-
-                        tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
-                        tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
-                        P[i] -= tempP
-                        Q[j] -= tempQ
-
-        # Compute error (this section can be commented)
-        if verbose:
-            counter = 0
-            error = 0
-            for i in range(0, num_users):
-                for j in range(0, num_items):
-                    if R[i, j] > 0:
-                        counter +=1
-                        rij_pred = global_mean_items + \
-                                   deltaItem[j] + \
-                                   deltaUser[i] + \
-                                   np.dot(P[i, :], Q[j, :])
-                        error += (rij_pred - R[i, j])**2
-
-            error = math.sqrt(error/counter)
-            print('- RMSE: %.3f' % error)
-
-        return P, Q, bias
-
-
 class UserAvgModel(Model):
 
-    def __init__(self, P, Q, bias):
+    def __init__(self, users_average, shape):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
 
         Args:
-            P: Matrix (users x Latent_factors)
-            Q: Matrix (items x Latent_factors)
-            bias: dictionary
-                'delta items', 'delta users', 'global mean items' and
-                'global mean users'
+            users_average: Array
+            shape: (int, int)
 
        """
-        self.P = P
-        self.Q = Q
-        self.bias = bias
-        self.shape = (len(self.P), len(self.Q))
+        self.users_average = users_average
+        self.shape = shape
 
 
-    def predict(self, X, Y=None):
-        """This function receives an array of indexes [[idx_user, idx_item]] and
-        returns the prediction for these pairs.
+    def predict(self, X):
+        """This function receives an array of indexes like [[idx_user]] or
+         [[idx_user, idx_item]] and returns the prediction for these pairs.
 
             Args:
-                X: Matrix (2xN)
+                X: Matrix (mxn),
                     Matrix that contains pairs of the type user-item
 
             Returns:
@@ -335,18 +163,10 @@ class UserAvgModel(Model):
 
             """
 
-        bias = self.bias['gMeanItems'] + \
-               self.bias['dUsers'][X[:, 0]] + \
-               self.bias['dItems'][X[:, 1]]
+        if X.shape[1] > 1:
+            X = X[:, 0]
 
-        tempP = self.P[X[:, 0]]
-        tempQ = self.Q[X[:, 1]]
-
-        # base_pred = np.multiply(tempP, tempQ)
-        base_pred = np.einsum('ij,ij->i', tempP, tempQ)
-        predictions = bias + base_pred
-
-        return predictions
+        return self.users_average[X]
 
 
     def predict_storage(self, data):
@@ -361,7 +181,7 @@ class UserAvgModel(Model):
         """
 
         # Convert indices to integer and call predict()
-        return self.predict(data.X.astype(int), data.Y)
+        return self.predict(data.X.astype(int))
 
 
     def predict_items(self, users=None, top=None):
@@ -370,7 +190,7 @@ class UserAvgModel(Model):
         the users (matrix of size [num_users x num_items]).
 
         Args:
-            user: array, optional
+            users: array, optional
                 Array with the indices of the users to which make the
                 predictions.
 
@@ -383,33 +203,14 @@ class UserAvgModel(Model):
         """
 
         if users is None:
-            users = np.asarray(range(0, len(self.bias['dUsers'])))
-
-        bias = self.bias['gMeanItems'] + self.bias['dUsers'][users]
-        tempB = np.tile(np.array(self.bias['dItems']), (len(users), 1))
-        bias = bias[:, np.newaxis] + tempB
-
-        base_pred = np.dot(self.P[users], self.Q.T)
-        predictions = bias + base_pred
-
-        """
-        So far this is been removed because it makes the code more complicated
-         and there is no need to add this.
-
-        # Sort predictions
-        if sort:
-            indices = np.argsort(predictions)[::-1]  # Descending order
-        else:
-            indices = np.arange(0, len(predictions))
-
-        # Join predictions and indices
-        predictions = np.array((indices, predictions[indices])).T
-        """
+            users = np.asarray(range(0, self.shape[0]))
 
         # Return top-k recommendations
-        if top != None:
-            return predictions[:, :top]
+        if top is None:
+            top = self.shape[1]
 
+        predictions = self.users_average[users]
+        predictions = np.tile(predictions[:, np.newaxis], (1, top))
 
         return predictions
 
