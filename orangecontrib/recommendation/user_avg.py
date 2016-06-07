@@ -13,25 +13,12 @@ import time
 __all__ = ['UserAvgLearner']
 
 class UserAvgLearner(Learner):
-    """ Biased Regularized Incremental Simultaneous Matrix Factorization
+    """ User average
 
-    This model uses stochastic gradient descent to find the ratings of two
-    low-rank matrices which represents user and item factors. This object can
-    factorize either dense or sparse matrices.
+    This is a simple model that only works with the average of the ratings made
+    by each user.
 
     Attributes:
-        K: int, optional
-            The number of latent factors.
-
-        steps: int, optional (default = 100)
-            The number of epochs of stochastic gradient descent.
-
-        alpha: float, optional (default = 0.005)
-            The learning rate of stochastic gradient descent.
-
-        beta: float, optional (default = 0.02)
-            The regularization parameter.
-
         verbose: boolean, optional (default = False)
             Prints information about the process.
     """
@@ -92,7 +79,7 @@ class UserAvgLearner(Learner):
             data: Orange.data.Table
 
         Returns:
-            Model object (ItemAvgModel).
+            Model object (UserAvgModel).
 
         """
 
