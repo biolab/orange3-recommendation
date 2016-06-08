@@ -83,97 +83,46 @@ class UserItemBaselineLearner(Learner):
         # Optional, can be manage through preprocessors.
         data = self.format_data(data)
 
-        # build sparse matrix
-        R = self.build_sparse_matrix(data.X[:, 0],
-                                     data.X[:, 1],
-                                     data.Y,
-                                     self.shape)
-
         # Compute bias and averages
-        self.bias = self.compute_bias(R, self.verbose)
         self.global_average = np.mean(data.Y)
+        self.bias = self.compute_bias(data, self.verbose)
 
         return UserItemBaselineModel(bias=self.bias,
                                      global_average=self.global_average)
 
 
-    def build_sparse_matrix(self, row, col, data, shape):
-        """ Given the indices of the rows, columns and its corresponding value
-        this builds an sparse matrix of size 'shape'
-
-        Args:
-            row: Array of integers
-               Indices of the rows for their corresponding value
-
-            col: Array of integers
-               Indices of the columns for their corresponding value
-
-            data: Array
-               Array with the values that correspond to the pair (row, col)
-
-            shape: (int, int)
-               Tuple of integers with the shape of the matrix
-
-        Returns:
-            Compressed Sparse Row matrix
-
-        """
-
-        mtx = sparse.csr_matrix((data, (row, col)), shape=shape)
-        return mtx
-
-
-    def compute_bias(self, R, verbose=False):
+    def compute_bias(self, data, verbose=False):
         """ Compute averages and biases of the matrix R
 
         Args:
-            R: Matrix
-                Matrix with the user-item ratings (Zeros are equivalent to unknown data)
+            data: Orange.data.Table
 
             verbose: boolean, optional
                 If true, it outputs information about the process.
 
         Returns:
-            bias (dictionary, 'delta items' , 'delta users', 'global mean items' and 'global mean users')
+            bias (dictionary: {'delta items' , 'delta users'})
 
         """
 
-        # Check if R is a sparse matrix
-        if isinstance(R, sparse.csr_matrix) or \
-                isinstance(R, sparse.csc_matrix):
-            start2 = time.time()
-            # Local means (array)
-            mean_user_rating = np.ravel(R.mean(axis=1))  # Rows
-            mean_item_rating = np.ravel(R.mean(axis=0))  # Columns
+        # Count non zeros in rows and columns
+        countings_users = np.bincount(data.X[:, 0])
+        countings_items = np.bincount(data.X[:, 1])
 
-            # Global mean
-            global_mean_users = mean_user_rating.mean()
-            global_mean_items = mean_item_rating.mean()
+        # Sum values along axis 0 and 1
+        sums_users = np.bincount(data.X[:, 0], weights=data.Y)
+        sums_items = np.bincount(data.X[:, 1], weights=data.Y)
 
-            if verbose:
-                print('- Time mean (sparse): %.3fs' % (time.time() - start2))
+        # Compute averages
+        averages_users = sums_users / countings_users
+        averages_items = sums_items / countings_items
 
-        else:  # Dense matrix
-            start2 = time.time()
-            # Local means (array)
-            mean_user_rating = np.mean(R, axis=1)  # Rows
-            mean_item_rating = np.mean(R, axis=0)  # Columns
+        # Compute bias and deltas
+        deltaUser = averages_users - self.global_average
+        deltaItem = averages_items - self.global_average
 
-            # Global mean
-            global_mean_users = np.mean(mean_user_rating)
-            global_mean_items = np.mean(mean_item_rating)
-
-            if verbose:
-                print('- Time mean (dense): %.3fs' % (time.time() - start2))
-
-
-        # Compute bias and deltas (Common - Dense/Sparse matrices)
-        deltaUser = mean_user_rating - global_mean_users
-        deltaItem = mean_item_rating - global_mean_items
         bias = {'dItems': deltaItem,
-                'dUsers': deltaUser,
-                'gMeanItems': global_mean_items,
-                'gMeanUsers': global_mean_users}
+                'dUsers': deltaUser}
 
         return bias
 
@@ -186,8 +135,7 @@ class UserItemBaselineModel(Model):
 
         Args:
             bias: dictionary
-                'delta items', 'delta users', 'global mean items' and
-                'global mean users'
+                {'delta items', 'delta users'}
 
             global_average: float
 

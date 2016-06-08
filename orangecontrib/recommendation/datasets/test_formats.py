@@ -12,6 +12,33 @@ def tab_format():
         print('%d\t%d\t%d' % (data.X[i_row][0], data.X[i_row][1], data.Y[i_row]))
 
 
+def build_sparse_matrix(self, row, col, data, shape):
+    """ Given the indices of the rows, columns and its corresponding value
+    this builds an sparse matrix of size 'shape'
+
+    Args:
+        row: Array of integers
+           Indices of the rows for their corresponding value
+
+        col: Array of integers
+           Indices of the columns for their corresponding value
+
+        data: Array
+           Array with the values that correspond to the pair (row, col)
+
+        shape: (int, int)
+           Tuple of integers with the shape of the matrix
+
+    Returns:
+        Compressed Sparse Row matrix
+
+    """
+
+    mtx = sparse.csr_matrix((data, (row, col)), shape=shape)
+    return mtx
+
+
+
 def print_dense_matrix():
     # Load data
     filename = '../datasets/users-movies-toy2.tab'

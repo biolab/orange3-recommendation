@@ -8,7 +8,7 @@ import Orange
 
 class TestUserItemBaseline(unittest.TestCase):
 
-    """
+
     def test_UserItemBaseline_predict_items(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
@@ -72,7 +72,7 @@ class TestUserItemBaseline(unittest.TestCase):
 
         # Check correctness
         self.assertEqual(len(y_pred), sample_size)
-    """
+
 
     def test_UserItemBaseline_CV(self):
         from Orange.evaluation.testing import CrossValidation

@@ -17,12 +17,13 @@ class TestItemAvg(unittest.TestCase):
         recommender = learner(data)
 
         print('Items average: %s' % np.array_str(recommender.items_average))
-        ground_truth = np.asarray([2, 2.25, 2.375, 2, 2.5])
+        ground_truth = np.asarray([3.2, 3.6, 2.7142, 3.2, 3.3333])
+        #print(np.mean(ground_truth))
         np.testing.assert_array_almost_equal(recommender.items_average,
                                              ground_truth,
                                              decimal=2)
 
-    """
+
     def test_ItemAvg_predict_items(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
@@ -121,7 +122,7 @@ class TestItemAvg(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertIsInstance(rmse, np.ndarray)
-    """
+
 
 if __name__ == "__main__":
     unittest.main()

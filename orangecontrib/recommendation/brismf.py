@@ -137,17 +137,11 @@ class BRISMFLearner(Learner):
         # Optional, can be manage through preprocessors.
         data = self.format_data(data)
 
-        # build sparse matrix
-        R = self.build_sparse_matrix(data.X[:, 0],
-                                     data.X[:, 1],
-                                     data.Y,
-                                     self.shape)
-
         # Compute global average
         self.global_average = np.mean(data.Y)
 
         # Factorize matrix
-        self.P, self.Q, self.bias = self.matrix_factorization(R,
+        self.P, self.Q, self.bias = self.matrix_factorization(data,
                                                                 self.K,
                                                                 self.steps,
                                                                 self.alpha,
@@ -161,33 +155,9 @@ class BRISMFLearner(Learner):
                            global_average=self.global_average)
 
 
-    def build_sparse_matrix(self, row, col, data, shape):
-        """ Given the indices of the rows, columns and its corresponding value
-        this builds an sparse matrix of size 'shape'
-
-        Args:
-            row: Array of integers
-               Indices of the rows for their corresponding value
-
-            col: Array of integers
-               Indices of the columns for their corresponding value
-
-            data: Array
-               Array with the values that correspond to the pair (row, col)
-
-            shape: (int, int)
-               Tuple of integers with the shape of the matrix
-
-        Returns:
-            Compressed Sparse Row matrix
-
-        """
-
-        mtx = sparse.csr_matrix((data, (row, col)), shape=shape)
-        return mtx
 
 
-    def matrix_factorization(self, R, K, steps, alpha, beta, verbose=False):
+    def matrix_factorization(self, data, K, steps, alpha, beta, verbose=False):
         """ Factorize either a dense matrix or a sparse matrix into two low-rank
          matrices which represents user and item factors.
 
@@ -217,92 +187,85 @@ class BRISMFLearner(Learner):
         """
 
         # Initialize factorized matrices randomly
-        num_users, num_items = R.shape
+        num_users, num_items = self.shape
         P = np.random.rand(num_users, K)  # User and features
         Q = np.random.rand(num_items, K)  # Item and features
 
-
-        # Check if R is a sparse matrix
-        if isinstance(R, sparse.csr_matrix) or \
-                isinstance(R, sparse.csc_matrix):
-            start2 = time.time()
-            # Local means (array)
-            mean_user_rating = np.ravel(R.mean(axis=1))  # Rows
-            mean_item_rating = np.ravel(R.mean(axis=0))  # Columns
-
-            # Global mean
-            global_mean_users = mean_user_rating.mean()
-            global_mean_items = mean_item_rating.mean()
-
-            if verbose:
-                print('- Time mean (sparse): %.3fs' % (time.time() - start2))
-
-        else:  # Dense matrix
-            start2 = time.time()
-            # Local means (array)
-            mean_user_rating = np.mean(R, axis=1)  # Rows
-            mean_item_rating = np.mean(R, axis=0)  # Columns
-
-            # Global mean
-            global_mean_users = np.mean(mean_user_rating)
-            global_mean_items = np.mean(mean_item_rating)
-
-            if verbose:
-                print('- Time mean (dense): %.3fs' % (time.time() - start2))
-
-
-        # Compute bias and deltas (Common - Dense/Sparse matrices)
-        deltaUser = mean_user_rating - global_mean_users
-        deltaItem = mean_item_rating - global_mean_items
-        bias = {'dItems': deltaItem,
-                'dUsers': deltaUser,
-                'gMeanItems': global_mean_items,
-                'gMeanUsers': global_mean_users}
-
-        # Get non-zero elements
-        #indices = R.nonzero()
-        indices = np.array(np.nonzero(R > 0)).T
+        # Compute biases
+        bias = self.compute_bias(data)
 
         # Factorize matrix using SGD
         for step in range(steps):
 
             # Compute predictions
-            for i, j in indices:
+            for k in range(0, len(data.Y)):
+                i, j = data.X[k]
 
-                    # Try to remove this (try indexing)
-                    if R[i, j] > 0:  # This makes sparse matrices really slow
-                        #masked
+                rij_pred = self.global_average + \
+                           bias['dItems'][j] + \
+                           bias['dUsers'][i] + \
+                           np.dot(P[i, :], Q[j, :])
 
-                        rij_pred = self.global_average + \
-                                   deltaItem[j] + \
-                                   deltaUser[i] + \
-                                   np.dot(P[i, :], Q[j, :])
+                eij = rij_pred - data.Y[k]
 
-                        eij = rij_pred - R[i, j]
-
-                        tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
-                        tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
-                        P[i] -= tempP
-                        Q[j] -= tempQ
+                tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
+                tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
+                P[i] -= tempP
+                Q[j] -= tempQ
 
         # Compute error (this section can be commented)
         if verbose:
-            counter = 0
             error = 0
-            for i in range(0, num_users):
-                for j in range(0, num_items):
-                    if R[i, j] > 0:
-                        counter +=1
-                        rij_pred = global_mean_items + \
-                                   deltaItem[j] + \
-                                   deltaUser[i] + \
-                                   np.dot(P[i, :], Q[j, :])
-                        error += (rij_pred - R[i, j])**2
+            for k in range(0, len(data.Y)):
+                i, j = data.X[k]
+                rij_pred = self.global_average + \
+                           bias['dItems'][j] + \
+                           bias['dUsers'][i] + \
+                           np.dot(P[i, :], Q[j, :])
 
-            error = math.sqrt(error/counter)
+                error += (rij_pred - data.Y[k])**2
+
+            error = math.sqrt(error/len(data.Y))
             print('- RMSE: %.3f' % error)
 
         return P, Q, bias
+
+
+    def compute_bias(self, data, verbose=False):
+        """ Compute averages and biases of the matrix R
+
+        Args:
+            data: Orange.data.Table
+
+            verbose: boolean, optional
+                If true, it outputs information about the process.
+
+        Returns:
+            bias (dictionary: {'delta items' , 'delta users'})
+
+        """
+
+        # Count non zeros in rows and columns
+        countings_users = np.bincount(data.X[:, 0])
+        countings_items = np.bincount(data.X[:, 1])
+
+        # Sum values along axis 0 and 1
+        sums_users = np.bincount(data.X[:, 0], weights=data.Y)
+        sums_items = np.bincount(data.X[:, 1], weights=data.Y)
+
+        # Compute averages
+        averages_users = sums_users / countings_users
+        averages_items = sums_items / countings_items
+
+        # Compute bias and deltas
+        deltaUser = averages_users - self.global_average
+        deltaItem = averages_items - self.global_average
+
+        bias = {'dItems': deltaItem,
+                'dUsers': deltaUser}
+
+        return bias
+
 
 
 class BRISMFModel(Model):

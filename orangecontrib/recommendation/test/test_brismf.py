@@ -83,7 +83,7 @@ class TestBRISMF(unittest.TestCase):
         brismf = BRISMFLearner(K=5, steps=250, beta=0.02, verbose=False)
         learners = [brismf]
 
-        """
+
         learner = BRISMFLearner(K=5, steps=250, beta=0.02, verbose=False)
         recommender = learner(data)
         prediction = recommender.predict_items()
@@ -94,7 +94,7 @@ class TestBRISMF(unittest.TestCase):
         print(recommender.domain.variables[0].values)
         print(recommender.domain.variables[1].values)
         print('')
-        """
+
 
         res = CrossValidation(data, learners, k=5)
         rmse = Orange.evaluation.RMSE(res)

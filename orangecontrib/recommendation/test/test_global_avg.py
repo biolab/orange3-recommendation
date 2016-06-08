@@ -19,7 +19,7 @@ class TestGlobalAvg(unittest.TestCase):
         print('Global average: %.5f' % recommender.global_average)
         self.assertAlmostEqual(recommender.global_average, 3.17857, places=2)
 
-    """
+
     def test_GlobalAvg_predict_items(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
@@ -117,7 +117,7 @@ class TestGlobalAvg(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertIsInstance(rmse, np.ndarray)
-    """
+
 
 if __name__ == "__main__":
     unittest.main()

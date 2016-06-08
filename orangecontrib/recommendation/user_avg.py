@@ -78,40 +78,34 @@ class UserAvgLearner(Learner):
         # Optional, can be manage through preprocessors.
         data = self.format_data(data)
 
-        # build sparse matrix
-        R = self.build_sparse_matrix(data.X[:, 0],
-                                     data.X[:, 1],
-                                     data.Y,
-                                     self.shape)
+        # Compute averages
+        averages_users = self.compute_averages(data)
 
-        return UserAvgModel(users_average=np.ravel(R.mean(axis=1)),
+        return UserAvgModel(users_average=averages_users,
                             shape=self.shape)
 
 
-    def build_sparse_matrix(self, row, col, data, shape):
-        """ Given the indices of the rows, columns and its corresponding value
-        this builds an sparse matrix of size 'shape'
+    def compute_averages(self, data):
+        """This function computes the averages of the items
 
         Args:
-            row: Array of integers
-               Indices of the rows for their corresponding value
-
-            col: Array of integers
-               Indices of the columns for their corresponding value
-
-            data: Array
-               Array with the values that correspond to the pair (row, col)
-
-            shape: (int, int)
-               Tuple of integers with the shape of the matrix
+            data: Orange.data.Table
 
         Returns:
-            Compressed Sparse Row matrix
+            Array
 
         """
 
-        mtx = sparse.csr_matrix((data, (row, col)), shape=shape)
-        return mtx
+        # Count non zeros in columns
+        countings_users = np.bincount(data.X[:, 0])
+
+        # Sum values along axis 0
+        sums_users = np.bincount(data.X[:, 0], weights=data.Y)
+
+        # Compute averages
+        averages_users = sums_users / countings_users
+
+        return averages_users
 
 
 class UserAvgModel(Model):
