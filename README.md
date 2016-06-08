@@ -9,22 +9,20 @@ from the Orange data mining framework.
 Last results
 ------------
 
-    BRISMF -> 150 ratings, 100 users, 25 items.
-    ------------------------------------------
-    
-    DENSE:
-        - RMSE: 0.390
-        - Time mean: 0.000s
-        - Time: 0.277s
-        
-        * Mac OSX has a feature to compress the memory, so dense matrix are automatically manage as a kind of dense matrices.
-        
-    SPARSE:
-        - RMSE: 0.379
-        - Time mean: 0.002s
-        - Time: 1.237s
-        
-        * Too slow (x4-5), I don't know why. (CSR<CSC<COO)
+    Times on MovieLens100K:
+        - Loading time: 2.848s
+        - Time (GlobalAvgLearner): 0.001s
+        - Time (ItemAvgLearner): 0.001s
+        - Time (UserAvgLearner): 0.001s
+        - Time (UserItemBaselineLearner): 0.001s
+        - Time (BRISMFLearner): 1.999s/iter; k=5
+
+    RMSE on MovieLens100K:
+        - RMSE (GlobalAvgLearner): 1.126
+        - RMSE (ItemAvgLearner): 1.000
+        - RMSE (UserAvgLearner): 1.031
+        - RMSE (UserItemBaselineLearner): 0.938
+        - RMSE (BRISMFLearner): —Overflow—
     
 
         
