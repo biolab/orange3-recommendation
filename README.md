@@ -37,8 +37,11 @@ RECENT CHANGES
 
 PROBLEMS 
 --------
-**Cross-validation:**
-Why does the RMSE of the test set differ so much from the train set? Maybe not enough data?
+**Cross-validation: (-DIAGNOSED-)**
+Why does the RMSE of the test set differ so much from the train set? 
+When computing the mean of users/items, zeros (non-existing) values are included, 
+therefore the predictions are lower than they should. (Uses masked of .nonzeros() 
+or something like that)
   
   Description:
   
