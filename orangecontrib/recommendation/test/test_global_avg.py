@@ -8,7 +8,18 @@ import Orange
 
 class TestGlobalAvg(unittest.TestCase):
 
+    def test_GlobalAvg_correctness(self):
+        filename = '../datasets/users-movies-toy2.tab'
+        data = Orange.data.Table(filename)
 
+        # Train recommender
+        learner = GlobalAvgLearner(verbose=False)
+        recommender = learner(data)
+
+        print('Global average: %.5f' % recommender.global_average)
+        self.assertAlmostEqual(recommender.global_average, 3.17857, places=2)
+
+    """
     def test_GlobalAvg_predict_items(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
@@ -84,18 +95,17 @@ class TestGlobalAvg(unittest.TestCase):
         global_avg = GlobalAvgLearner(verbose=False)
         learners = [global_avg]
 
-        """
-        learner = GlobalAvgLearner(verbose=False)
-        recommender = learner(data)
-        prediction = recommender.predict_items()
-        print(prediction)
-        y_pred = prediction[data.X[:, 0], data.X[:, 1]]
-        rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
-        print('-> RMSE (predict items): %.3f' % rmse)
-        print(recommender.domain.variables[0].values)
-        print(recommender.domain.variables[1].values)
-        print('')
-        """
+
+        # learner = GlobalAvgLearner(verbose=False)
+        # recommender = learner(data)
+        # prediction = recommender.predict_items()
+        # print(prediction)
+        # y_pred = prediction[data.X[:, 0], data.X[:, 1]]
+        # rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
+        # print('-> RMSE (predict items): %.3f' % rmse)
+        # print(recommender.domain.variables[0].values)
+        # print(recommender.domain.variables[1].values)
+        # print('')
 
         res = CrossValidation(data, learners, k=5)
         rmse = Orange.evaluation.RMSE(res)
@@ -107,6 +117,7 @@ class TestGlobalAvg(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertIsInstance(rmse, np.ndarray)
+    """
 
 if __name__ == "__main__":
     unittest.main()

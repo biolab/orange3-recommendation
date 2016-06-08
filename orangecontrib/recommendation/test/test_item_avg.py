@@ -8,7 +8,21 @@ import Orange
 
 class TestItemAvg(unittest.TestCase):
 
+    def test_ItemAvg_correctness(self):
+        filename = '../datasets/users-movies-toy2.tab'
+        data = Orange.data.Table(filename)
 
+        # Train recommender
+        learner = ItemAvgLearner(verbose=False)
+        recommender = learner(data)
+
+        print('Items average: %s' % np.array_str(recommender.items_average))
+        ground_truth = np.asarray([2, 2.25, 2.375, 2, 2.5])
+        np.testing.assert_array_almost_equal(recommender.items_average,
+                                             ground_truth,
+                                             decimal=2)
+
+    """
     def test_ItemAvg_predict_items(self):
         # Load data
         filename = '../datasets/users-movies-toy2.tab'
@@ -84,18 +98,18 @@ class TestItemAvg(unittest.TestCase):
         items_avg = ItemAvgLearner(verbose=False)
         learners = [items_avg]
 
-        """
-        learner = ItemAvgLearner(verbose=False)
-        recommender = learner(data)
-        prediction = recommender.predict_items()
-        print(prediction)
-        y_pred = prediction[data.X[:, 0], data.X[:, 1]]
-        rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
-        print('-> RMSE (predict items): %.3f' % rmse)
-        print(recommender.domain.variables[0].values)
-        print(recommender.domain.variables[1].values)
-        print('')
-        """
+
+        # learner = ItemAvgLearner(verbose=False)
+        # recommender = learner(data)
+        # prediction = recommender.predict_items()
+        # print(prediction)
+        # y_pred = prediction[data.X[:, 0], data.X[:, 1]]
+        # rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
+        # print('-> RMSE (predict items): %.3f' % rmse)
+        # print(recommender.domain.variables[0].values)
+        # print(recommender.domain.variables[1].values)
+        # print('')
+
 
         res = CrossValidation(data, learners, k=5)
         rmse = Orange.evaluation.RMSE(res)
@@ -107,7 +121,7 @@ class TestItemAvg(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertIsInstance(rmse, np.ndarray)
-
+    """
 
 if __name__ == "__main__":
     unittest.main()
