@@ -8,8 +8,7 @@ __all__ = ['UserAvgLearner']
 class UserAvgLearner(Learner):
     """ User average
 
-    This is a simple model that only works with the average of the ratings made
-    by each user.
+    Uses the average rating value of a user to make predictions.
 
     Attributes:
         verbose: boolean, optional (default = False)

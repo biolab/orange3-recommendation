@@ -8,8 +8,7 @@ __all__ = ['ItemAvgLearner']
 class ItemAvgLearner(Learner):
     """ Item average
 
-    This is a simple model that only works with the average of the ratings of
-    each movie.
+    Uses the average rating value of an item to make predictions.
 
     Attributes:
         verbose: boolean, optional (default = False)

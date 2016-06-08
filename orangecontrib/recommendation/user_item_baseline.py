@@ -11,7 +11,7 @@ class UserItemBaselineLearner(Learner):
     """ User-Item Baseline
 
     This model takes the bias of users and items plus the global average to make
-    the recommendations
+    predictions.
 
     Attributes:
         verbose: boolean, optional (default = False)

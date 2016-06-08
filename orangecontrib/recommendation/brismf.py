@@ -15,9 +15,9 @@ __all__ = ['BRISMFLearner']
 class BRISMFLearner(Learner):
     """ Biased Regularized Incremental Simultaneous Matrix Factorization
 
-    This model uses stochastic gradient descent to find the ratings of two
-    low-rank matrices which represents user and item factors. This object can
-    factorize either dense or sparse matrices.
+    This model uses stochastic gradient descent to find the values of two
+    low-rank matrices which represents the user and item factors. This object
+    can factorize either dense or sparse matrices.
 
     Attributes:
         K: int, optional

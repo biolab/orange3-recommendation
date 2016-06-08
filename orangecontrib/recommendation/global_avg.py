@@ -5,11 +5,9 @@ import numpy as np
 __all__ = ['GlobalAvgLearner']
 
 class GlobalAvgLearner(Learner):
-    """ Biased Regularized Incremental Simultaneous Matrix Factorization
+    """ Global Average
 
-    This model uses stochastic gradient descent to find the ratings of two
-    low-rank matrices which represents user and item factors. This object can
-    factorize either dense or sparse matrices.
+    Uses the average rating value of all ratings to make predictions.
 
     Attributes:
 
