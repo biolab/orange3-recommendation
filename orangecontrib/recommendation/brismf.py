@@ -3,12 +3,9 @@ from Orange.base import Model, Learner
 import numpy as np
 from numpy import linalg as LA
 
-from scipy import sparse
-
 import math
 
 import warnings
-import time
 
 __all__ = ['BRISMFLearner']
 
@@ -196,6 +193,7 @@ class BRISMFLearner(Learner):
 
         # Factorize matrix using SGD
         for step in range(steps):
+            asd = 23
 
             # Compute predictions
             for k in range(0, len(data.Y)):
@@ -212,6 +210,7 @@ class BRISMFLearner(Learner):
                 tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
                 P[i] -= tempP
                 Q[j] -= tempQ
+
 
         # Compute error (this section can be commented)
         if verbose:

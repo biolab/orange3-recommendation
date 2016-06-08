@@ -103,6 +103,8 @@ class ItemAvgLearner(Learner):
         sums_items = np.bincount(data.X[:, 1], weights=data.Y)
 
         # Compute averages
+        #a = np.ma.masked_invalid(countings_items)
+        #b= np.where(a==True)
         averages_items = sums_items / countings_items
 
         return averages_items

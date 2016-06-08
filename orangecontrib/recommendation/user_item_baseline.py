@@ -1,9 +1,6 @@
 from Orange.base import Model, Learner
 
 import numpy as np
-from scipy import sparse
-
-import time
 
 __all__ = ['UserItemBaselineLearner']
 
