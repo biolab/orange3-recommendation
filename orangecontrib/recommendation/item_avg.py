@@ -97,14 +97,19 @@ class ItemAvgLearner(Learner):
         """
 
         # Count non zeros in rows
+        # Bincount() returns an array of length np.amax(x)+1. Therefore, items
+        # not rated will have a count=0. To avoid division by zero, replace
+        # zeros by ones
         countings_items = np.bincount(data.X[:, 1])
+
+        # Replace zeros by ones (Avoid problems of division by zero)
+        # This only should happen during Cross-Validation
+        countings_items[countings_items == 0] = 1
 
         # Sum values along axis 1
         sums_items = np.bincount(data.X[:, 1], weights=data.Y)
 
         # Compute averages
-        #a = np.ma.masked_invalid(countings_items)
-        #b= np.where(a==True)
         averages_items = sums_items / countings_items
 
         return averages_items

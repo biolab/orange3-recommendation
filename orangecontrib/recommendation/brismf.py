@@ -245,8 +245,16 @@ class BRISMFLearner(Learner):
         """
 
         # Count non zeros in rows and columns
+        # Bincount() returns an array of length np.amax(x)+1. Therefore, items
+        # not rated will have a count=0. To avoid division by zero, replace
+        # zeros by ones
         countings_users = np.bincount(data.X[:, 0])
         countings_items = np.bincount(data.X[:, 1])
+
+        # Replace zeros by ones (Avoid problems of division by zero)
+        # This only should happen during Cross-Validation
+        countings_users[countings_users == 0] = 1
+        countings_items[countings_items == 0] = 1
 
         # Sum values along axis 0 and 1
         sums_users = np.bincount(data.X[:, 0], weights=data.Y)

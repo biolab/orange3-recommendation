@@ -1,6 +1,7 @@
 import Orange
 from orangecontrib.recommendation import *
 
+
 import time
 import math
 
@@ -16,33 +17,31 @@ def test_speed():
     print('- Loading time: %.3fs' % (time.time() - start))
 
 
-
-    start = time.time()
-    learner = GlobalAvgLearner()
-    recommender = learner(data)
-    print('- Time (GlobalAvgLearner): %.3fs' % (time.time() - start))
-
-    start = time.time()
-    learner = ItemAvgLearner()
-    recommender = learner(data)
-    print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
-
-    start = time.time()
-    learner = UserAvgLearner()
-    recommender = learner(data)
-    print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
+    #
+    # start = time.time()
+    # learner = GlobalAvgLearner()
+    # recommender = learner(data)
+    # print('- Time (GlobalAvgLearner): %.3fs' % (time.time() - start))
+    #
+    # start = time.time()
+    # learner = ItemAvgLearner()
+    # recommender = learner(data)
+    # print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
+    #
+    # start = time.time()
+    # learner = UserAvgLearner()
+    # recommender = learner(data)
+    # print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
 
     start = time.time()
     learner = UserItemBaselineLearner()
     recommender = learner(data)
     print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
 
-    start = time.time()
-    learner = BRISMFLearner(K=5, steps=10, alpha=0.07, beta=0.1, verbose=False)
-    recommender = learner(data)
-    print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
-
-    asd = 23
+    # start = time.time()
+    # learner = BRISMFLearner(K=5, steps=10, alpha=0.07, beta=0.1, verbose=False)
+    # recommender = learner(data)
+    # print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
 
 
 def test_training_set():
@@ -102,7 +101,9 @@ def test_CV():
         print(
             "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
+
+
 if __name__ == "__main__":
-    #test_speed()
+    test_speed()
     #test_training_set()
-    test_CV()
+    #test_CV()
