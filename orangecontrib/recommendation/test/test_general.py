@@ -86,8 +86,12 @@ def test_CV():
     filename = '../datasets/MovieLensOrange.tab'
     data = Orange.data.Table(filename)
 
-    brismf = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.01, verbose=True)
-    learners = [brismf]
+    global_avg = GlobalAvgLearner()
+    items_avg = ItemAvgLearner()
+    users_avg = UserAvgLearner()
+    user_item_baseline = UserItemBaselineLearner()
+    brismf = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.02, verbose=True)
+    learners = [global_avg, items_avg, users_avg, user_item_baseline, brismf]
 
     res = CrossValidation(data, learners, k=5)
     rmse = Orange.evaluation.RMSE(res)
