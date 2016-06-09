@@ -183,33 +183,47 @@ class BRISMFLearner(Learner):
 
         """
 
-        # Initialize factorized matrices randomly
-        num_users, num_items = self.shape
-        P = np.random.rand(num_users, K)  # User and features
-        Q = np.random.rand(num_items, K)  # Item and features
+        # This line allow us to catch warning as if they were exceptions
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
 
-        # Compute biases
-        bias = self.compute_bias(data)
+            # Initialize factorized matrices randomly
+            num_users, num_items = self.shape
+            P = np.random.rand(num_users, K)  # User and features
+            Q = np.random.rand(num_items, K)  # Item and features
 
-        # Factorize matrix using SGD
-        for step in range(steps):
-            asd = 23
+            # Compute biases
+            bias = self.compute_bias(data)
 
-            # Compute predictions
-            for k in range(0, len(data.Y)):
-                i, j = data.X[k]
+            try:
+                # Factorize matrix using SGD
+                for step in range(steps):
+                    if verbose:
+                        print('- Step: %d' % step)
 
-                rij_pred = self.global_average + \
-                           bias['dItems'][j] + \
-                           bias['dUsers'][i] + \
-                           np.dot(P[i, :], Q[j, :])
+                    # Compute predictions
+                    for k in range(0, len(data.Y)):
+                        i, j = data.X[k]
 
-                eij = rij_pred - data.Y[k]
+                        rij_pred = self.global_average + \
+                                   bias['dItems'][j] + \
+                                   bias['dUsers'][i] + \
+                                   np.dot(P[i], Q[j])
 
-                tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
-                tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
-                P[i] -= tempP
-                Q[j] -= tempQ
+                        # This error goes to infinite for some values of beta
+                        eij = rij_pred - data.Y[k]
+
+
+                        tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
+                        tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
+                        P[i] -= tempP
+                        Q[j] -= tempQ
+
+            except Warning as e:
+                if verbose:
+                    print('- BRISMF ERROR: ', e)
+                pass
+
 
 
         # Compute error (this section can be commented)

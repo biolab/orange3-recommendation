@@ -16,13 +16,13 @@ Last results
         - Time (UserAvgLearner): 0.001s
         - Time (UserItemBaselineLearner): 0.001s
         - Time (BRISMFLearner): 1.999s/iter; k=5
-
+    
     RMSE on MovieLens100K:
         - RMSE (GlobalAvgLearner): 1.126
         - RMSE (ItemAvgLearner): 1.000
         - RMSE (UserAvgLearner): 1.031
         - RMSE (UserItemBaselineLearner): 0.938
-        - RMSE (BRISMFLearner): —Overflow—
+        - RMSE (BRISMFLearner): 0.905
     
 
         

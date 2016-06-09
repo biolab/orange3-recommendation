@@ -84,16 +84,16 @@ class TestBRISMF(unittest.TestCase):
         learners = [brismf]
 
 
-        learner = BRISMFLearner(K=5, steps=250, beta=0.02, verbose=False)
-        recommender = learner(data)
-        prediction = recommender.predict_items()
-        print(prediction)
-        y_pred = prediction[data.X[:, 0], data.X[:, 1]]
-        rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
-        print('-> RMSE (predict items): %.3f' % rmse)
-        print(recommender.domain.variables[0].values)
-        print(recommender.domain.variables[1].values)
-        print('')
+        # learner = BRISMFLearner(K=5, steps=250, beta=0.02, verbose=False)
+        # recommender = learner(data)
+        # prediction = recommender.predict_items()
+        # print(prediction)
+        # y_pred = prediction[data.X[:, 0], data.X[:, 1]]
+        # rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
+        # print('-> RMSE (predict items): %.3f' % rmse)
+        # print(recommender.domain.variables[0].values)
+        # print(recommender.domain.variables[1].values)
+        # print('')
 
 
         res = CrossValidation(data, learners, k=5)

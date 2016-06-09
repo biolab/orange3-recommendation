@@ -33,15 +33,15 @@ def test_speed():
     # recommender = learner(data)
     # print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
 
-    start = time.time()
-    learner = UserItemBaselineLearner()
-    recommender = learner(data)
-    print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
-
     # start = time.time()
-    # learner = BRISMFLearner(K=5, steps=10, alpha=0.07, beta=0.1, verbose=False)
+    # learner = UserItemBaselineLearner()
     # recommender = learner(data)
-    # print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
+    # print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
+
+    start = time.time()
+    learner = BRISMFLearner(K=5, steps=10, alpha=0.07, beta=0.01, verbose=True)
+    recommender = learner(data)
+    print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
 
 
 def test_training_set():
@@ -86,11 +86,8 @@ def test_CV():
     filename = '../datasets/MovieLensOrange.tab'
     data = Orange.data.Table(filename)
 
-    global_avg = GlobalAvgLearner()
-    items_avg = ItemAvgLearner()
-    users_avg = UserAvgLearner()
-    user_item_baseline = UserItemBaselineLearner()
-    learners = [global_avg, items_avg, users_avg, user_item_baseline]
+    brismf = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.01, verbose=True)
+    learners = [brismf]
 
     res = CrossValidation(data, learners, k=5)
     rmse = Orange.evaluation.RMSE(res)
@@ -104,6 +101,6 @@ def test_CV():
 
 
 if __name__ == "__main__":
-    test_speed()
+    #test_speed()
     #test_training_set()
-    #test_CV()
+    test_CV()
