@@ -32,28 +32,28 @@ class TestBigDataset(unittest.TestCase):
         recommender = learner(data)
         print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
+        print('- RMSE (ItemAvgLearner): %.3f' % rmse)
 
         start = time.time()
         learner = UserAvgLearner()
         recommender = learner(data)
         print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
+        print('- RMSE (UserAvgLearner): %.3f' % rmse)
 
         start = time.time()
         learner = UserItemBaselineLearner()
         recommender = learner(data)
         print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
+        print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
 
         start = time.time()
-        learner = BRISMFLearner(K=10, steps=1, alpha=0.07, beta=0.0)
+        learner = BRISMFLearner(K=10, steps=1, alpha=0.07, beta=0.1)
         recommender = learner(data)
         print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
+        print('- RMSE (BRISMFLearner): %.3f' % rmse)
 
         self.assertEqual(1, 1)
 
@@ -89,6 +89,6 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBigDataset("test_CV"))
+    suite.addTest(TestBigDataset("test_learners"))
     runner = unittest.TextTestRunner()
     runner.run(suite)

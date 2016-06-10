@@ -76,6 +76,9 @@ PROBLEMS
     I can retrive this shape, but is not a general solution at all. Indeed, using this can of solution the loading
     time has a cuadratic cost and the spacial cost is far bigger than the current option. Which is scalable to big 
     datasets (like netflix), runs on a reasoable time but cannot work with Cross-validation without the modification.
+    
+    2. Overflows in BRISMF when increasing the regularization factor (beta) (>0.05) in big datasets.
+        -> Related with LA.norm(P[i])
 
 DETAILED
 --------
