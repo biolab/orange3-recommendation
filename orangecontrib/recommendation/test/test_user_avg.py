@@ -8,18 +8,43 @@ import Orange
 
 class TestUserAvg(unittest.TestCase):
 
-    def test_UserAvg_correctness(self):
+    def test_UserAvg_swap_columns(self):
+        # Recommender
+        learner = UserAvgLearner(verbose=False)
+
+        # Dataset 1
+        filename = '../datasets/users-movies-toy.tab'
+        data = Orange.data.Table(filename)
+        recommender = learner(data)
+        prediction = recommender.predict_items()
+        y_pred1 = prediction[data.X[:, recommender.order[0]],
+                             data.X[:, recommender.order[1]]]
+
+        # Dataset 2
         filename = '../datasets/users-movies-toy2.tab'
+        data = Orange.data.Table(filename)
+        recommender = learner(data)
+        prediction = recommender.predict_items()
+        y_pred2 = prediction[data.X[:, recommender.order[0]],
+                             data.X[:, recommender.order[1]]]
+
+        # Compare results
+        np.testing.assert_array_equal(y_pred1, y_pred2)
+
+
+    def test_UserAvg_correctness(self):
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
         learner = UserAvgLearner(verbose=False)
         recommender = learner(data)
 
-        print('Users average: %s' % np.array_str(recommender.users_average))
+        # Set ground truth
         ground_truth = np.asarray([3.25, 3.6666, 3.25, 3.3333, 3.3333, 2.6666,
                                    2.6, 3.6666])
-        #print(np.mean(ground_truth))
+
+        # Compare results
         np.testing.assert_array_almost_equal(recommender.users_average,
                                              ground_truth,
                                              decimal=2)
@@ -27,7 +52,7 @@ class TestUserAvg(unittest.TestCase):
 
     def test_UserAvg_predict_items(self):
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -49,7 +74,7 @@ class TestUserAvg(unittest.TestCase):
 
     def test_UserAvg_input_data(self):
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -69,7 +94,7 @@ class TestUserAvg(unittest.TestCase):
 
     def test_UserAvg_pairs(self):
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -95,7 +120,7 @@ class TestUserAvg(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         users_avg = UserAvgLearner(verbose=False)

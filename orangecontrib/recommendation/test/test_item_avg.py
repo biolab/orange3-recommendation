@@ -8,17 +8,43 @@ import Orange
 
 class TestItemAvg(unittest.TestCase):
 
-    def test_ItemAvg_correctness(self):
+
+    def test_ItemAvg_swap_columns(self):
+        # Recommender
+        learner = ItemAvgLearner(verbose=False)
+
+        # Dataset 1
+        filename = '../datasets/users-movies-toy.tab'
+        data = Orange.data.Table(filename)
+        recommender = learner(data)
+        prediction = recommender.predict_items()
+        y_pred1 = prediction[data.X[:, recommender.order[0]],
+                             data.X[:, recommender.order[1]]]
+
+        # Dataset 2
         filename = '../datasets/users-movies-toy2.tab'
+        data = Orange.data.Table(filename)
+        recommender = learner(data)
+        prediction = recommender.predict_items()
+        y_pred2 = prediction[data.X[:, recommender.order[0]],
+                             data.X[:, recommender.order[1]]]
+
+        # Compare results
+        np.testing.assert_array_equal(y_pred1, y_pred2)
+
+
+    def test_ItemAvg_correctness(self):
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
         learner = ItemAvgLearner(verbose=False)
         recommender = learner(data)
 
-        print('Items average: %s' % np.array_str(recommender.items_average))
+        # Set ground truth
         ground_truth = np.asarray([3.2, 3.6, 2.7142, 3.2, 3.3333])
-        #print(np.mean(ground_truth))
+
+        # Compare results
         np.testing.assert_array_almost_equal(recommender.items_average,
                                              ground_truth,
                                              decimal=2)
@@ -26,7 +52,7 @@ class TestItemAvg(unittest.TestCase):
 
     def test_ItemAvg_predict_items(self):
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -48,7 +74,7 @@ class TestItemAvg(unittest.TestCase):
 
     def test_ItemAvg_input_data(self):
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -68,7 +94,7 @@ class TestItemAvg(unittest.TestCase):
 
     def test_ItemAvg_pairs(self):
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -94,7 +120,7 @@ class TestItemAvg(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = '../datasets/users-movies-toy2.tab'
+        filename = '../datasets/users-movies-toy.tab'
         data = Orange.data.Table(filename)
 
         items_avg = ItemAvgLearner(verbose=False)
