@@ -1,6 +1,7 @@
 import Orange
 
 from scipy import sparse
+import numpy as np
 
 def preprocess(data):
     """Transforms the raw data read by Orange into something that this
@@ -34,8 +35,8 @@ def preprocess(data):
     idx_items = data.domain.variables.index(col_attribute)
     idx_users = data.domain.variables.index(row_attribute)
 
-    users = len(data.domain.variables[idx_users].values)
-    items = len(data.domain.variables[idx_items].values)
+    users = int(np.max(data.X[:, idx_users]) + 1)
+    items = int(np.max(data.X[:, idx_items]) + 1)
 
     order = (idx_users, idx_items)
     shape = (users, items)

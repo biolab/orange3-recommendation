@@ -11,13 +11,12 @@ from sklearn.metrics import mean_squared_error
 
 class TestBigDataset(unittest.TestCase):
 
-    def test_speed(self):
+    def test_learners(self):
         start = time.time()
 
         # Load data
-        filename = '../datasets/MovieLensOrange.tab'
+        filename = '/Users/salvacarrion/Desktop/big_datasets/MovieLens100K.tab'
         data = Orange.data.Table(filename)
-
         print('- Loading time: %.3fs' % (time.time() - start))
 
 
@@ -25,65 +24,39 @@ class TestBigDataset(unittest.TestCase):
         learner = GlobalAvgLearner()
         recommender = learner(data)
         print('- Time (GlobalAvgLearner): %.3fs' % (time.time() - start))
-
-        start = time.time()
-        learner = ItemAvgLearner()
-        recommender = learner(data)
-        print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
-
-        start = time.time()
-        learner = UserAvgLearner()
-        recommender = learner(data)
-        print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
-
-        start = time.time()
-        learner = UserItemBaselineLearner()
-        recommender = learner(data)
-        print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
-
-        start = time.time()
-        learner = BRISMFLearner(K=5, steps=5, alpha=0.07, beta=0.0)
-        recommender = learner(data)
-        print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
-
-        self.assertEqual(1, 1)
-
-
-    def test_rmse(self):
-        # Load data
-        filename = '../datasets/MovieLensOrange.tab'
-        data = Orange.data.Table(filename)
-
-        learner = GlobalAvgLearner()
-        recommender = learner(data)
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
         print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
 
         start = time.time()
         learner = ItemAvgLearner()
         recommender = learner(data)
+        print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (ItemAvgLearner): %.3f' % rmse)
+        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
 
         start = time.time()
         learner = UserAvgLearner()
         recommender = learner(data)
+        print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (UserAvgLearner): %.3f' % rmse)
+        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
 
         start = time.time()
         learner = UserItemBaselineLearner()
         recommender = learner(data)
+        print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
+        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
 
         start = time.time()
-        learner = BRISMFLearner(K=5, steps=5, alpha=0.07, beta=0.0)
+        learner = BRISMFLearner(K=10, steps=1, alpha=0.07, beta=0.0)
         recommender = learner(data)
+        print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-        print('- RMSE (BRISMFLearner): %.3f' % rmse)
+        print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
 
         self.assertEqual(1, 1)
+
 
     def test_CV(self):
         from Orange.evaluation.testing import CrossValidation
@@ -116,6 +89,6 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBigDataset("test_rmse"))
+    suite.addTest(TestBigDataset("test_learners"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
