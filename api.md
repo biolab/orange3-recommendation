@@ -51,7 +51,7 @@ orangecontrib
 Interface
 ---------
 
-All modules can be found inside **orangecontrib.recommendation.\***
+All modules can be found inside **orangecontrib.recommendation.***
 
     from orangecontrib.recommendation import *
     
