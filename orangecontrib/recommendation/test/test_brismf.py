@@ -10,7 +10,7 @@ class TestBRISMF(unittest.TestCase):
 
     def test_BRISMF_swap_columns(self):
         # Recommender
-        learner = BRISMFLearner(K=10, steps=50, verbose=False)
+        learner = BRISMFLearner(K=10, steps=50, beta=0.02, verbose=False)
 
         # Dataset 1
         filename = '../datasets/users-movies-toy.tab'
@@ -38,7 +38,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=50, verbose=False)
+        learner = BRISMFLearner(K=10, steps=50, beta=0.02, verbose=False)
         recommender = learner(data)
 
         # Compute predictions
@@ -60,7 +60,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=50, verbose=False)
+        learner = BRISMFLearner(K=10, steps=50, beta=0.02, verbose=False)
         recommender = learner(data)
 
         # Compute predictions
@@ -80,7 +80,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=50, verbose=False)
+        learner = BRISMFLearner(K=10, steps=50, beta=0.02, verbose=False)
         recommender = learner(data)
 
         # Create indices to test
@@ -119,7 +119,6 @@ class TestBRISMF(unittest.TestCase):
         # print(recommender.domain.variables[0].values)
         # print(recommender.domain.variables[1].values)
         # print('')
-
 
         res = CrossValidation(data, learners, k=5)
         rmse = Orange.evaluation.RMSE(res)

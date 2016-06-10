@@ -41,7 +41,7 @@ class UserAvgLearner(Learner):
         """
 
         # Optional, can be manage through preprocessors.
-        data, self.order, self.shape = format_data.format_data(data)
+        data, self.order, self.shape = format_data.preprocess(data)
 
         # Compute averages
         averages_users = self.compute_averages(data)

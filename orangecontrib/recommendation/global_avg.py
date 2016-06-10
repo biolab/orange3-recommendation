@@ -41,7 +41,7 @@ class GlobalAvgLearner(Learner):
         """
 
         # Optional, can be manage through preprocessors.
-        data, self.order, self.shape = format_data.format_data(data)
+        data, self.order, self.shape = format_data.preprocess(data)
 
         return GlobalAvgModel(global_average=np.mean(data.Y),
                               shape=self.shape,

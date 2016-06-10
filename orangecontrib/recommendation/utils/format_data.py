@@ -2,18 +2,22 @@ import Orange
 
 from scipy import sparse
 
-def format_data(data):
+def preprocess(data):
     """Transforms the raw data read by Orange into something that this
-    class can use
+    class can use.
+    data.X are converted to integers (it is use as indices), order are the
+    index of users and items in the file (order[0]=idx_users;
+    order[1]=idx_items), shape (total users, total items).
 
     Args:
         data: Orange.data.Table
 
     Returns:
-        data
+        data: Orange.data.Table
+        order: (int, int)
+        shape: (int, int)
 
     """
-
     col_attributes = [a for a in data.domain.attributes + data.domain.metas
                       if a.attributes.get("col")]
 
