@@ -10,19 +10,55 @@ Last results
 ------------
 
     Times on MovieLens100K:
-        - Loading time: 2.848s
+        - Loading time: 0.428s
         - Time (GlobalAvgLearner): 0.001s
         - Time (ItemAvgLearner): 0.001s
         - Time (UserAvgLearner): 0.001s
         - Time (UserItemBaselineLearner): 0.001s
-        - Time (BRISMFLearner): 1.999s/iter; k=5
+        - Time (BRISMFLearner): 1.999s/iter; k=5; alpha=0.07; beta=0.0
     
     RMSE on MovieLens100K:
         - RMSE (GlobalAvgLearner): 1.126
         - RMSE (ItemAvgLearner): 1.000
         - RMSE (UserAvgLearner): 1.031
         - RMSE (UserItemBaselineLearner): 0.938
-        - RMSE (BRISMFLearner): 0.905
+        - RMSE (BRISMFLearner): 0.880
+    ----------------------------------------------------
+    
+    Times on MovieLens1M:
+        - Loading time: 4.535s
+        - Time (GlobalAvgLearner): 0.010s
+        - Time (ItemAvgLearner): 0.018s
+        - Time (UserAvgLearner): 0.021s
+        - Time (UserItemBaselineLearner): 0.027s
+        - Time (BRISMFLearner): 22.894s/iter; k=10; alpha=0.07; beta=0.0
+        
+    RMSE on MovieLens1M:
+        - RMSE (GlobalAvgLearner): 1.117
+        - RMSE (ItemAvgLearner): 0.975
+        - RMSE (UserAvgLearner): 1.028
+        - RMSE (UserItemBaselineLearner): 0.924
+        - RMSE (BRISMFLearner): 0.920
+    ----------------------------------------------------
+    
+    Times on MovieLens10M:
+        - Loading time: 49.804s
+        - Time (GlobalAvgLearner): 0.129s
+        - Time (ItemAvgLearner): 0.256s
+        - Time (UserAvgLearner): 0.256s
+        - Time (UserItemBaselineLearner): 0.361s
+        - Time (BRISMFLearner): 206.062s/iter; k=10; alpha=0.07; beta=0.0
+        
+    RMSE on MovieLens10M:
+        - RMSE (GlobalAvgLearner): 1.060
+        - RMSE (ItemAvgLearner): 0.942
+        - RMSE (UserAvgLearner): 0.970
+        - RMSE (UserItemBaselineLearner): 0.877
+        - RMSE (BRISMFLearner): 0.910
+    
+        
+        
+
     
 
         
