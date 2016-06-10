@@ -51,9 +51,9 @@ orangecontrib
 Interface
 ---------
 
-Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imported with **orangecontrib.recsystems.models.\***
+All modules can be found inside **orangecontrib.recommendation.\***
 
-    from orangecontrib.recsystems.models import brismf
+    from orangecontrib.recommendation import *
     
 **Recommend items for set of users:**
 
@@ -61,7 +61,7 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
 
     data = Orange.data.Table('ratings.tab')
 
-    learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
+    learner = BRISMFLearner(K=2, steps=100, verbose=True)
     recommender = learner(data)
 
     indices_users = np.array([0, 1, 2, 3, 4])
@@ -89,7 +89,7 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
 
     data = Orange.data.Table('ratings.tab')
 
-    learner = brismf.BRISMFLearner(K=2, steps=100, verbose=True)
+    learner = BRISMFLearner(K=2, steps=100, verbose=True)
     recommender = learner(data)
     
     prediction = recommender(data[:3])  # Recommend first 3 tuples X (U_id, I_id)
@@ -103,12 +103,12 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
 
 **Evaluation:**
 
-    from recsystems.models import brismf
+    from orangecontrib.recommendation import BRISMFLearner
     from Orange.evaluation.testing import CrossValidation
     
     data = Orange.data.Table('ratings.tab')
     
-    learners = [brismf.BRISMFLearner(K=2, steps=100)]
+    learners = [BRISMFLearner(K=2, steps=100)]
     
     res = Orange.evaluation.CrossValidation(data, learners, k=5)
     rmse = Orange.evaluation.RMSE(res)
@@ -118,7 +118,6 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
     for i in range(len(learners)):
         print("{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
         
-    # Small bug -> Need to be solved
     > Learner  RMSE  R2
       BRISMF  2.80 -2.21
     
