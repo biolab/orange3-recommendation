@@ -33,11 +33,14 @@ orangecontrib
     |- recsystems
        |- datasets
        |- models
-           |- model_based
-               |- brismf
-               |- climf*
-               |- SDV++*
-               |- TrustSVD*
+           |- global_avg
+           |- item_avg
+           |- user_avg
+           |- user_item_baseline
+           |- brismf
+           |- climf*
+           |- SDV++*
+           |- TrustSVD*
        |- tests
        
 * Not added yet
@@ -119,120 +122,3 @@ Every model inside **orangecontrib.recsystems.models.model_based.\*** can be imp
     > Learner  RMSE  R2
       BRISMF  2.80 -2.21
     
-BRISMF
-------
-
-This module has two classes: **BRISMFLearner** and **BRISMFModel**
-
-**BRISMFLearner**
-```
-    Biased Regularized Incremental Simultaneous Matrix Factorization
-
-    This model uses stochastic gradient descent to find the ratings of two
-    low-rank matrices which represents user and item factors. This object can
-    factorize either dense or sparse matrices.
-
-    Attributes:
-        K: int, optional
-            The number of latent factors.
-
-        steps: int, optional (default = 100)
-            The number of epochs of stochastic gradient descent.
-
-        alpha: float, optional (default = 0.005)
-            The learning rate of stochastic gradient descent.
-
-        beta: float, optional (default = 0.02)
-            The regularization parameter.
-
-        verbose: boolean, optional (default = False)
-            Prints information about the process.
-```
-
-Methods:
-
-* fit(self, X, Y=None, W=None)
-
-        This function calls the factorization method.
-
-        Args:
-            X: Matrix
-                Data to fit.
-
-        Returns:
-            Model object (BRISMFModel)
-
-* prepare_data(self, X):
-
-        Function to remove NaNs from the data (preprocessor)
-
-        Args:
-            X: Matrix (data to fit).
-
-        Returns:
-            X (matrix)
-
-* matrix_factorization(self, R, K, steps, alpha, beta, verbose=False)`
-
-        Factorize either a dense matrix or a sparse matrix into two low-rank
-         matrices which represents user and item factors.
-
-        Args:
-            R: Matrix
-                Matrix to factorize. (Zeros are equivalent to unknown data)
-
-            K: int
-                The number of latent factors.
-
-            steps: int
-                The number of epochs of stochastic gradient descent.
-
-            alpha: float
-                The learning rate of stochastic gradient descent.
-
-            beta: float
-                The regularization parameter.
-
-            verbose: boolean, optional
-                If true, it outputs information about the process.
-
-        Returns:
-            P (matrix, UxK), Q (matrix, KxI) and bias (dictionary, 'delta items'
-            , 'delta users', 'global mean items' and 'global mean users')
-
-<br>
-<br>
-
-**BRISMFModel**
-
-```
-This model receives a learner and provides and interface to make the
-        predictions for a given user.
-
-        Args:
-            P: Matrix
-            Q: Matrix
-            bias: dictionary
-                'delta items', 'delta users', 'global mean items' and
-                'global mean users'
-```
-
-Methods:
-
-* predict(self, user, sort=True, top=None):
-
-        This function receives the index of a user and returns its
-                recomendations.
-                Args:
-                    user: int
-                        Index of the user to which make the predictions.
-        
-                    sort: boolean, optional
-                        If True, the returned array with the ratings will be sorted in
-                        descending order.
-        
-                    top: int, optional
-                        Return just the first k recommendations.
-        
-                Returns:
-                    Array with the recommendations for a given user.

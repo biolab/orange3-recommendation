@@ -61,14 +61,14 @@ class TestBigDataset(unittest.TestCase):
     def test_CV(self):
         from Orange.evaluation.testing import CrossValidation
         # Load data
-        filename = '../datasets/MovieLensOrange.tab'
+        filename = '../datasets/MovieLens100K.tab'
         data = Orange.data.Table(filename)
 
         global_avg = GlobalAvgLearner()
         items_avg = ItemAvgLearner()
         users_avg = UserAvgLearner()
         useritem_baseline = UserItemBaselineLearner()
-        brismf = BRISMFLearner(K=5, steps=5, alpha=0.07, beta=0.0)
+        brismf = BRISMFLearner(K=15, steps=5, alpha=0.07, beta=0.0)
         learners = [global_avg, items_avg, users_avg, useritem_baseline, brismf]
 
         res = CrossValidation(data, learners, k=5)
@@ -89,6 +89,6 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBigDataset("test_learners"))
+    suite.addTest(TestBigDataset("test_CV"))
     runner = unittest.TextTestRunner()
     runner.run(suite)

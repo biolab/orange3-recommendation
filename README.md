@@ -71,7 +71,11 @@ RECENT CHANGES
 
 PROBLEMS 
 --------
-    1. BRISMF overflows from time to time.
+    1. Cross-validation cannot work until all splits preserve the value of the orginal shape. 
+    As new splits are create, the shape of the original one is lost. Through meta-tags or discrete values
+    I can retrive this shape, but is not a general solution at all. Indeed, using this can of solution the loading
+    time has a cuadratic cost and the spacial cost is far bigger than the current option. Which is scalable to big 
+    datasets (like netflix), runs on a reasoable time but cannot work with Cross-validation without the modification.
 
 DETAILED
 --------
