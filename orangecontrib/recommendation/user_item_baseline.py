@@ -1,4 +1,5 @@
 from Orange.base import Model, Learner
+from orangecontrib.recommendation.utils import format_data
 
 import numpy as np
 
@@ -24,46 +25,10 @@ class UserItemBaselineLearner(Learner):
         self.shape = None
         self.bias = None
         self.global_average = None
+        self.order = None
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
-
-    def format_data(self, data):
-        """Transforms the raw data read by Orange into something that this
-        class can use
-
-        Args:
-            data: Orange.data.Table
-
-        Returns:
-            data
-
-        """
-
-        col_attributes = [a for a in data.domain.attributes + data.domain.metas
-                          if a.attributes.get("col")]
-
-        col_attribute = col_attributes[0] if len(
-            col_attributes) == 1 else print("warning")
-
-        row_attributes = [a for a in data.domain.attributes + data.domain.metas
-                          if a.attributes.get("row")]
-
-        row_attribute = row_attributes[0] if len(
-            row_attributes) == 1 else print("warning")
-
-        # Get indices of the columns
-        idx_items = data.domain.variables.index(col_attribute)
-        idx_users = data.domain.variables.index(row_attribute)
-
-        users = len(data.domain.variables[idx_users].values)
-        items = len(data.domain.variables[idx_items].values)
-        self.shape = (users, items)
-
-        # Convert to integer
-        data.X = data.X.astype(int)
-
-        return data
 
 
     def fit_storage(self, data):
@@ -78,14 +43,15 @@ class UserItemBaselineLearner(Learner):
         """
 
         # Optional, can be manage through preprocessors.
-        data = self.format_data(data)
+        data, self.order, self.shape = format_data.format_data(data)
 
         # Compute bias and averages
         self.global_average = np.mean(data.Y)
         self.bias = self.compute_bias(data, self.verbose)
 
         return UserItemBaselineModel(bias=self.bias,
-                                     global_average=self.global_average)
+                                     global_average=self.global_average,
+                                     order=self.order)
 
 
     def compute_bias(self, data, verbose=False):
@@ -106,8 +72,8 @@ class UserItemBaselineLearner(Learner):
         # Bincount() returns an array of length np.amax(x)+1. Therefore, items
         # not rated will have a count=0. To avoid division by zero, replace
         # zeros by ones
-        countings_users = np.bincount(data.X[:, 0])
-        countings_items = np.bincount(data.X[:, 1])
+        countings_users = np.bincount(data.X[:, self.order[0]])
+        countings_items = np.bincount(data.X[:, self.order[1]])
 
         # Replace zeros by ones (Avoid problems of division by zero)
         # This only should happen during Cross-Validation
@@ -115,8 +81,8 @@ class UserItemBaselineLearner(Learner):
         countings_items[countings_items == 0] = 1
 
         # Sum values along axis 0 and 1
-        sums_users = np.bincount(data.X[:, 0], weights=data.Y)
-        sums_items = np.bincount(data.X[:, 1], weights=data.Y)
+        sums_users = np.bincount(data.X[:, self.order[0]], weights=data.Y)
+        sums_items = np.bincount(data.X[:, self.order[1]], weights=data.Y)
 
         # Compute averages
         averages_users = sums_users / countings_users
@@ -134,7 +100,7 @@ class UserItemBaselineLearner(Learner):
 
 class UserItemBaselineModel(Model):
 
-    def __init__(self, bias, global_average):
+    def __init__(self, bias, global_average, order):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
 
@@ -148,6 +114,7 @@ class UserItemBaselineModel(Model):
         self.bias = bias
         self.global_average = global_average
         self.shape = (len(bias['dUsers']), len(bias['dItems']))
+        self.order = order
 
 
     def predict(self, X):
@@ -164,8 +131,8 @@ class UserItemBaselineModel(Model):
             """
 
         predictions = self.global_average + \
-                      self.bias['dUsers'][X[:, 0]] + \
-                      self.bias['dItems'][X[:, 1]]
+                      self.bias['dUsers'][X[:, self.order[0]]] + \
+                      self.bias['dItems'][X[:, self.order[1]]]
 
         return predictions
 

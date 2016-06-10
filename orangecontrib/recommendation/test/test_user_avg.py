@@ -36,7 +36,8 @@ class TestUserAvg(unittest.TestCase):
 
         # Compute predictions
         prediction = recommender.predict_items()
-        y_pred = prediction[data.X[:, 0], data.X[:, 1]]
+        y_pred = prediction[data.X[:, recommender.order[0]],
+                            data.X[:, recommender.order[1]]]
 
         # Compute RMSE
         rmse = math.sqrt(mean_squared_error(data.Y, y_pred))

@@ -1,4 +1,5 @@
 from Orange.base import Model, Learner
+from orangecontrib.recommendation.utils import format_data
 
 import numpy as np
 from scipy import sparse
@@ -22,46 +23,10 @@ class UserAvgLearner(Learner):
                  verbose=False):
         self.verbose = verbose
         self.shape = None
+        self.order = None
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
-
-    def format_data(self, data):
-        """Transforms the raw data read by Orange into something that this
-        class can use
-
-        Args:
-            data: Orange.data.Table
-
-        Returns:
-            data
-
-        """
-
-        col_attributes = [a for a in data.domain.attributes + data.domain.metas
-                          if a.attributes.get("col")]
-
-        col_attribute = col_attributes[0] if len(
-            col_attributes) == 1 else print("warning")
-
-        row_attributes = [a for a in data.domain.attributes + data.domain.metas
-                          if a.attributes.get("row")]
-
-        row_attribute = row_attributes[0] if len(
-            row_attributes) == 1 else print("warning")
-
-        # Get indices of the columns
-        idx_items = data.domain.variables.index(col_attribute)
-        idx_users = data.domain.variables.index(row_attribute)
-
-        users = len(data.domain.variables[idx_users].values)
-        items = len(data.domain.variables[idx_items].values)
-        self.shape = (users, items)
-
-        # Convert to integer
-        data.X = data.X.astype(int)
-
-        return data
 
 
     def fit_storage(self, data):
@@ -76,13 +41,14 @@ class UserAvgLearner(Learner):
         """
 
         # Optional, can be manage through preprocessors.
-        data = self.format_data(data)
+        data, self.order, self.shape = format_data.format_data(data)
 
         # Compute averages
         averages_users = self.compute_averages(data)
 
         return UserAvgModel(users_average=averages_users,
-                            shape=self.shape)
+                            shape=self.shape,
+                            order=self.order)
 
 
     def compute_averages(self, data):
@@ -100,14 +66,14 @@ class UserAvgLearner(Learner):
         # Bincount() returns an array of length np.amax(x)+1. Therefore, items
         # not rated will have a count=0. To avoid division by zero, replace
         # zeros by ones
-        countings_users = np.bincount(data.X[:, 0])
+        countings_users = np.bincount(data.X[:, self.order[0]])
 
         # Replace zeros by ones (Avoid problems of division by zero)
         # This only should happen during Cross-Validation
         countings_users[countings_users == 0] = 1
 
         # Sum values along axis 0
-        sums_users = np.bincount(data.X[:, 0], weights=data.Y)
+        sums_users = np.bincount(data.X[:, self.order[0]], weights=data.Y)
 
         # Compute averages
         averages_users = sums_users / countings_users
@@ -117,7 +83,7 @@ class UserAvgLearner(Learner):
 
 class UserAvgModel(Model):
 
-    def __init__(self, users_average, shape):
+    def __init__(self, users_average, shape, order):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
 
@@ -128,6 +94,7 @@ class UserAvgModel(Model):
        """
         self.users_average = users_average
         self.shape = shape
+        self.order = order
 
 
     def predict(self, X):
@@ -144,7 +111,7 @@ class UserAvgModel(Model):
             """
 
         if X.shape[1] > 1:
-            X = X[:, 0]
+            X = X[:, self.order[0]]
 
         return self.users_average[X]
 

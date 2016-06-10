@@ -90,7 +90,7 @@ def test_CV():
     items_avg = ItemAvgLearner()
     users_avg = UserAvgLearner()
     user_item_baseline = UserItemBaselineLearner()
-    brismf = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.02, verbose=True)
+    brismf = BRISMFLearner(K=15, steps=100, alpha=0.07, beta=0.0, verbose=True)
     learners = [global_avg, items_avg, users_avg, user_item_baseline, brismf]
 
     res = CrossValidation(data, learners, k=5)
