@@ -113,6 +113,10 @@ class ItemAvgModel(Model):
         if X.shape[1] > 1:
             X = X[:, self.order[1]]
 
+        # Check if all indices exist. If not, return random index.
+        # On average, random indices is equivalent to return a global_average
+        X[X >= self.shape[1]] = np.random.randint(low=0, high=self.shape[1])
+
         return self.items_average[X]
 
 

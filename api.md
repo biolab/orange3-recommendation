@@ -106,9 +106,14 @@ All modules can be found inside **orangecontrib.recommendation.***
     from orangecontrib.recommendation import BRISMFLearner
     from Orange.evaluation.testing import CrossValidation
     
-    data = Orange.data.Table('ratings.tab')
+    data = Orange.data.Table('MovieLens100K.tab')
     
-    learners = [BRISMFLearner(K=2, steps=100)]
+    global_avg = GlobalAvgLearner()
+    items_avg = ItemAvgLearner()
+    users_avg = UserAvgLearner()
+    useritem_baseline = UserItemBaselineLearner()
+    brismf = BRISMFLearner(K=15, steps=5, alpha=0.07, beta=0.0)
+    learners = [global_avg, items_avg, users_avg, useritem_baseline, brismf]
     
     res = Orange.evaluation.CrossValidation(data, learners, k=5)
     rmse = Orange.evaluation.RMSE(res)
@@ -118,6 +123,10 @@ All modules can be found inside **orangecontrib.recommendation.***
     for i in range(len(learners)):
         print("{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
         
-    > Learner  RMSE  R2
-      BRISMF  2.80 -2.21
+    > Learner                   RMSE  R2
+        - Global average        1.13 -0.00
+        - Item average          1.03  0.16
+        - User average          1.04  0.14
+        - User-Item Baseline    0.98  0.25
+        - BRISMF                1.09  0.06
     

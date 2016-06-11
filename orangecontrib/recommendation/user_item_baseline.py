@@ -130,6 +130,13 @@ class UserItemBaselineModel(Model):
 
             """
 
+        # Check if all indices exist. If not, return random index.
+        # On average, random indices is equivalent to return a global_average
+        X[X[:, self.order[0]] >= self.shape[0], self.order[0]] = \
+            np.random.randint(low=0, high=self.shape[0])
+        X[X[:, self.order[1]] >= self.shape[1], self.order[1]] = \
+            np.random.randint(low=0, high=self.shape[1])
+
         predictions = self.global_average + \
                       self.bias['dUsers'][X[:, self.order[0]]] + \
                       self.bias['dItems'][X[:, self.order[1]]]
