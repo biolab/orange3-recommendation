@@ -58,7 +58,8 @@ All modules can be found inside **orangecontrib.recommendation.***
 **Recommend items for set of users:**
 
     import Orange
-
+    from orangecontrib.recommendation import BRISMFLearner
+    
     data = Orange.data.Table('ratings.tab')
 
     learner = BRISMFLearner(K=2, steps=100, verbose=True)
@@ -86,10 +87,11 @@ All modules can be found inside **orangecontrib.recommendation.***
 **Rating pairs (user, item):**
 
     import Orange
-
+    from orangecontrib.recommendation import BRISMFLearner
+    
     data = Orange.data.Table('ratings.tab')
 
-    learner = BRISMFLearner(K=2, steps=100, verbose=True)
+    learner = BRISMFLearner(K=5, steps=20, verbose=False)
     recommender = learner(data)
     
     prediction = recommender(data[:3])  # Recommend first 3 tuples X (U_id, I_id)
@@ -98,9 +100,6 @@ All modules can be found inside **orangecontrib.recommendation.***
     > [ 5.20604847  3.66934749  2.14537758]
     
     
-    
-
-
 **Evaluation:**
 
     from orangecontrib.recommendation import BRISMFLearner

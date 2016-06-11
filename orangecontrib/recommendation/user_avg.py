@@ -89,7 +89,11 @@ class UserAvgModel(Model):
 
         Args:
             users_average: Array
+
             shape: (int, int)
+
+            order: (int, int)
+                Tuple with the index of the columns users and items in X. (idx_user, idx_item)
 
        """
         self.users_average = users_average

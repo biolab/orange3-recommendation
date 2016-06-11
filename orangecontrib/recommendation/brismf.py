@@ -125,7 +125,7 @@ class BRISMFLearner(Learner):
 
         Returns:
             P (matrix, UxK), Q (matrix, KxI) and bias (dictionary, 'delta items'
-            , 'delta users', 'global mean items' and 'global mean users')
+            , 'delta users')
 
         """
 
@@ -249,10 +249,12 @@ class BRISMFModel(Model):
             Q: Matrix (items x Latent_factors)
 
             bias: dictionary
-                'delta items', 'delta users', 'global mean items' and
-                'global mean users'
+                {'delta items', 'delta users'}
 
             global_average: float
+
+            order: (int, int)
+                Tuple with the index of the columns users and items in X. (idx_user, idx_item)
 
        """
         self.P = P

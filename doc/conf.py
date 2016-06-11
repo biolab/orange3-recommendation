@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.abspath('/Users/salvacarrion/Documents/Programming_pr
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.viewcode',
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
 ]
