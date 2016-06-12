@@ -1,14 +1,18 @@
 import Orange
 from orangecontrib.recommendation.utils import format_data
 
+from scipy.sparse import csr_matrix
 
 def tab_format():
     # Load data
-    filename = '../datasets/users-movies-toy2.tab'
+    filename = '/Users/salvacarrion/Desktop/data_binary.tab'
     data = Orange.data.Table(filename)
 
-    for i_row in range(0, len(data.Y)):
-        print('%d\t%d\t%d' % (data.X[i_row][0], data.X[i_row][1], data.Y[i_row]))
+    A = csr_matrix(data.X)
+
+    indices = A.nonzero()
+    for i in range(0, len(indices[0])):
+        print('%d\t%d\t%d' % (indices[0][i], indices[1][i], 1))
 
 
 def print_dense_matrix():
@@ -27,5 +31,5 @@ def print_dense_matrix():
 
 
 if __name__ == "__main__":
-    print_dense_matrix()
-    #tab_format()
+    #print_dense_matrix()
+    tab_format()

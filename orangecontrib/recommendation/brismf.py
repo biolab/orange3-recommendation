@@ -105,8 +105,7 @@ class BRISMFLearner(Learner):
          matrices which represents user and item factors.
 
         Args:
-            R: Matrix
-                Matrix to factorize. (Zeros are equivalent to unknown data)
+            data: Orange.data.Table
 
             K: int
                 The number of latent factors.
