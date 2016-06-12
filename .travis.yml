@@ -6,6 +6,26 @@ python:
     - "3.4"
     - "3.5"
 
+addons:
+    apt:
+        packages:
+            - gfortran
+            - libblas-dev
+            - liblapack-dev
+            - libqt4-dev
+
+cache:
+    apt: true   # does not work for public repos
+    directories:
+        - $HOME/.cache/pip
+        - $HOME/.ccache
+
+before_cache:   # prevent logs from caching
+    - rm -f $HOME/.cache/pip/log/debug.log
+
+before_install:
+    - pip install -U setuptools pip wheel
+
 install:
     - travis_wait pip install -r requirements.txt
 
