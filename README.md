@@ -15,14 +15,14 @@ Last results
         - Time (ItemAvgLearner): 0.001s
         - Time (UserAvgLearner): 0.001s
         - Time (UserItemBaselineLearner): 0.001s
-        - Time (BRISMFLearner): 1.999s/iter; k=5; alpha=0.07; beta=0.0
+        - Time (BRISMFLearner): 1.453s/iter; k=15; alpha=0.07; beta=0.1
     
     RMSE on MovieLens100K:
         - RMSE (GlobalAvgLearner): 1.126
         - RMSE (ItemAvgLearner): 1.000
         - RMSE (UserAvgLearner): 1.031
         - RMSE (UserItemBaselineLearner): 0.938
-        - RMSE (BRISMFLearner): 0.880
+        - RMSE (BRISMFLearner): 0.823
     ----------------------------------------------------
     
     Times on MovieLens1M:
@@ -31,14 +31,14 @@ Last results
         - Time (ItemAvgLearner): 0.018s
         - Time (UserAvgLearner): 0.021s
         - Time (UserItemBaselineLearner): 0.027s
-        - Time (BRISMFLearner): 22.894s/iter; k=10; alpha=0.07; beta=0.0
+        - Time (BRISMFLearner): 14.347s/iter; k=15; alpha=0.07; beta=0.1
         
     RMSE on MovieLens1M:
         - RMSE (GlobalAvgLearner): 1.117
         - RMSE (ItemAvgLearner): 0.975
         - RMSE (UserAvgLearner): 1.028
         - RMSE (UserItemBaselineLearner): 0.924
-        - RMSE (BRISMFLearner): 0.920
+        - RMSE (BRISMFLearner): 0.872
     ----------------------------------------------------
     
     Times on MovieLens10M:
@@ -47,14 +47,14 @@ Last results
         - Time (ItemAvgLearner): 0.256s
         - Time (UserAvgLearner): 0.256s
         - Time (UserItemBaselineLearner): 0.361s
-        - Time (BRISMFLearner): 206.062s/iter; k=10; alpha=0.07; beta=0.0
+        - Time (BRISMFLearner): 138.309s/iter; k=15; alpha=0.07; beta=0.1
         
     RMSE on MovieLens10M:
         - RMSE (GlobalAvgLearner): 1.060
         - RMSE (ItemAvgLearner): 0.942
         - RMSE (UserAvgLearner): 0.970
         - RMSE (UserItemBaselineLearner): 0.877
-        - RMSE (BRISMFLearner): 0.910
+        - RMSE (BRISMFLearner): 0.841
         
         
 RECENT CHANGES
@@ -66,8 +66,7 @@ RECENT CHANGES
 
 PROBLEMS 
 --------
-    1. Overflows in BRISMF when increasing the regularization factor (beta) (>0.05) in big datasets.
-        -> Related with LA.norm(P[i])
+    None
 
 DETAILED
 --------

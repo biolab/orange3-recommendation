@@ -111,7 +111,7 @@ All modules can be found inside **orangecontrib.recommendation.***
     items_avg = ItemAvgLearner()
     users_avg = UserAvgLearner()
     useritem_baseline = UserItemBaselineLearner()
-    brismf = BRISMFLearner(K=15, steps=5, alpha=0.07, beta=0.0)
+    brismf = BRISMFLearner(K=15, steps=15, alpha=0.07, beta=0.1)
     learners = [global_avg, items_avg, users_avg, useritem_baseline, brismf]
     
     res = Orange.evaluation.CrossValidation(data, learners, k=5)
@@ -127,5 +127,5 @@ All modules can be found inside **orangecontrib.recommendation.***
         - Item average          1.03  0.16
         - User average          1.04  0.14
         - User-Item Baseline    0.98  0.25
-        - BRISMF                1.09  0.06
+        - BRISMF                0.96  0.28
     

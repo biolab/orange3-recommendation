@@ -49,7 +49,7 @@ class TestBigDataset(unittest.TestCase):
         print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
 
         start = time.time()
-        learner = BRISMFLearner(K=10, steps=1, alpha=0.07, beta=0.1)
+        learner = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.1, verbose=True)
         recommender = learner(data)
         print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
@@ -68,7 +68,7 @@ class TestBigDataset(unittest.TestCase):
         items_avg = ItemAvgLearner()
         users_avg = UserAvgLearner()
         useritem_baseline = UserItemBaselineLearner()
-        brismf = BRISMFLearner(K=20, steps=10, alpha=0.07, beta=0.0)
+        brismf = BRISMFLearner(K=15, steps=25, alpha=0.07, beta=0.1)
         learners = [global_avg, items_avg, users_avg, useritem_baseline, brismf]
 
         res = CrossValidation(data, learners, k=5)

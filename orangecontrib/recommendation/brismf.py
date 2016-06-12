@@ -145,7 +145,7 @@ class BRISMFLearner(Learner):
                 # Factorize matrix using SGD
                 for step in range(steps):
                     if verbose:
-                        print('- Step: %d' % step)
+                        print('- Step: %d' % (step+1))
 
                     # Compute predictions
                     for k in range(0, len(data.Y)):
@@ -160,8 +160,8 @@ class BRISMFLearner(Learner):
                         # This error goes to infinite for some values of beta
                         eij = rij_pred - data.Y[k]
 
-                        tempP = alpha * 2 * (eij * Q[j] + beta * LA.norm(P[i]))
-                        tempQ = alpha * 2 * (eij * P[i] + beta * LA.norm(Q[j]))
+                        tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
+                        tempQ = alpha * 2 * (eij * P[i] + beta * Q[j])
                         P[i] -= tempP
                         Q[j] -= tempQ
 
