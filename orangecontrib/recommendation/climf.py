@@ -260,7 +260,7 @@ class CLiMFModel(Model):
         """
 
         if users is None:
-            users = np.asarray(range(0, len(self.bias['dUsers'])))
+            users = np.asarray(range(0, self.shape[0]))
 
         predictions = np.einsum('ij,ij->i', self.U[users], self.V)
 

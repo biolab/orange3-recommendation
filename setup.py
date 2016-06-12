@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 from setuptools import setup
 
 ENTRY_POINTS = {
@@ -18,6 +19,14 @@ ENTRY_POINTS = {
         #'My Category = orangecontrib.recsystems.widgets',
     ),
 }
+
+if 'test' in sys.argv:
+    extra_setuptools_args = dict(
+        test_suite='orangecontrib.recommendation.tests',
+    )
+else:
+    extra_setuptools_args = dict()
+
 
 if __name__ == '__main__':
     setup(
