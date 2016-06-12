@@ -11,3 +11,6 @@ install:
 
 script:
     - coverage run setup.py test
+
+notifications:
+  email: false
