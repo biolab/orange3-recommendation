@@ -8,7 +8,6 @@ import Orange
 
 class TestCLiMF(unittest.TestCase):
 
-    pass
     """
     def test_CLiMF_predict_items(self):
         # Load data
@@ -100,10 +99,10 @@ class TestCLiMF(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    #unittest.main()
+    unittest.main()
 
     # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestCLiMF("test_CLiMF_input_data"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)

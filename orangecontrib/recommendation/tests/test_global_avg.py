@@ -8,28 +8,28 @@ import Orange
 
 class TestGlobalAvg(unittest.TestCase):
 
-    def test_GlobalAvg_swap_columns(self):
-        # Recommender
-        learner = GlobalAvgLearner(verbose=False)
-
-        # Dataset 1
-        filename = '../datasets/users-movies-toy.tab'
-        data = Orange.data.Table(filename)
-        recommender = learner(data)
-        prediction = recommender.predict_items()
-        y_pred1 = prediction[data.X[:, recommender.order[0]],
-                             data.X[:, recommender.order[1]]]
-
-        # Dataset 2
-        filename = '../datasets/users-movies-toy2.tab'
-        data = Orange.data.Table(filename)
-        recommender = learner(data)
-        prediction = recommender.predict_items()
-        y_pred2 = prediction[data.X[:, recommender.order[0]],
-                             data.X[:, recommender.order[1]]]
-
-        # Compare results
-        np.testing.assert_array_equal(y_pred1, y_pred2)
+    # def test_GlobalAvg_swap_columns(self):
+    #     # Recommender
+    #     learner = GlobalAvgLearner(verbose=False)
+    #
+    #     # Dataset 1
+    #     filename = '../datasets/users-movies-toy.tab'
+    #     data = Orange.data.Table(filename)
+    #     recommender = learner(data)
+    #     prediction = recommender.predict_items()
+    #     y_pred1 = prediction[data.X[:, recommender.order[0]],
+    #                          data.X[:, recommender.order[1]]]
+    #
+    #     # Dataset 2
+    #     filename = '../datasets/users-movies-toy2.tab'
+    #     data = Orange.data.Table(filename)
+    #     recommender = learner(data)
+    #     prediction = recommender.predict_items()
+    #     y_pred2 = prediction[data.X[:, recommender.order[0]],
+    #                          data.X[:, recommender.order[1]]]
+    #
+    #     # Compare results
+    #     np.testing.assert_array_equal(y_pred1, y_pred2)
 
 
     def test_GlobalAvg_correctness(self):
