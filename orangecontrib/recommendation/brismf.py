@@ -37,8 +37,8 @@ class BRISMFLearner(Learner):
     name = 'BRISMF'
 
     def __init__(self,
-                 K=2,
-                 steps=100,
+                 K=5,
+                 steps=25,
                  alpha=0.005,
                  beta=0.02,
                  preprocessors=None,

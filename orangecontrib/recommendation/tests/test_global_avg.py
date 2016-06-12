@@ -120,18 +120,6 @@ class TestGlobalAvg(unittest.TestCase):
         global_avg = GlobalAvgLearner(verbose=False)
         learners = [global_avg]
 
-
-        # learner = GlobalAvgLearner(verbose=False)
-        # recommender = learner(data)
-        # prediction = recommender.predict_items()
-        # print(prediction)
-        # y_pred = prediction[data.X[:, 0], data.X[:, 1]]
-        # rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
-        # print('-> RMSE (predict items): %.3f' % rmse)
-        # print(recommender.domain.variables[0].values)
-        # print(recommender.domain.variables[1].values)
-        # print('')
-
         res = CrossValidation(data, learners, k=5)
         rmse = Orange.evaluation.RMSE(res)
         r2 = Orange.evaluation.R2(res)
