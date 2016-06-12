@@ -1,5 +1,8 @@
 Orange3 RecommenderSystems Add-on
-======================
+=================================
+
+(--This is just a test, not real--)
+[![Build Status](https://travis-ci.org/salvacarrion/orange3-recommendersystems.svg?branch=master)](https://travis-ci.org/salvacarrion/orange3-recommendersystems)
 
 Orange3 RecommenderSystems extends [Orange3](http://orange.biolab.si), a data mining software
 package, with common functionality for make recommendations. It provides access

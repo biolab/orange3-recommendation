@@ -3,8 +3,8 @@ language: python
 sudo: false   # use container-based infrastructure
 
 python:
-  - "3.4"
-  - "3.5"
+    - "3.4"
+    - "3.5"
 
 install:
     - travis_wait pip install -r requirements.txt
@@ -13,4 +13,4 @@ script:
     - coverage run setup.py test
 
 notifications:
-  email: false
+    email: false
