@@ -1,9 +1,9 @@
-Orange3 Recommendation2
-=======================
+Orange3 Recommendation
+======================
 
-[![Build Status](https://travis-ci.org/salvacarrion/orange3-recommendersystems.svg?branch=master)](https://travis-ci.org/salvacarrion/orange3-recommendersystems)
-[![Documentation Status](https://readthedocs.org/projects/orange3-recommendersystems/badge/?version=latest)](http://orange3-recommendersystems.readthedocs.io/en/latest/?badge=latest)
-
+[![Build Status](https://travis-ci.org/salvacarrion/orange3-recommendation.svg?branch=master)](https://travis-ci.org/salvacarrion/orange3-recommendation)
+[![Documentation Status](https://readthedocs.org/projects/orange3-recommendation/badge/?version=latest)](http://orange3-recommendation.readthedocs.io/en/latest/?badge=latest)
+                
 Orange3 Recommendation is a Python module that extends [Orange3](http://orange.biolab.si) to include support for recommender systems.
 All features can be combined with powerful data mining techniques from the Orange data mining framework.
 
