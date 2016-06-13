@@ -1,4 +1,5 @@
 numpy
 scikit-learn
 setuptools-git
+setuptools
 Orange3
