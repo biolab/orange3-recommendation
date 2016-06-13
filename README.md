@@ -1,5 +1,5 @@
-Orange3 Recommendation
-======================
+Orange3 Recommendation2
+=======================
 
 [![Build Status](https://travis-ci.org/salvacarrion/orange3-recommendersystems.svg?branch=master)](https://travis-ci.org/salvacarrion/orange3-recommendersystems)
 [![Documentation Status](https://readthedocs.org/projects/orange3-recommendersystems/badge/?version=latest)](http://orange3-recommendersystems.readthedocs.io/en/latest/?badge=latest)
