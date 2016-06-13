@@ -31,7 +31,7 @@ install:
     - travis_wait pip install -r requirements.txt
 
 script:
-    - python tests/test_all.py
+    - python orangecontrib/recommendation/tests/test_all.py
 
 notifications:
     email: false
