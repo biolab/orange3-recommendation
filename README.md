@@ -2,7 +2,8 @@ Orange3 RecommenderSystems Add-on
 =================================
 
 [![Build Status](https://travis-ci.org/salvacarrion/orange3-recommendersystems.svg?branch=master)](https://travis-ci.org/salvacarrion/orange3-recommendersystems)
-
+[![Documentation Status](https://readthedocs.org/projects/orange3-recommendersystems/badge/?version=latest)](http://orange3-recommendersystems.readthedocs.io/en/latest/?badge=latest)
+                
 Orange3 RecommenderSystems extends [Orange3](http://orange.biolab.si), a data mining software
 package, with common functionality for make recommendations. It provides access
 to publicly available data, like MovieLens, Yahoo! Music, Flixster,... All features can be combined with powerful data mining techniques
