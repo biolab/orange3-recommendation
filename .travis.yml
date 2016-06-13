@@ -25,9 +25,13 @@ before_cache:   # prevent logs from caching
 
 before_install:
     - pip install -U setuptools pip wheel
+    - pip install codecov
 
 install:
     - travis_wait pip install -r requirements.txt
+
+script:
+    - python tests/test_all.py
 
 notifications:
     email: false

@@ -8,7 +8,6 @@ import Orange
 
 class TestCLiMF(unittest.TestCase):
 
-    """
     def test_CLiMF_predict_items(self):
         # Load data
         filename = '../datasets/binary_data.tab'
@@ -95,7 +94,6 @@ class TestCLiMF(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertIsInstance(rmse, np.ndarray)
-    """
 
 if __name__ == "__main__":
     # Test all
