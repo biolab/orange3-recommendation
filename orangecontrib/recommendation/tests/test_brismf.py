@@ -6,6 +6,7 @@ from sklearn.metrics import mean_squared_error
 import math
 import Orange
 
+
 class TestBRISMF(unittest.TestCase):
 
     # def test_BRISMF_swap_columns(self):
@@ -13,7 +14,7 @@ class TestBRISMF(unittest.TestCase):
     #     learner = BRISMFLearner(K=10, steps=25, verbose=False)
     #
     #     # Dataset 1
-    #     filename = '../datasets/users-movies-toy.tab'
+    #     filename = '../datasets/ratings.tab'
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -21,7 +22,7 @@ class TestBRISMF(unittest.TestCase):
     #                          data.X[:, recommender.order[1]]]
     #
     #     # Dataset 2
-    #     filename = '../datasets/users-movies-toy2.tab'
+    #     filename = '../datasets/ratings2.tab'
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -34,7 +35,7 @@ class TestBRISMF(unittest.TestCase):
 
     def test_BRISMF_predict_items(self):
         # Load data
-        filename = '../datasets/users-movies-toy.tab'
+        filename = '../datasets/ratings.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -56,7 +57,7 @@ class TestBRISMF(unittest.TestCase):
 
     def test_BRISMF_input_data(self):
         # Load data
-        filename = '../datasets/users-movies-toy.tab'
+        filename = '../datasets/ratings.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -76,7 +77,7 @@ class TestBRISMF(unittest.TestCase):
 
     def test_BRISMF_pairs(self):
         # Load data
-        filename = '../datasets/users-movies-toy.tab'
+        filename = '../datasets/ratings.tab'
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -102,7 +103,7 @@ class TestBRISMF(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = '../datasets/users-movies-toy.tab'
+        filename = '../datasets/ratings.tab'
         data = Orange.data.Table(filename)
 
         brismf = BRISMFLearner(K=10, steps=5, verbose=False)

@@ -17,7 +17,7 @@ def tab_format():
 
 def print_dense_matrix():
     # Load data
-    filename = '../datasets/users-movies-toy2.tab'
+    filename = '../datasets/ratings2.tab'
     data = Orange.data.Table(filename)
 
     data, order, shape = format_data.format_data(data)
