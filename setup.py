@@ -54,7 +54,7 @@ if __name__ == '__main__':
             'orangecontrib.recommendation': ['tutorials/*.ows'],
             'orangecontrib.recommendation.widgets': ['icons/*'],
         },
-        install_requires=['Orange'],
+        install_requires=INSTALL_REQUIRES,
         entry_points=ENTRY_POINTS,
         namespace_packages=['orangecontrib'],
         include_package_data=True,
