@@ -1,0 +1,6 @@
+Orange3 Recommendation
+======================
+
+Orange3 add-on for recommendation. A Python module that extends Orange3 to
+include support for recommender systems. All features can be combined with
+powerful data mining techniques from the Orange data mining framework.

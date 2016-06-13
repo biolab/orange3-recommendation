@@ -4,6 +4,19 @@ import os
 import sys
 from setuptools import setup, find_packages
 
+NAME = 'Orange3-Recommendation'
+
+VERSION = '0.1'
+
+DESCRIPTION = 'Orange3 Recommendation add-on.'
+README_FILE = os.path.join(os.path.dirname(__file__), 'README.pypi')
+LONG_DESCRIPTION = open(README_FILE).read()
+AUTHOR = 'Bioinformatics Laboratory, FRI UL'
+AUTHOR_EMAIL = 'contact@orange.biolab.si'
+URL = "https://github.com/salvacarrion/orange3-recommendation"
+DOWNLOAD_URL = "https://github.com/salvacarrion/orange3-recommendation".format(VERSION)
+
+
 ENTRY_POINTS = {
     # Entry point used to specify packages containing tutorials accessible
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
@@ -44,19 +57,20 @@ else:
 
 if __name__ == '__main__':
     setup(
-        name="Orange3-Recommendation",
-        author='Salva Carrion',
-        packages=['orangecontrib',
-                  'orangecontrib.recommendation'],
-                  # 'orangecontrib.recsystems.tutorials',
-                  # 'orangecontrib.recsystems.widgets'],
-        package_data={
-            'orangecontrib.recommendation': ['tutorials/*.ows'],
-            'orangecontrib.recommendation.widgets': ['icons/*'],
-        },
+        name=NAME,
+        description=DESCRIPTION,
+        long_description=LONG_DESCRIPTION,
+        version=VERSION,
+        author=AUTHOR,
+        author_email=AUTHOR_EMAIL,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        packages=find_packages(),
+        include_package_data=True,
         install_requires=INSTALL_REQUIRES,
         entry_points=ENTRY_POINTS,
+        keywords=KEYWORDS,
         namespace_packages=['orangecontrib'],
-        include_package_data=True,
         zip_safe=False,
+        **extra_setuptools_args
     )
