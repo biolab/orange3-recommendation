@@ -28,11 +28,15 @@ before_install:
     - pip install codecov
 
 install:
-    - pip install -e .
     - travis_wait pip install -r requirements.txt
+    - pip install -e .
 
 script:
-    - python orangecontrib/recommendation/tests/test_all.py
+    #- python orangecontrib/recommendation/tests/test_all.py
+    - coverage run setup.py test
+
+after_success:
+    - codecov
 
 notifications:
     email: false
