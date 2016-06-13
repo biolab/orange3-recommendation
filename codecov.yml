@@ -8,4 +8,3 @@ coverage:
     project:
       default:
         target: auto
-

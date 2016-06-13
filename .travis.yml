@@ -32,8 +32,8 @@ install:
     - pip install -e .
 
 script:
-    #- python orangecontrib/recommendation/tests/test_all.py
     - coverage run setup.py test
+    #- python orangecontrib/recommendation/tests/test_all.py
 
 after_success:
     - codecov
