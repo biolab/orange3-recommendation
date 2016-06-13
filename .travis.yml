@@ -28,8 +28,8 @@ before_install:
     - pip install codecov
 
 install:
-    - travis_wait pip install -r requirements.txt
     - pip install .
+    - travis_wait pip install -r requirements.txt
 
 script:
     - python orangecontrib/recommendation/tests/test_all.py
