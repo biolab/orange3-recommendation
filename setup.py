@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
+import os
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 
 ENTRY_POINTS = {
     # Entry point used to specify packages containing tutorials accessible
@@ -20,6 +21,19 @@ ENTRY_POINTS = {
     ),
 }
 
+KEYWORDS = [
+    # [PyPi](https://pypi.python.org) packages with keyword "orange3 add-on"
+    # can be installed using the Orange Add-on Manager
+    'orange3-recommendation',
+    'data mining',
+    'orange3 add-on',
+]
+
+INSTALL_REQUIRES = sorted(set(
+    line.partition('#')[0].strip()
+    for line in open(os.path.join(os.path.dirname(__file__), 'requirements.txt'))
+) - {''})
+
 if 'test' in sys.argv:
     extra_setuptools_args = dict(
         test_suite='orangecontrib.recommendation.tests',
@@ -31,6 +45,7 @@ else:
 if __name__ == '__main__':
     setup(
         name="Orange3-Recommendation",
+        author='Salva Carrion',
         packages=['orangecontrib',
                   'orangecontrib.recommendation'],
                   # 'orangecontrib.recsystems.tutorials',
