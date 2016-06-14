@@ -11,7 +11,7 @@ Available classes and methods.
 .. toctree::
    :maxdepth: 2
 
-	reference/recommendation
+	reference/recommendation.rst
 
 Indices and tables
 ==================
