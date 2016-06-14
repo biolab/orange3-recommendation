@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Recommendation documentation build configuration file, created by
-# sphinx-quickstart on Tue Jun 14 03:21:15 2016.
+# Orange3-Recommendation documentation build configuration file, created by
+# sphinx-quickstart on Tue Jun 14 15:50:45 2016.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -19,7 +19,6 @@ import os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../orangecontrib'))
-
 
 # -- Readthedocs ----------------------------------------------------------
 
@@ -42,6 +41,7 @@ sys.path.insert(0, os.path.abspath('../../orangecontrib'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.todo',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
 ]
@@ -61,7 +61,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Recommendation'
+project = u'Orange3-Recommendation'
 copyright = u'2016, Salva Carrión'
 author = u'Salva Carrión'
 
@@ -116,7 +116,7 @@ pygments_style = 'sphinx'
 #keep_warnings = False
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = False
+todo_include_todos = True
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -215,7 +215,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Recommendationdoc'
+htmlhelp_basename = 'Orange3-Recommendationdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -237,7 +237,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Recommendation.tex', u'Recommendation Documentation',
+    (master_doc, 'Orange3-Recommendation.tex', u'Orange3-Recommendation Documentation',
      u'Salva Carrión', 'manual'),
 ]
 
@@ -267,7 +267,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'recommendation', u'Recommendation Documentation',
+    (master_doc, 'orange3-recommendation', u'Orange3-Recommendation Documentation',
      [author], 1)
 ]
 
@@ -281,8 +281,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'Recommendation', u'Recommendation Documentation',
-     author, 'Recommendation', 'One line description of project.',
+    (master_doc, 'Orange3-Recommendation', u'Orange3-Recommendation Documentation',
+     author, 'Orange3-Recommendation', 'One line description of project.',
      'Miscellaneous'),
 ]
 
