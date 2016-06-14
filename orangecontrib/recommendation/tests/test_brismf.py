@@ -39,7 +39,7 @@ class TestBRISMF(unittest.TestCase):
         print('*******************************************************')
         print('*******************************************************')
         print('*******************************************************')
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath('../datasets/ratings.tab')
         print(filename)
         print(os.path.dirname(os.path.realpath(__file__)))
         print('*******************************************************')
