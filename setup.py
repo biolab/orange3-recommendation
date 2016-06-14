@@ -67,6 +67,7 @@ if __name__ == '__main__':
         download_url=DOWNLOAD_URL,
         packages=find_packages(),
         include_package_data=True,
+        install_requires=INSTALL_REQUIRES,
         entry_points=ENTRY_POINTS,
         keywords=KEYWORDS,
         namespace_packages=['orangecontrib'],

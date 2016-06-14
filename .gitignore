@@ -1,0 +1,35 @@
+# Build files
+Orange3_Recommendation.egg-info
+Orange3_Recommendation.egg-info/*
+
+# Documentation
+doc/build
+doc/build/*
+doc/source/_static
+doc/source/_static/*
+doc/source/_templates
+doc/source/_templates/*
+doc/make.bat
+doc/source/
+
+# Virtual environment
+orange3venv-recsys/
+
+# Unversioned files
+orangecontrib/__init__.pyc
+orangecontrib/recommendation/__init__.pyc
+orangecontrib/recommendation/global_avg.pyc
+
+# Editor files
+.idea
+.idea/*
+
+*~
+.project
+.pydevproject
+.settings/*
+.DS_Store
+
+# Coverage
+.coverage
+coverage.xml

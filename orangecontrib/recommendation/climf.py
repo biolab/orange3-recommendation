@@ -33,7 +33,7 @@ class CLiMFLearner(Learner):
             Prints information about the process.
     """
 
-    name = 'BRISMF'
+    name = 'CLiMF'
 
     def __init__(self,
                  K=2,

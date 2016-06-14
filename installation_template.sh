@@ -7,4 +7,4 @@ source orange3venv-recsys/bin/activate
 pip install -r requirements.txt
 
 # Finally install Orange in editable/development mode.
-# pip install -e .
+pip install -e .
