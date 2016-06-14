@@ -83,6 +83,10 @@ Global Average
 
 Global Average uses the average rating value of all ratings to make predictions.
 
+.. math::
+	r_{ ui } = \mu
+
+
 Example
 =======
 
@@ -108,6 +112,10 @@ User Average
 
 User Average uses the average rating value of a user to make predictions.
 
+
+.. math::
+	r_{ ui } = \mu_{u}
+	
 Example
 =======
 
@@ -133,6 +141,9 @@ Item Average
 
 Item Average uses the average rating value of an item to make predictions.
 
+.. math::
+	r_{ ui } = \mu_{i}
+	
 Example
 =======
 
@@ -159,6 +170,9 @@ User-Item Baseline
 User-Item Baseline takes the bias of users and items plus the global average to
 make predictions.
 
+.. math::
+	r_{ ui } = \mu + b_{u} + b_{i}
+	
 Example
 =======
 
@@ -182,9 +196,24 @@ pair: recommenders; brismf
 BRISMF
 ------
 
-This model uses stochastic gradient descent to find the values of two low-rank
-matrices which represents the user and item factors. This object can factorize
-either dense or sparse matrices.
+BRISMF (Biased Regularized Incremental Simultaneous Matrix Factorization) is 
+factorization-based algorithm for large scale recommendation systems.
+
+The basic idea is to factorize a very sparse matrix into two low-rank matrices
+which represents user and item factors. This can be done by using an iterative 
+approach to minimize the loss function.
+ 
+User's predictions are defined as follows:
+ 
+.. math::
+	\hat { r } _{ ui }=\mu +b_{ u }+b_{ i }+{ q }_{ i }^{ T }{ p }_{ u }
+
+
+But in order to compute the two low-rank matrices, first these are randomly initialized and then optimized through a training loss like this:
+
+.. math::
+	\min _{ p*,q*,b* }{ \sum _{ (u,i\in k) }^{  }{ { ({ r }_{ ui }-\mu -b_{ u }-b_{ i }-{ q }_{ i }^{ T }{ p }_{ u }) }^{ 2 }+\lambda ({ \left\| { p }_{ u } \right\|  }^{ 2 }+{ \left\| q_{ i } \right\|  }^{ 2 }+{ { b }_{ u } }^{ 2 }+{ { b }_{ i } }^{ 2 }) }  } 
+
 
 Example
 =======
@@ -209,8 +238,18 @@ pair: recommenders; climf
 CLiMF
 -----
 
-This model is focused on improving top-k recommendations through ranking by
-directly maximizing the Mean Reciprocal Rank (MRR).
+CLiMF (Collaborative Less-is-More Filtering) is used in scenarios with binary 
+relevance data. Hence, it's focused on improving top-k recommendations through
+ranking by directly maximizing the Mean Reciprocal Rank (MRR).
+ 
+Following a similar technique as other iterative approaches, the two low-rank matrices
+can be randomly initialize and then optimize through a training loss like this:
+
+.. math::
+	\begin{split}
+   		F(U,V) &= \sum _{ i=1 }^{ M }{ \sum _{ j=1 }^{ N }{ { Y }_{ ij }[\ln { \quad g({ U }_{ i }^{ T }V_{ i }) } +\sum _{ k=1 }^{ N }{ \ln { (1-{ Y }_{ ik }g({ U }_{ i }^{ T }V_{ k }-{ U }_{ i }^{ T }V_{ j })) }  } ] }  }  \\
+    	&-\frac { \lambda  }{ 2 } ({ \left\| U \right\|  }^{ 2 }+{ \left\| V \right\|  }^{ 2 })
+	\end{split}
 
 Example
 =======
