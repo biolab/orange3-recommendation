@@ -22,6 +22,9 @@ orangecontrib/recommendation/global_avg.pyc
 .idea
 .idea/*
 
+# Temporal
+orangecontrib/recommendation/evaluation/*
+
 *~
 .project
 .pydevproject

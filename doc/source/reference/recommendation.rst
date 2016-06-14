@@ -246,10 +246,7 @@ Following a similar technique as other iterative approaches, the two low-rank ma
 can be randomly initialize and then optimize through a training loss like this:
 
 .. math::
-	\begin{split}
-   		F(U,V) &= \sum _{ i=1 }^{ M }{ \sum _{ j=1 }^{ N }{ { Y }_{ ij }[\ln { \quad g({ U }_{ i }^{ T }V_{ i }) } +\sum _{ k=1 }^{ N }{ \ln { (1-{ Y }_{ ik }g({ U }_{ i }^{ T }V_{ k }-{ U }_{ i }^{ T }V_{ j })) }  } ] }  }  \\
-    	&-\frac { \lambda  }{ 2 } ({ \left\| U \right\|  }^{ 2 }+{ \left\| V \right\|  }^{ 2 })
-	\end{split}
+	F(U,V) = \sum _{ i=1 }^{ M }{ \sum _{ j=1 }^{ N }{ { Y }_{ ij }[\ln{\quad g({ U }_{ i }^{ T }V_{ i })} +\sum _{ k=1 }^{ N }{ \ln { (1-{ Y }_{ ik }g({ U }_{ i }^{ T }V_{ k }-{ U }_{ i }^{ T }V_{ j })) }  } ] }  } -\frac { \lambda  }{ 2 } ({ \left\| U \right\|  }^{ 2 }+{ \left\| V \right\|  }^{ 2 })
 
 Example
 =======
