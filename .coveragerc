@@ -3,6 +3,7 @@ branch = True
 source = orangecontrib
 omit =
     orangecontrib/recommendation/tests/*
+    orangecontrib/climf.py
 
 [report]
 exclude_lines =
