@@ -34,8 +34,17 @@ class TestBRISMF(unittest.TestCase):
 
 
     def test_BRISMF_predict_items(self):
+        import os
         # Load data
+        print('*******************************************************')
+        print('*******************************************************')
+        print('*******************************************************')
         filename = '../datasets/ratings.tab'
+        print(filename)
+        print(os.path.dirname(os.path.realpath(__file__)))
+        print('*******************************************************')
+        print('*******************************************************')
+        print('*******************************************************')
         data = Orange.data.Table(filename)
 
         # Train recommender
