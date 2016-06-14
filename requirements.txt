@@ -1,5 +1,5 @@
 numpy
 scikit-learn
 setuptools-git
-setuptools
+mock
 Orange3
