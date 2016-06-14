@@ -1,11 +1,12 @@
+import os
+import math
 import unittest
 
-import numpy as np
-from orangecontrib.recommendation import BRISMFLearner
-from sklearn.metrics import mean_squared_error
-import math
 import Orange
+from orangecontrib.recommendation import BRISMFLearner
 
+import numpy as np
+from sklearn.metrics import mean_squared_error
 
 class TestBRISMF(unittest.TestCase):
 
@@ -14,7 +15,8 @@ class TestBRISMF(unittest.TestCase):
     #     learner = BRISMFLearner(K=10, steps=25, verbose=False)
     #
     #     # Dataset 1
-    #     filename = '../datasets/ratings.tab'
+    #     filename = os.path.abspath(
+    #        os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -22,7 +24,8 @@ class TestBRISMF(unittest.TestCase):
     #                          data.X[:, recommender.order[1]]]
     #
     #     # Dataset 2
-    #     filename = '../datasets/ratings2.tab'
+    #     filename = os.path.abspath(
+    #       os.path.join(os.path.dirname(__file__), '../datasets/ratings2.tab'))
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -34,18 +37,9 @@ class TestBRISMF(unittest.TestCase):
 
 
     def test_BRISMF_predict_items(self):
-        import os
         # Load data
-        print('*******************************************************')
-        print('*******************************************************')
-        print('*******************************************************')
-        filename = '../datasets/ratings.tab'
-        filename = os.path.abspath(os.path.join(os.path.dirname(__file__), filename))
-        print(filename)
-        print(os.path.dirname(os.path.realpath(__file__)))
-        print('*******************************************************')
-        print('*******************************************************')
-        print('*******************************************************')
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -67,7 +61,8 @@ class TestBRISMF(unittest.TestCase):
 
     def test_BRISMF_input_data(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -87,7 +82,8 @@ class TestBRISMF(unittest.TestCase):
 
     def test_BRISMF_pairs(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -113,7 +109,8 @@ class TestBRISMF(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         brismf = BRISMFLearner(K=10, steps=5, verbose=False)

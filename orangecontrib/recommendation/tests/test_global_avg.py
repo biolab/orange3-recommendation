@@ -1,10 +1,12 @@
+import os
+import math
 import unittest
 
-import numpy as np
-from orangecontrib.recommendation import GlobalAvgLearner
-from sklearn.metrics import mean_squared_error
-import math
 import Orange
+from orangecontrib.recommendation import GlobalAvgLearner
+
+import numpy as np
+from sklearn.metrics import mean_squared_error
 
 class TestGlobalAvg(unittest.TestCase):
 
@@ -13,7 +15,8 @@ class TestGlobalAvg(unittest.TestCase):
     #     learner = GlobalAvgLearner(verbose=False)
     #
     #     # Dataset 1
-    #     filename = '../datasets/ratings.tab'
+    #     filename = os.path.abspath(
+    #         os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -21,7 +24,8 @@ class TestGlobalAvg(unittest.TestCase):
     #                          data.X[:, recommender.order[1]]]
     #
     #     # Dataset 2
-    #     filename = '../datasets/ratings2.tab'
+    #     filename = os.path.abspath(
+    #         os.path.join(os.path.dirname(__file__), '../datasets/ratings2.tab'))
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -33,7 +37,8 @@ class TestGlobalAvg(unittest.TestCase):
 
 
     def test_GlobalAvg_correctness(self):
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -46,7 +51,8 @@ class TestGlobalAvg(unittest.TestCase):
 
     def test_GlobalAvg_predict_items(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -68,7 +74,8 @@ class TestGlobalAvg(unittest.TestCase):
 
     def test_GlobalAvg_input_data(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -88,7 +95,8 @@ class TestGlobalAvg(unittest.TestCase):
 
     def test_GlobalAvg_pairs(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -114,7 +122,8 @@ class TestGlobalAvg(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         global_avg = GlobalAvgLearner(verbose=False)

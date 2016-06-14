@@ -1,10 +1,12 @@
+import os
+import math
 import unittest
 
-import numpy as np
-from orangecontrib.recommendation import UserItemBaselineLearner
-from sklearn.metrics import mean_squared_error
-import math
 import Orange
+from orangecontrib.recommendation import UserItemBaselineLearner
+
+import numpy as np
+from sklearn.metrics import mean_squared_error
 
 class TestUserItemBaseline(unittest.TestCase):
 
@@ -13,7 +15,8 @@ class TestUserItemBaseline(unittest.TestCase):
     #     learner = UserItemBaselineLearner(verbose=False)
     #
     #     # Dataset 1
-    #     filename = '../datasets/ratings.tab'
+    #     filename = os.path.abspath(
+    #         os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -21,7 +24,8 @@ class TestUserItemBaseline(unittest.TestCase):
     #                          data.X[:, recommender.order[1]]]
     #
     #     # Dataset 2
-    #     filename = '../datasets/ratings2.tab'
+    #     filename = os.path.abspath(
+    #         os.path.join(os.path.dirname(__file__), '../datasets/ratings2.tab'))
     #     data = Orange.data.Table(filename)
     #     recommender = learner(data)
     #     prediction = recommender.predict_items()
@@ -33,7 +37,9 @@ class TestUserItemBaseline(unittest.TestCase):
 
 
     def test_UserAvg_correctness(self):
-        filename = '../datasets/ratings.tab'
+        # Load data
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -58,7 +64,8 @@ class TestUserItemBaseline(unittest.TestCase):
 
     def test_UserItemBaseline_predict_items(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -80,7 +87,8 @@ class TestUserItemBaseline(unittest.TestCase):
 
     def test_UserItemBaseline_input_data(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -100,7 +108,8 @@ class TestUserItemBaseline(unittest.TestCase):
 
     def test_UserItemBaseline_pairs(self):
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -126,7 +135,8 @@ class TestUserItemBaseline(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = '../datasets/ratings.tab'
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
         user_item_baseline = UserItemBaselineLearner(verbose=False)
