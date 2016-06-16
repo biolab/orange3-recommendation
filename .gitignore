@@ -14,17 +14,13 @@ doc/source/_templates/*
 orange3venv-recsys/
 
 # Unversioned files
-orangecontrib/__init__.pyc
-orangecontrib/recommendation/__init__.pyc
-orangecontrib/recommendation/global_avg.pyc
+*.pyc
 
 # Editor files
 .idea
 .idea/*
 
-# Temporal
-orangecontrib/recommendation/evaluation/*
-
+# Others
 *~
 .project
 .pydevproject

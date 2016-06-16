@@ -108,15 +108,6 @@ class CLiMFLearner(Learner):
         y = ex / (1 + ex) ** 2
         return y
 
-    def precompute_f(self, X, U, V, i):
-        """precompute f[j] = <U[i],V[j]>"""
-        items = X[X[:, self.order[0]] == i][:, self.order[1]]
-        #f = dict((j, np.dot(U[i], V[j])) for j in items)
-        values = np.einsum('j,ij->i', U[i], V[items])
-        f = dict(zip(items, values))
-        return f
-
-
     def matrix_factorization(self, data, K, steps, alpha, beta, verbose=False):
         """ Factorize either a dense matrix or a sparse matrix into two low-rank
          matrices which represents user and item factors.
@@ -164,22 +155,27 @@ class CLiMFLearner(Learner):
             for i in range(len(U)):
                 dU = -beta * U[i]
 
-                f = self.precompute_f(data.X, U, V, i)
+                # Precompute f (f[j] = <U[i], V[j]>)
+                items = data.X[data.X[:, self.order[0]] == i][:, self.order[1]]
+                f = np.einsum('j,ij->i', U[i], V[items])
 
-                for j in f:
-                    dV = self.g(-f[j]) - beta * V[j]
+                for j in range(len(items)):  #j=items
+                    w = items[j]
 
-                    for k in f:
-                        dV += self.dg(f[j] - f[k]) * (
-                        1 / (1 - self.g(f[k] - f[j]))
-                        - 1 / (1 - self.g(f[j] - f[k]))) * U[i]
+                    dV = self.g(-f[j]) - beta * V[w]
 
-                    V[j] += alpha * dV
-                    dU += self.g(-f[j]) * V[j]
+                    # For I
+                    vec1 = self.dg(f[j] - f) * \
+                        (1/(1 - self.g(f - f[j])) - 1/(1 - self.g(f[j] - f)))
+                    dV += np.einsum('i,j->ij', vec1, U[i]).sum(axis=0)
 
-                    for k in f:  #range(len(f))
-                        dU += (V[j] - V[k]) * self.dg(f[k] - f[j]) / (
-                        1 - self.g(f[k] - f[j]))
+                    V[w] += alpha * dV
+                    dU += self.g(-f[j]) * V[w]
+
+                    # For II
+                    vec2 = (V[items[j]] - V[items])
+                    vec3 = self.dg(f - f[j])/(1 - self.g(f - f[j]))
+                    dU += np.einsum('ij,i->ij', vec2, vec3).sum(axis=0)
 
                 U[i] += alpha * dU
 
@@ -246,11 +242,12 @@ class CLiMFModel(Model):
                 Array with the indices of the users to which make the
                 predictions.
 
-            top: int, optional
-                Return just the first k recommendations.
+            top_k: int, optional
+                Return just the top k recommendations.
 
         Returns:
-            Array with the recommendations for requested users.
+            Array with the indices of the items recommended, sorted by ascending
+            ranking. (1st better than 2nd, than 3rd,...)
 
         """
 

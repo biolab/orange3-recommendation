@@ -14,7 +14,7 @@ class TestCLiMF(unittest.TestCase):
     def test_CLiMF_input_data(self):
         # Load data
         filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/epinions_train.tab'))
+            os.path.join(os.path.dirname(__file__), '../datasets/binary_data.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
@@ -69,10 +69,10 @@ class TestCLiMF(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    # unittest.main()
+    unittest.main()
 
     # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestCLiMF("test_CLiMF_input_data"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
