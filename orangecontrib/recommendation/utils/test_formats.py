@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix
 
 def tab_format():
     # Load data
-    filename = '/Users/salvacarrion/Desktop/data_binary.tab'
+    filename = '/Users/salvacarrion/Desktop/trainingSet.csv'
     data = Orange.data.Table(filename)
 
     A = csr_matrix(data.X)

@@ -1,12 +1,19 @@
 from Orange.base import Model, Learner
+from Orange.evaluation.scoring import RMSE
+
 from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
 import numpy as np
 from numpy import linalg as LA
+import numpy.ma as ma
+from scipy.special import expit as sigmoid
 
 import math
 
+import time
 import warnings
+import random
 
 __all__ = ['CLiMFLearner']
 
@@ -76,6 +83,7 @@ class CLiMFLearner(Learner):
         # Optional, can be manage through preprocessors.
         data, self.order, self.shape = format_data.preprocess(data)
 
+
         # Factorize matrix
         self.U, self.V = self.matrix_factorization(data,
                                                     self.K,
@@ -89,29 +97,23 @@ class CLiMFLearner(Learner):
                           V=self.V,
                            order=self.order)
 
-    def tensor(self, x, beta):
-        return pow(math.e, -beta * x)
+
 
     def g(self, x):
         """sigmoid function"""
-        return 1 / (1 + math.exp(-x))
+        return sigmoid(x)
 
-    def dg(self, x):
-        """derivative of sigmoid function"""
-        return math.exp(x) / (1 + math.exp(x)) ** 2
+    def dg(seld, x):
+        ex = np.exp(-x)
+        y = ex / (1 + ex) ** 2
+        return y
 
     def precompute_f(self, X, U, V, i):
-        """precompute f[j] = <U[i],V[j]>
-        params:
-          data: scipy csr sparse matrix containing user->(item,count)
-          U   : user factors
-          V   : item factors
-          i   : item of interest
-        returns:
-          dot products <U[i],V[j]> for all j in data[i]
-        """
-        items = X[i]
-        f = dict((j, np.dot(U[i], V[j])) for j in items)
+        """precompute f[j] = <U[i],V[j]>"""
+        items = X[X[:, self.order[0]] == i][:, self.order[1]]
+        #f = dict((j, np.dot(U[i], V[j])) for j in items)
+        values = np.einsum('j,ij->i', U[i], V[items])
+        f = dict(zip(items, values))
         return f
 
 
@@ -145,36 +147,72 @@ class CLiMFLearner(Learner):
 
         # Initialize factorized matrices randomly
         num_users, num_items = self.shape
-        U = np.random.rand(num_users, K)  # User and features
-        V = np.random.rand(num_items, K)  # Item and features
+        U = 0.01*np.random.rand(num_users, K)  # User and features
+        V = 0.01*np.random.rand(num_items, K)  # Item and features
+
+        if verbose:
+            num_train_sample_users = min(num_users, 1000)
+            train_sample_users = random.sample(range(num_users),
+                                               num_train_sample_users)
 
         # Factorize matrix using SGD
         for step in range(steps):
             if verbose:
+                start = time.time()
                 print('- Step: %d' % (step+1))
 
             for i in range(len(U)):
                 dU = -beta * U[i]
+
                 f = self.precompute_f(data.X, U, V, i)
+
                 for j in f:
                     dV = self.g(-f[j]) - beta * V[j]
-                    for k in f:
-                        inv_g1 = 1 - self.g(f[k] - f[j])
-                        inv_g2 = 1 - self.g(f[j] - f[k])
 
+                    for k in f:
                         dV += self.dg(f[j] - f[k]) * (
-                        1 / (inv_g1) - 1 / (inv_g2)) * U[i]
+                        1 / (1 - self.g(f[k] - f[j]))
+                        - 1 / (1 - self.g(f[j] - f[k]))) * U[i]
+
                     V[j] += alpha * dV
                     dU += self.g(-f[j]) * V[j]
-                    for k in f:
+
+                    for k in f:  #range(len(f))
                         dU += (V[j] - V[k]) * self.dg(f[k] - f[j]) / (
                         1 - self.g(f[k] - f[j]))
+
                 U[i] += alpha * dU
+
+            if verbose:
+                print('\tTime: %.3f' % (time.time() - start))
+                print('\tMRR = {0:.4f}\n'.format(
+                    self.compute_mrr(data.X, U,V, train_sample_users)))
 
         return U, V
 
 
+    def compute_mrr(self, X, U, V, test_users=None):
 
+        start = time.time()
+        if test_users is None:
+            test_users = range(len(U))
+
+        # Get scores for all the items for a user[i]
+        predictions = np.dot(U[test_users], V.T)
+        predictions_sorted = np.argsort(predictions)
+        predictions_sorted = np.fliplr(predictions_sorted)
+
+        # Get items that are relevant for the user[i]
+        all_items_u = []
+        for i in test_users:
+            items_u = X[X[:, self.order[0]] == i][:, self.order[1]]
+            all_items_u.append(items_u)
+
+
+        MRR = MeanReciprocalRank(predictions_sorted, all_items_u)
+
+        print('\tTime MRR: %.3f' % (time.time() - start))
+        return MRR
 
 
 class CLiMFModel(Model):
@@ -198,50 +236,7 @@ class CLiMFModel(Model):
         self.order = order
 
 
-    def predict(self, X):
-        """This function receives an array of indexes [[idx_user, idx_item]] and
-        returns the prediction for these pairs.
-
-            Args:
-                X: Matrix (2xN)
-                    Matrix that contains pairs of the type user-item
-
-            Returns:
-                Array with the recommendations for a given user.
-
-            """
-
-        # Check if all indices exist. If not, return random index.
-        # On average, random indices is equivalent to return a global_average
-        X[X[:, self.order[0]] >= self.shape[0], self.order[0]] = \
-            np.random.randint(low=0, high=self.shape[0])
-        X[X[:, self.order[1]] >= self.shape[1], self.order[1]] = \
-            np.random.randint(low=0, high=self.shape[1])
-
-        tempU = self.U[X[:, self.order[0]]]
-        tempV = self.V[X[:, self.order[1]]]
-
-        predictions = np.einsum('ij,ij->i', tempU, tempV)
-
-        return predictions
-
-
-    def predict_storage(self, data):
-        """ Convert data.X variables to integer and calls predict(data.X)
-
-        Args:
-            data: Orange.data.Table
-
-        Returns:
-            Array with the recommendations for a given user.
-
-        """
-
-        # Convert indices to integer and call predict()
-        return self.predict(data.X.astype(int))
-
-
-    def predict_items(self, users=None, top=None):
+    def predict(self, X, top_k=None):
         """This function returns all the predictions for a set of items.
         If users is set to 'None', it will return all the predictions for all
         the users (matrix of size [num_users x num_items]).
@@ -259,16 +254,38 @@ class CLiMFModel(Model):
 
         """
 
-        if users is None:
-            users = np.asarray(range(0, self.shape[0]))
+        # Check if all indices exist. If not, return random index.
+        # On average, random indices is equivalent to return a global_average
+        X = X[:, self.order[0]]
+        X[X >= self.shape[0]] = np.random.randint(low=0, high=self.shape[0])
 
-        predictions = np.einsum('ij,ij->i', self.U[users], self.V)
+        # Compute scores
+        predictions = np.dot(self.U[X], self.V.T)
+
+        # Return indices of the sorted predictions
+        predictions = np.argsort(predictions)
+        predictions = np.fliplr(predictions)
 
         # Return top-k recommendations
-        if top is not None:
-            return predictions[:, :top]
+        if top_k is not None:
+            return predictions[:, :top_k]
 
         return predictions
+
+
+    def predict_storage(self, data):
+        """ Convert data.X variables to integer and calls predict(data.X)
+
+        Args:
+            data: Orange.data.Table
+
+        Returns:
+            Array with the recommendations for a given user.
+
+        """
+
+        # Convert indices to integer and call predict()
+        return self.predict(data.X.astype(int))
 
 
     def __str__(self):
