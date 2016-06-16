@@ -1,11 +1,12 @@
 from Orange.base import Model, Learner
+
 from orangecontrib.recommendation.utils import format_data
+from sklearn.metrics import mean_squared_error
 
 import numpy as np
-from numpy import linalg as LA
-
 import math
 
+import time
 import warnings
 
 __all__ = ['BRISMFLearner']
@@ -70,11 +71,9 @@ class BRISMFLearner(Learner):
 
         """
 
-
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
-                          "well. You are advised to use the LinearRegression "
-                          "estimator", stacklevel=2)
+                          "well.", stacklevel=2)
 
         # Optional, can be manage through preprocessors.
         data, self.order, self.shape = format_data.preprocess(data)
@@ -144,7 +143,8 @@ class BRISMFLearner(Learner):
                 # Factorize matrix using SGD
                 for step in range(steps):
                     if verbose:
-                        print('- Step: %d' % (step+1))
+                        start = time.time()
+                        print('- Step: %d' % (step + 1))
 
                     # Compute predictions
                     for k in range(0, len(data.Y)):
@@ -164,29 +164,14 @@ class BRISMFLearner(Learner):
                         P[i] -= tempP
                         Q[j] -= tempQ
 
+                    if verbose:
+                        print('\tTime: %.3fs' % (time.time() - start))
+                        print('\tRMSE: %.3f\n' % self.compute_rmse(data,
+                                                                 bias, P, Q))
             except Warning as e:
                 if verbose:
                     print('- BRISMF ERROR: ', e)
                 pass
-
-
-
-        # Compute error (this section can be commented)
-        if verbose:
-            error = 0
-            for k in range(0, len(data.Y)):
-                i = data.X[k][self.order[0]]  # Users
-                j = data.X[k][self.order[1]]  # Items
-
-                rij_pred = self.global_average + \
-                           bias['dItems'][j] + \
-                           bias['dUsers'][i] + \
-                           np.dot(P[i, :], Q[j, :])
-
-                error += (rij_pred - data.Y[k])**2
-
-            error = math.sqrt(error/len(data.Y))
-            print('- RMSE: %.3f' % error)
 
         return P, Q, bias
 
@@ -235,6 +220,21 @@ class BRISMFLearner(Learner):
         return bias
 
 
+    def compute_rmse(self, data, bias, P, Q):
+        sq_error = 0
+        for k in range(0, len(data.Y)):
+            i = data.X[k][self.order[0]]  # Users
+            j = data.X[k][self.order[1]]  # Items
+
+            rij_pred = self.global_average + \
+                       bias['dItems'][j] + \
+                       bias['dUsers'][i] + \
+                       np.dot(P[i, :], Q[j, :])
+            sq_error += (rij_pred - data.Y[k]) ** 2
+
+        # Compute RMSE
+        rmse = math.sqrt(sq_error / len(data.Y))
+        return rmse
 
 class BRISMFModel(Model):
 

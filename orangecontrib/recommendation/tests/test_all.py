@@ -6,7 +6,8 @@
 #         'test_item_avg',
 #         'test_user_avg',
 #         'test_user_item_baseline',
-#         'test_brismf'
+#         'test_brismf',
+#         'test_climf'
 #     ]
 #
 #     suite = unittest.TestSuite()

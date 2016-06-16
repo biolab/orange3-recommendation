@@ -1,6 +1,8 @@
 # Build files
 Orange3_Recommendation.egg-info
 Orange3_Recommendation.egg-info/*
+llvmlite
+llvmlite/*
 
 # Documentation
 doc/build

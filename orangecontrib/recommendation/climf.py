@@ -7,8 +7,8 @@ import numpy as np
 from scipy.special import expit as sigmoid
 
 import time
-import warnings
 import random
+import warnings
 
 __all__ = ['CLiMFLearner']
 
@@ -72,8 +72,7 @@ class CLiMFLearner(Learner):
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
-                          "well. You are advised to use the LinearRegression "
-                          "estimator", stacklevel=2)
+                          "well.", stacklevel=2)
 
         # Optional, can be manage through preprocessors.
         data, self.order, self.shape = format_data.preprocess(data)
@@ -175,7 +174,7 @@ class CLiMFLearner(Learner):
                 U[i] += alpha * dU
 
             if verbose:
-                print('\tTime: %.3f' % (time.time() - start))
+                print('\tTime: %.3fs' % (time.time() - start))
                 print('\tMRR = {0:.4f}\n'.format(
                     self.compute_mrr(data.X, U,V, train_sample_users)))
 
@@ -202,7 +201,7 @@ class CLiMFLearner(Learner):
 
         MRR = MeanReciprocalRank(predictions_sorted, all_items_u)
 
-        print('\tTime MRR: %.3f' % (time.time() - start))
+        print('\tTime MRR: %.3fs' % (time.time() - start))
         return MRR
 
 

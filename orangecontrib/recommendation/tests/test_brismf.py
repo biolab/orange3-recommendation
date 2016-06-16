@@ -43,7 +43,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=5, verbose=False)
+        learner = BRISMFLearner(K=10, steps=5, verbose=True)
         recommender = learner(data)
 
         # Compute predictions
@@ -127,6 +127,14 @@ class TestBRISMF(unittest.TestCase):
 
         self.assertIsInstance(rmse, np.ndarray)
 
+
 if __name__ == "__main__":
-    unittest.main()
+    # Test all
+    #unittest.main()
+
+    # Test single test
+    suite = unittest.TestSuite()
+    suite.addTest(TestBRISMF("test_BRISMF_predict_items"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 
