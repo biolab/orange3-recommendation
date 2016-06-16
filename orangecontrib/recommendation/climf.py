@@ -1,15 +1,10 @@
 from Orange.base import Model, Learner
-from Orange.evaluation.scoring import RMSE
 
 from orangecontrib.recommendation.utils import format_data
 from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
 import numpy as np
-from numpy import linalg as LA
-import numpy.ma as ma
 from scipy.special import expit as sigmoid
-
-import math
 
 import time
 import warnings
