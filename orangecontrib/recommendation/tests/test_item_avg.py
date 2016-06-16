@@ -1,5 +1,6 @@
 import os
 import math
+import random
 import unittest
 
 import Orange
@@ -62,20 +63,20 @@ class TestItemAvg(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = ItemAvgLearner(verbose=False)
+        learner = ItemAvgLearner(verbose=True)
         recommender = learner(data)
 
         # Compute predictions
-        prediction = recommender.predict_items()
-        y_pred = prediction[data.X[:, recommender.order[0]],
-                            data.X[:, recommender.order[1]]]
-
-        # Compute RMSE
-        rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
-        print('-> RMSE (predict items): %.3f' % rmse)
+        num_users = min(recommender.shape[0], 10)
+        num_items = min(recommender.shape[1], 5)
+        users_sampled = random.sample(range(recommender.shape[0]), num_users)
+        prediction = recommender.predict_items(users=users_sampled,
+                                               top=num_items)
 
         # Check correctness
-        self.assertGreaterEqual(rmse, 0)
+        len_u, len_i = prediction.shape
+        self.assertEqual(len_u, num_users)
+        self.assertEqual(len_i, num_items)
 
 
     def test_ItemAvg_input_data(self):

@@ -21,9 +21,6 @@ class TestCLiMF(unittest.TestCase):
         learner = CLiMFLearner(K=10, steps=10, alpha=0.0001, beta=0.001, verbose=True)
         recommender = learner(data)
 
-        # filename = '../datasets/epinions_test.tab'
-        # data = Orange.data.Table(filename)
-
         # Select subset to test
         num_sample = min(recommender.shape[0], 100)
         test_users = random.sample(range(recommender.shape[0]),num_sample)
