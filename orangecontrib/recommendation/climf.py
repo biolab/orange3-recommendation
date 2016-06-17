@@ -259,7 +259,7 @@ class CLiMFModel(Model):
 
         # Return top-k recommendations
         if top_k is not None:
-            return predictions[:, :top_k]
+            predictions = predictions[:, :top_k]
 
         return predictions
 
