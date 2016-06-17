@@ -14,10 +14,13 @@ LONG_DESCRIPTION = open(README_FILE).read()
 AUTHOR = 'Bioinformatics Laboratory, FRI UL'
 AUTHOR_EMAIL = 'contact@orange.biolab.si'
 URL = "https://github.com/salvacarrion/orange3-recommendation"
-DOWNLOAD_URL = "https://github.com/salvacarrion/orange3-recommendation".format(VERSION)
+DOWNLOAD_URL = "https://github.com/salvacarrion/orange3-recommendation/tarball/{}".format(VERSION)
 
 
 ENTRY_POINTS = {
+    'orange3.addon': (
+        'recommendation = orangecontrib.recommendation',
+    ),
     # Entry point used to specify packages containing tutorials accessible
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
     'orange.widgets.tutorials': (

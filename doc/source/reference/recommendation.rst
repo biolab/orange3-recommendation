@@ -253,11 +253,28 @@ Example
 
     >>> import Orange
     >>> from orangecontrib.recommendation import CLiMFLearner
-    >>> data = Orange.data.Table('binary_data.tab')
-    >>> learner = CLiMFLearner(K=10, steps=5, alpha=0.05, beta=0.01)
+    >>>
+    >>> # Load data and train the model
+    >>> data = Orange.data.Table('epinions_train.tab')
+    >>> learner = CLiMFLearner(K=10, steps=10, alpha=0.0001, beta=0.001)
     >>> recommender = learner(data)
-    >>> prediction = recommender(data[:3])
-    >>> print(prediction)
+    >>>
+    >>> # Load testing set
+    >>> data = Orange.data.Table('epinions_test.tab')
+    >>>
+    >>> # Compute predictions
+    >>> y_pred = recommender(data)
+    >>>
+    >>> # Get relevant items for the user[i]
+    >>> all_items_u = []
+    >>> for i in data.X[:, recommender.order[0]]:
+    >>>     items_u = data.X[data.X[:, recommender.order[0]] == i][:, recommender.order[1]]
+    >>>     all_items_u.append(items_u)
+    >>>
+    >>> # Compute Mean Reciprocal Rank (MRR)
+    >>> mrr = MeanReciprocalRank(results=y_pred, query=all_items_u)
+    >>> print('MRR: %.3f' % mrr)
+    MRR: 0.481
 
 .. autoclass:: CLiMFLearner
    :members:

@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_BRISMF_input_data"))
+    suite.addTest(TestBRISMF("test_BRISMF_CV"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

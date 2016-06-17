@@ -1,4 +1,5 @@
 from Orange.base import Model, Learner
+from Orange.data import Table
 
 from orangecontrib.recommendation.utils import format_data
 from orangecontrib.recommendation.evaluation import MeanReciprocalRank
@@ -225,6 +226,26 @@ class CLiMFModel(Model):
         self.shape = (len(self.U), len(self.V))
         self.order = order
 
+    def __call__(self, *args, **kwargs):
+        """
+        We need to override the __call__ of the base.model because it transforms
+        the output to 'argmax(probabilities=X)'
+        """
+
+        data = args[0]
+        top_k = None
+        if 'top_k' in kwargs:  # Check if this parameters exists
+            top_k = kwargs['top_k']
+
+        if isinstance(data, np.ndarray):
+            prediction = self.predict(X=data, top_k=top_k)
+        elif isinstance(data, Table):
+            prediction = self.predict(X=data.X.astype(int), top_k=top_k)
+        else:
+            raise TypeError("Unrecognized argument (instance of '{}')"
+                            .format(type(data).__name__))
+
+        return prediction
 
     def predict(self, X, top_k=None):
         """This function returns all the predictions for a set of items.
@@ -261,22 +282,7 @@ class CLiMFModel(Model):
         if top_k is not None:
             predictions = predictions[:, :top_k]
 
-        return predictions
-
-
-    def predict_storage(self, data):
-        """ Convert data.X variables to integer and calls predict(data.X)
-
-        Args:
-            data: Orange.data.Table
-
-        Returns:
-            Array with the recommendations for a given user.
-
-        """
-
-        # Convert indices to integer and call predict()
-        return self.predict(data.X.astype(int))
+        return predictions.ravel()
 
 
     def __str__(self):

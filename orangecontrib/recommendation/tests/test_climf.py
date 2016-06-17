@@ -6,7 +6,9 @@ import Orange
 from orangecontrib.recommendation import CLiMFLearner
 from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
+import numpy as np
 import random
+
 
 class TestCLiMF(unittest.TestCase):
 
@@ -27,9 +29,8 @@ class TestCLiMF(unittest.TestCase):
         test_users = random.sample(range(recommender.shape[0]),num_sample)
 
         # Compute predictions
-        #y_pred = recommender(data[test_users])
-        y_pred = recommender.predict(data[test_users].X,
-                                     top_k=min(recommender.shape[1], 5))
+        y_pred = recommender(data[test_users].X,
+                              top_k=min(recommender.shape[1], 5))
 
         # Get relevant items for the user
         all_items_u = []
@@ -68,10 +69,10 @@ class TestCLiMF(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    unittest.main()
+    #unittest.main()
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
+    suite.addTest(TestCLiMF("test_CLiMF_CV"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
