@@ -50,7 +50,7 @@ orangecontrib
            |- user_avg
            |- user_item_baseline
            |- brismf
-           |- climf*
+           |- climf
            |- SDV++*
            |- TrustSVD*
        |- tests

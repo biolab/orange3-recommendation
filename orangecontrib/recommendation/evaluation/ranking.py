@@ -1,11 +1,22 @@
 import numpy as np
-import sklearn.metrics as skl_metrics
-from Orange.evaluation.scoring import Score
 
 __all__ = ['ReciprocalRank', 'MeanReciprocalRank']
 
-
 def ReciprocalRank(results, query):
+    """ The Reciprocal Rank (RR) is the multiplicative inverse of the rank of
+    the first correct answer.
+
+    Args:
+        results: array
+            Array with the responses. => [[4, 2, 12, 52], [3, 2, 10]]
+
+        query: array
+            Array with the query. => [[12], [10, 4]]
+
+    Returns:
+        List of floats
+
+    """
 
     all_ranks = []
     for i in range(len(results)):
@@ -24,5 +35,21 @@ def ReciprocalRank(results, query):
 
 
 def MeanReciprocalRank(results, query):
+    """ The Mean Reciprocal Rank (MRR) is statistic measure to evaluate processes
+    which produce multiple responses to a query, sorted by probability of
+    correctness.
+
+    Args:
+        results: array
+            Array with the responses. => [[4, 2, 12, 52], [3, 2, 10]]
+
+        query: array
+            Array with the query. => [[12], [10, 4]]
+
+    Returns:
+        float
+
+    """
+
     return np.mean(ReciprocalRank(results, query))
 

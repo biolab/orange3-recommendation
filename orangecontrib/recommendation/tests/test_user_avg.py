@@ -88,6 +88,7 @@ class TestUserAvg(unittest.TestCase):
         # Train recommender
         learner = UserAvgLearner(verbose=False)
         recommender = learner(data)
+        print(str(recommender) + ' trained')
 
         # Compute predictions
         y_pred = recommender(data)

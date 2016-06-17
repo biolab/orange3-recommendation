@@ -73,16 +73,16 @@ class TestUserItemBaseline(unittest.TestCase):
         learner = UserItemBaselineLearner(verbose=True)
         recommender = learner(data)
 
-        # Compute predictions
-        num_users = min(recommender.shape[0], 10)
+        # Compute predictions (-force 'None': All users for test coverage-)
+        #num_users = min(recommender.shape[0], 10)
         num_items = min(recommender.shape[1], 5)
-        users_sampled = random.sample(range(recommender.shape[0]), num_users)
-        prediction = recommender.predict_items(users=users_sampled,
+        #users_sampled = random.sample(range(recommender.shape[0]), num_users)
+        prediction = recommender.predict_items(users=None,
                                                top=num_items)
 
         # Check correctness
         len_u, len_i = prediction.shape
-        self.assertEqual(len_u, num_users)
+        self.assertEqual(len_u, recommender.shape[0])
         self.assertEqual(len_i, num_items)
 
 
@@ -95,6 +95,7 @@ class TestUserItemBaseline(unittest.TestCase):
         # Train recommender
         learner = UserItemBaselineLearner(verbose=False)
         recommender = learner(data)
+        print(str(recommender) + ' trained')
 
         # Compute predictions
         y_pred = recommender(data)

@@ -82,6 +82,7 @@ class TestGlobalAvg(unittest.TestCase):
         # Train recommender
         learner = GlobalAvgLearner(verbose=False)
         recommender = learner(data)
+        print(str(recommender) + ' trained')
 
         # Compute predictions
         y_pred = recommender(data)

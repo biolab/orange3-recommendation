@@ -344,7 +344,7 @@ class BRISMFModel(Model):
 
         # Return top-k recommendations
         if top is not None:
-            return predictions[:, :top]
+            predictions = predictions[:, :top]
 
         return predictions
 

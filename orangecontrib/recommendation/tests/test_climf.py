@@ -20,6 +20,7 @@ class TestCLiMF(unittest.TestCase):
         # Train recommender
         learner = CLiMFLearner(K=10, steps=10, alpha=0.0001, beta=0.001, verbose=True)
         recommender = learner(data)
+        print(str(recommender) + ' trained')
 
         # Select subset to test
         num_sample = min(recommender.shape[0], 100)
