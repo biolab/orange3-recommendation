@@ -67,16 +67,12 @@ class TestUserAvg(unittest.TestCase):
         recommender = learner(data)
 
         # Compute predictions
-        num_users = min(recommender.shape[0], 10)
-        num_items = min(recommender.shape[1], 5)
-        users_sampled = random.sample(range(recommender.shape[0]), num_users)
-        prediction = recommender.predict_items(users=users_sampled,
-                                               top=num_items)
+        prediction = recommender.predict_items(users=None, top=None)
 
         # Check correctness
         len_u, len_i = prediction.shape
-        self.assertEqual(len_u, num_users)
-        self.assertEqual(len_i, num_items)
+        self.assertEqual(len_u, recommender.shape[0])
+        self.assertEqual(len_i, recommender.shape[1])
 
 
     def test_UserAvg_input_data(self):

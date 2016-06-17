@@ -28,7 +28,8 @@ class TestCLiMF(unittest.TestCase):
 
         # Compute predictions
         #y_pred = recommender(data[test_users])
-        y_pred = recommender.predict(data[test_users].X, top_k=None)
+        y_pred = recommender.predict(data[test_users].X,
+                                     top_k=min(recommender.shape[1], 5))
 
         # Get relevant items for the user
         all_items_u = []
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     unittest.main()
 
     # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestCLiMF("test_CLiMF_input_data"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)

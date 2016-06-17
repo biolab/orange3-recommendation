@@ -127,51 +127,43 @@ class BRISMFLearner(Learner):
 
         """
 
-        # This line allow us to catch warning as if they were exceptions
-        with warnings.catch_warnings():
-            warnings.filterwarnings('error')
 
-            # Initialize factorized matrices randomly
-            num_users, num_items = self.shape
-            P = np.random.rand(num_users, K)  # User and features
-            Q = np.random.rand(num_items, K)  # Item and features
+        # Initialize factorized matrices randomly
+        num_users, num_items = self.shape
+        P = np.random.rand(num_users, K)  # User and features
+        Q = np.random.rand(num_items, K)  # Item and features
 
-            # Compute biases
-            bias = self.compute_bias(data)
+        # Compute biases
+        bias = self.compute_bias(data)
 
-            try:
-                # Factorize matrix using SGD
-                for step in range(steps):
-                    if verbose:
-                        start = time.time()
-                        print('- Step: %d' % (step + 1))
+        # Factorize matrix using SGD
+        for step in range(steps):
+            if verbose:
+                start = time.time()
+                print('- Step: %d' % (step + 1))
 
-                    # Compute predictions
-                    for k in range(0, len(data.Y)):
-                        i = data.X[k][self.order[0]]  # Users
-                        j = data.X[k][self.order[1]]  # Items
+            # Compute predictions
+            for k in range(0, len(data.Y)):
+                i = data.X[k][self.order[0]]  # Users
+                j = data.X[k][self.order[1]]  # Items
 
-                        rij_pred = self.global_average + \
-                                   bias['dItems'][j] + \
-                                   bias['dUsers'][i] + \
-                                   np.dot(P[i], Q[j])
+                rij_pred = self.global_average + \
+                           bias['dItems'][j] + \
+                           bias['dUsers'][i] + \
+                           np.dot(P[i], Q[j])
 
-                        # This error goes to infinite for some values of beta
-                        eij = rij_pred - data.Y[k]
+                # This error goes to infinite for some values of beta
+                eij = rij_pred - data.Y[k]
 
-                        tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
-                        tempQ = alpha * 2 * (eij * P[i] + beta * Q[j])
-                        P[i] -= tempP
-                        Q[j] -= tempQ
+                tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
+                tempQ = alpha * 2 * (eij * P[i] + beta * Q[j])
+                P[i] -= tempP
+                Q[j] -= tempQ
 
-                    if verbose:
-                        print('\tTime: %.3fs' % (time.time() - start))
-                        print('\tRMSE: %.3f\n' % self.compute_rmse(data,
-                                                                 bias, P, Q))
-            except Warning as e:
-                if verbose:
-                    print('- BRISMF ERROR: ', e)
-                pass
+            if verbose:
+                print('\tTime: %.3fs' % (time.time() - start))
+                print('\tRMSE: %.3f\n' % self.compute_rmse(data,
+                                                         bias, P, Q))
 
         return P, Q, bias
 

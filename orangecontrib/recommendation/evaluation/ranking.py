@@ -24,10 +24,16 @@ def ReciprocalRank(results, query):
         all_rr = []
         for j in query[i]:
             rank = np.where(results[i] == j)[0]
+
+            if len(rank) == 0:  # Check values not found
+                rank = len(query[i])
+            else:
+                rank = rank[0]
             all_rr.append(rank)
 
         # Get the item best ranked (the smaller, the better; 1st, 2nd,..)
         min_rank = min(all_rr)
+
         rr = 1.0 / (min_rank + 1)
         all_ranks.append(rr)
 
