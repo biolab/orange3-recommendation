@@ -282,7 +282,7 @@ class CLiMFModel(Model):
         if top_k is not None:
             predictions = predictions[:, :top_k]
 
-        return predictions.ravel()
+        return predictions
 
 
     def __str__(self):
