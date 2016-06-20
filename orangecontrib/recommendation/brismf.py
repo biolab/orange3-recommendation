@@ -1,5 +1,4 @@
-from Orange.base import Model, Learner
-
+from orangecontrib.recommendation import Learner, Model
 from orangecontrib.recommendation.utils import format_data
 from sklearn.metrics import mean_squared_error
 
@@ -228,6 +227,7 @@ class BRISMFLearner(Learner):
         rmse = math.sqrt(sq_error / len(data.Y))
         return rmse
 
+
 class BRISMFModel(Model):
 
     def __init__(self, P, Q, bias, global_average, order):
@@ -339,7 +339,6 @@ class BRISMFModel(Model):
             predictions = predictions[:, :top]
 
         return predictions
-
 
     def __str__(self):
         return self.name

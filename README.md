@@ -195,7 +195,7 @@ Relevant links
 ==============
 
 - Official source code repo: [https://github.com/salvacarrion/orange3-recommendation](https://github.com/salvacarrion/orange3-recommendation)
-- HTML documentation: [https://readthedocs.org/projects/orange3-recommendation](https://readthedocs.org/projects/orange3-recommendation)
+- HTML documentation: [http://orange3-recommendation.readthedocs.io](http://orange3-recommendation.readthedocs.io)
 - Download releases: [https://github.com/salvacarrion/orange3-recommendation/releases](https://github.com/salvacarrion/orange3-recommendation/releases)
 - Issue tracker: [https://github.com/salvacarrion/orange3-recommendation/issues](https://github.com/salvacarrion/orange3-recommendation/issues)
 

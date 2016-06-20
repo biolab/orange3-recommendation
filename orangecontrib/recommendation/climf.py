@@ -1,6 +1,6 @@
-from Orange.base import Model, Learner
 from Orange.data import Table
 
+from orangecontrib.recommendation import Learner, Model
 from orangecontrib.recommendation.utils import format_data
 from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
@@ -287,3 +287,4 @@ class CLiMFModel(Model):
 
     def __str__(self):
         return self.name
+
