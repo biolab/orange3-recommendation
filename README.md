@@ -13,7 +13,6 @@ Dependencies
 ============
 
 Orange3-Recommendation is tested to work under Python 3.
-numpy
 
 The required dependencies to build the software are Numpy >= 1.9.0 and Scikit-Learn >= 0.16
 
