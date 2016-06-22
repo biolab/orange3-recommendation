@@ -29,8 +29,12 @@ class TestCLiMF(unittest.TestCase):
         test_users = random.sample(range(recommender.shape[0]),num_sample)
 
         # Compute predictions
-        y_pred = recommender(data[test_users].X,
+        y_pred = recommender(data[test_users],
                               top_k=min(recommender.shape[1], 5))
+
+        # Compute predictions (Second calling type)
+        y_pred2 = recommender(data[test_users].X,
+                             top_k=min(recommender.shape[1], 5))
 
         # Get relevant items for the user
         all_items_u = []
@@ -44,6 +48,7 @@ class TestCLiMF(unittest.TestCase):
 
         # Check correctness
         self.assertGreaterEqual(mrr, 0)
+        np.testing.assert_equal(y_pred, y_pred2)
 
 
     def test_CLiMF_CV(self):
