@@ -1,5 +1,5 @@
 ======
-CLIMF
+CLiMF
 ======
 
 .. figure:: icons/climf.png

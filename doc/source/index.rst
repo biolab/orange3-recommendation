@@ -13,6 +13,7 @@ Widgets
    :maxdepth: 1
 
    widgets/brismf.rst
+   widgets/climf.rst
 
 
 Scripting Reference
