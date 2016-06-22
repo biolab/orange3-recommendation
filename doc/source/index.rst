@@ -14,6 +14,10 @@ Widgets
 
    widgets/brismf.rst
    widgets/climf.rst
+   widgets/global_avg.rst
+   widgets/user_avg.rst
+   widgets/item_avg.rst
+   widgets/user_item_baseline.rst
 
 
 Scripting Reference
