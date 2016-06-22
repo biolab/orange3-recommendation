@@ -1,5 +1,5 @@
 ==============
-Glboal average
+Global average
 ==============
 
 .. figure:: icons/average.svg
