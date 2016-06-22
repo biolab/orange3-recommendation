@@ -27,3 +27,26 @@ WIDGET_HELP_PATH = (
     # performed by comparing link caption to widget name.
     ("http://orange3-recommendation.readthedocs.io/en/latest", "")
 )
+
+
+"""
+***************************************************************************
+************************** CREDITS FOR THE ICONS **************************
+***************************************************************************
+
+- 'star.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'starred-list' icon made by [Freepik] from [www.flaticon.com]
+- 'customer.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'stars.svg' icon made by [ Alfredo Hernandez] from [www.flaticon.com]
+- 'star2.svg' icon made by [EpicCoders] from [www.flaticon.com]
+- 'brismf.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'manager.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'ranking.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'candidates-ranking-graphic.svg' icon made by [Freepik] from [www.flaticon.com]
+
+- 'organization.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'task.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'list.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'ranking.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'ranking.svg' icon made by [Freepik] from [www.flaticon.com]
+"""

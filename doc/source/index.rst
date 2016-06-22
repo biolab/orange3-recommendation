@@ -6,15 +6,23 @@
 Welcome to Orange3-Recommendation's documentation!
 ==================================================
 
-Reference
----------
-
-Available classes and methods.
+Widgets
+-------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   reference/recommendation
+   widgets/brismf.rst
+
+
+Scripting Reference
+-------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   scripting/recommendation.rst
+
 
 Indices and tables
 ==================

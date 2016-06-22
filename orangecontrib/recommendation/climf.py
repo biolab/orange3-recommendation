@@ -16,8 +16,11 @@ __all__ = ['CLiMFLearner']
 class CLiMFLearner(Learner):
     """ Collaborative Less-is-More Filtering Matrix Factorization
 
-    This model is focused on improving top-k recommendations through
-    ranking by directly maximizing the Mean Reciprocal Rank (MRR)
+    Matrix factorization for scenarios with binary relevance data when only a
+    few (k) items are recommended to individual users. It improves top-k
+    recommendations through ranking by directly maximizing the Mean Reciprocal
+    Rank (MRR).
+
 
     Attributes:
         K: int, optional
