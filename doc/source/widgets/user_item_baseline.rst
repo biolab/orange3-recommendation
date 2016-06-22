@@ -2,7 +2,7 @@
 User-Item baseline
 ==================
 
-.. figure:: icons/user-item-baseline.png
+.. figure:: icons/user-item-baseline.svg
 
 This model takes the bias of users and items plus the global average to make
 predictions.

@@ -2,7 +2,7 @@
 User average
 ============
 
-.. figure:: icons/user-avg.png
+.. figure:: icons/user-avg.svg
 
 Uses the average rating value of a user to make predictions.
 

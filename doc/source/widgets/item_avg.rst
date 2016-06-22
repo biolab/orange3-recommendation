@@ -2,7 +2,7 @@
 Item average
 ============
 
-.. figure:: icons/item-avg.png
+.. figure:: icons/item-avg.svg
 
 Uses the average rating value of an item to make predictions.
 
