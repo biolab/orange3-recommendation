@@ -101,6 +101,7 @@ Example
 
 .. autoclass:: GlobalAvgLearner
    :members:
+   :special-members: __init__
 
 
 
@@ -130,6 +131,7 @@ Example
 
 .. autoclass:: UserAvgLearner
    :members:
+   :special-members: __init__
 
 
 
@@ -158,6 +160,7 @@ Example
 
 .. autoclass:: ItemAvgLearner
    :members:
+   :special-members: __init__
 
 
 
@@ -187,11 +190,12 @@ Example
 
 .. autoclass:: UserItemBaselineLearner
    :members:
+   :special-members: __init__
 
 
 
 .. index:: .. index:: brismf
-pair: recommenders; brismf
+   pair: recommenders; brismf
 
 BRISMF
 ------
@@ -229,11 +233,12 @@ Example
 
 .. autoclass:: BRISMFLearner
    :members:
+   :special-members: __init__
 
 
 
 .. index:: .. index:: climf
-pair: recommenders; climf
+   pair: recommenders; climf
 
 CLiMF
 -----
@@ -278,4 +283,5 @@ Example
 
 .. autoclass:: CLiMFLearner
    :members:
+   :special-members: __init__
 
