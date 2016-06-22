@@ -26,7 +26,7 @@ ENTRY_POINTS = {
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
     'orange.widgets.tutorials': (
         # Syntax: any_text = path.to.package.containing.tutorials
-        #'exampletutorials = orangecontrib.recsystems.tutorials',
+        'recommendationtutorials = orangecontrib.recommendation.tutorials',
     ),
 
     # Entry point used to specify packages containing widgets.
