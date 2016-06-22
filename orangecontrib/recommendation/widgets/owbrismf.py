@@ -14,7 +14,7 @@ class OWBRISMF(OWBaseLearner):
     name = "BRISMF"
     description = 'Matrix factorization with explicit ratings, learning is ' \
                   'performed by stochastic gradient descent.'
-    icon = "icons/mywidget.svg"
+    icon = "icons/ranking.svg"
     priority = 80
 
     LEARNER = BRISMFLearner

@@ -15,7 +15,7 @@ class OWBRISMF(OWBaseLearner):
     description = 'This model is focused on improving top-k recommendations' \
                   ' through ranking by directly maximizing the Mean Reciprocal'\
                   ' Rank (MRR)'
-    icon = "icons/mywidget.svg"
+    icon = "icons/rankings.svg"
     priority = 80
 
     LEARNER = CLiMFLearner

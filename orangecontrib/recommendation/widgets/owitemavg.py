@@ -9,7 +9,7 @@ class OWItemAvg(OWBaseLearner):
     # and not shown in the menu.
     name = "Item Average"
     description = 'Uses the average rating value of an item to make predictions.'
-    icon = "icons/mywidget.svg"
+    icon = "icons/starred-list.svg"
     priority = 80
 
     LEARNER = ItemAvgLearner

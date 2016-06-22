@@ -10,7 +10,7 @@ class OWUserItemBaseline(OWBaseLearner):
     name = "User-Item Baseline"
     description = 'This model takes the bias of users and items plus the ' \
                   'global average to make predictions.'
-    icon = "icons/mywidget.svg"
+    icon = "icons/organization.svg"
     priority = 80
 
     LEARNER = UserItemBaselineLearner

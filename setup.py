@@ -19,8 +19,9 @@ DOWNLOAD_URL = "https://github.com/salvacarrion/orange3-recommendation/tarball/{
 
 ENTRY_POINTS = {
     'orange3.addon': (
-        'Recommendation = orangecontrib.recommendation',
+        'recommendation = orangecontrib.recommendation',
     ),
+
     # Entry point used to specify packages containing tutorials accessible
     # from welcome screen. Tutorials are saved Orange Workflows (.ows files).
     'orange.widgets.tutorials': (
@@ -33,8 +34,12 @@ ENTRY_POINTS = {
         # Syntax: category name = path.to.package.containing.widgets
         # Widget category specification can be seen in
         #    orangecontrib/example/widgets/__init__.py
-        'recommendation = orangecontrib.recommendation.widgets',
+        'Recommendation = orangecontrib.recommendation.widgets',
     ),
+
+    # Register widget help
+    "orange.canvas.help": (
+        'html-index = orangecontrib.recommendation.widgets:WIDGET_HELP_PATH',),
 }
 
 KEYWORDS = [

@@ -9,7 +9,7 @@ class OWGlobalAvg(OWBaseLearner):
     # and not shown in the menu.
     name = "Global Average"
     description = 'Uses the average rating value of all ratings to make predictions'
-    icon = "icons/mywidget.svg"
+    icon = "icons/average.svg"
     priority = 80
 
     LEARNER = GlobalAvgLearner

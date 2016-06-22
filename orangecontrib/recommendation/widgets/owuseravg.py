@@ -9,7 +9,7 @@ class OWUserAvg(OWBaseLearner):
     # and not shown in the menu.
     name = "User Average"
     description = 'Uses the average rating value of a user to make predictions.'
-    icon = "icons/mywidget.svg"
+    icon = "icons/candidates-ranking-graphic.svg"
     priority = 80
 
     LEARNER = UserAvgLearner
