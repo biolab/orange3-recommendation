@@ -3,6 +3,7 @@ Glboal average
 ==============
 
 .. figure:: icons/average.svg
+    :width: 64pt
 
 Uses the average rating value of all ratings to make predictions.
 

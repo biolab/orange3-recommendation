@@ -3,6 +3,7 @@ Item average
 ============
 
 .. figure:: icons/item-avg.svg
+    :width: 64pt
 
 Uses the average rating value of an item to make predictions.
 

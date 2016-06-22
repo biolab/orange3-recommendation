@@ -3,6 +3,7 @@ BRISMF
 ======
 
 .. figure:: icons/brismf.svg
+    :width: 64pt
 
 Matrix factorization with explicit ratings, learning is performed by stochastic
 gradient descent.

@@ -3,6 +3,7 @@ User average
 ============
 
 .. figure:: icons/user-avg.svg
+    :width: 64pt
 
 Uses the average rating value of a user to make predictions.
 

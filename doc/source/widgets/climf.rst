@@ -3,6 +3,7 @@ CLiMF
 ======
 
 .. figure:: icons/climf.svg
+    :width: 64pt
 
 Matrix factorization for scenarios with binary relevance data when only a few
 (k) items are recommended to individual users. It improves top-k recommendations
