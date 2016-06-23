@@ -37,7 +37,7 @@ input *Data* is present.
 Description
 -----------
 
-**Global average** widget uses computes the bias of users and items plus the
+**User-Item baseline** widget uses computes the bias of users and items plus the
 global average to make predictions.
 
 

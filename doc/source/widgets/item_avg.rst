@@ -36,7 +36,7 @@ input *Data* is present.
 Description
 -----------
 
-**User average** widget uses computes the average of each item to make
+**Item average** widget uses computes the average of each item to make
 predictions.
 
 
