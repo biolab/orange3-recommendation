@@ -72,12 +72,27 @@ class TestCLiMF(unittest.TestCase):
         #
         # self.assertIsInstance(mrr, np.ndarray)
 
+    def test_CLiMF_warnings(self):
+        # Load data
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
+        data = Orange.data.Table(filename)
+
+        # Train recommender
+        learner = CLiMFLearner(K=2, steps=1, alpha=0.0, verbose=False)
+
+        self.assertWarns(
+            UserWarning,
+            learner,
+            data
+        )
+
 if __name__ == "__main__":
     # Test all
     #unittest.main()
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
+    suite.addTest(TestCLiMF("test_CLiMF_warnings"))
     runner = unittest.TextTestRunner()
     runner.run(suite)

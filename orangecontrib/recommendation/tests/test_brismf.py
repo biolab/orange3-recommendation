@@ -47,16 +47,23 @@ class TestBRISMF(unittest.TestCase):
         learner = BRISMFLearner(K=10, steps=5, verbose=True)
         recommender = learner(data)
 
-        # Compute predictions (-force 'None': All users for test coverage-)
-        #num_users = min(recommender.shape[0], 10)
-        num_items = min(recommender.shape[1], 5)
-        #users_sampled = random.sample(range(recommender.shape[0]), num_users)
-        prediction = recommender.predict_items(users=None,
-                                               top=num_items)
+        # Compute predictions 1
+        prediction = recommender.predict_items(users=None, top=None)
 
-        # Check correctness
+        # Compute predictions 2 (Execute the other branch)
+        num_users = min(recommender.shape[0], 5)
+        num_items = min(recommender.shape[1], 5)
+        setUsers = random.sample(range(recommender.shape[0]), num_users)
+        prediction2 = recommender.predict_items(users=setUsers, top=num_items)
+
+        # Check correctness 1
         len_u, len_i = prediction.shape
         self.assertEqual(len_u, recommender.shape[0])
+        self.assertEqual(len_i, recommender.shape[1])
+
+        # Check correctness 2
+        len_u, len_i = prediction2.shape
+        self.assertEqual(len_u, num_users)
         self.assertEqual(len_i, num_items)
 
 
@@ -129,13 +136,28 @@ class TestBRISMF(unittest.TestCase):
 
         self.assertIsInstance(rmse, np.ndarray)
 
+    def test_BRISMF_warnings(self):
+        # Load data
+        filename = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
+        data = Orange.data.Table(filename)
+
+        # Train recommender
+        learner = BRISMFLearner(K=2, steps=1, alpha=0.0, verbose=False)
+
+        self.assertWarns(
+            UserWarning,
+            learner,
+            data
+        )
+
 if __name__ == "__main__":
     # Test all
     #unittest.main()
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_BRISMF_CV"))
+    suite.addTest(TestBRISMF("test_BRISMF_warnings"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 
