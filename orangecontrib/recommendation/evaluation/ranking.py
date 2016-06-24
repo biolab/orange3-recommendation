@@ -26,7 +26,7 @@ def ReciprocalRank(results, query):
             rank = np.where(results[i] == j)[0]
 
             if len(rank) == 0:  # Check values not found
-                rank = len(query[i])
+                rank = len(results[i])
             else:
                 rank = rank[0]
             all_rr.append(rank)
