@@ -20,26 +20,29 @@ class TestCLiMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = CLiMFLearner(K=10, steps=10, alpha=0.0001, beta=0.001, verbose=True)
+        learner = CLiMFLearner(K=2, steps=1, alpha=0.0001, beta=0.001, verbose=True)
         recommender = learner(data)
         print(str(recommender) + ' trained')
 
-        # Select subset to test
-        num_sample = min(recommender.shape[0], 100)
-        test_users = random.sample(range(recommender.shape[0]),num_sample)
+        # Create set to test
+        num_users = min(recommender.shape[0], 5)
+        num_items = recommender.shape[1]
+        test_users = random.sample(range(recommender.shape[0]), num_users)
 
-        # Compute predictions
-        y_pred = recommender(data[test_users],
-                              top_k=min(recommender.shape[1], 5))
+        # Compute predictions 1
+        y_pred = recommender(data[test_users], top_k=None)
 
-        # Compute predictions (Second calling type)
-        y_pred2 = recommender(data[test_users].X,
-                             top_k=min(recommender.shape[1], 5))
+        # Compute predictions 2 (Execute the 2nd branch)
+        y_pred2 = recommender(data[test_users].X, top_k=num_items)
 
-        # Get relevant items for the user
+        # Compute predictions 3 (Execute the 3rd branch, "no arg")
+        y_pred3 = recommender(data[test_users], no_real_arg='Something')
+
+        # Get relevant items for the user (to test MRR)
         all_items_u = []
         for i in test_users:
-            items_u = data.X[data.X[:, recommender.order[0]] == i][:, recommender.order[1]]
+            items_u = data.X[data.X[:, recommender.order[0]] == i][:,
+                      recommender.order[1]]
             all_items_u.append(items_u)
 
         # Compute MRR
@@ -49,6 +52,7 @@ class TestCLiMF(unittest.TestCase):
         # Check correctness
         self.assertGreaterEqual(mrr, 0)
         np.testing.assert_equal(y_pred, y_pred2)
+        np.testing.assert_equal(y_pred, y_pred3)
 
 
     def test_CLiMF_CV(self):
@@ -72,7 +76,8 @@ class TestCLiMF(unittest.TestCase):
         #
         # self.assertIsInstance(mrr, np.ndarray)
 
-    def test_CLiMF_warnings(self):
+
+    def test_CLiMF_exceptions(self):
         # Load data
         filename = os.path.abspath(
             os.path.join(os.path.dirname(__file__), '../datasets/binary_data.tab'))
@@ -80,6 +85,7 @@ class TestCLiMF(unittest.TestCase):
 
         # Train recommender
         learner = CLiMFLearner(K=2, steps=1, alpha=0.0, verbose=False)
+        recommender = learner(data)
 
         self.assertWarns(
             UserWarning,
@@ -87,12 +93,16 @@ class TestCLiMF(unittest.TestCase):
             data
         )
 
+        arg = 'Something that is not a table'
+        self.assertRaises(TypeError, recommender, arg)
+
+
 if __name__ == "__main__":
     # Test all
     #unittest.main()
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_CLiMF_warnings"))
+    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
     runner = unittest.TextTestRunner()
     runner.run(suite)

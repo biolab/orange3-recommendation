@@ -99,6 +99,7 @@ class TestUserAvg(unittest.TestCase):
 
         # Compute predictions
         y_pred = recommender(data)
+        y_pred2 = recommender(data[:, recommender.order[0]])
 
         # Compute RMSE
         rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
@@ -106,6 +107,7 @@ class TestUserAvg(unittest.TestCase):
 
         # Check correctness
         self.assertGreaterEqual(rmse, 0)
+        np.testing.assert_equal(y_pred, y_pred2)
 
 
     def test_UserAvg_pairs(self):

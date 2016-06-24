@@ -185,11 +185,8 @@ class CLiMFLearner(Learner):
         return U, V
 
 
-    def compute_mrr(self, X, U, V, test_users=None):
-
+    def compute_mrr(self, X, U, V, test_users):
         start = time.time()
-        if test_users is None:
-            test_users = range(len(U))
 
         # Get scores for all the items for a user[i]
         predictions = np.dot(U[test_users], V.T)
