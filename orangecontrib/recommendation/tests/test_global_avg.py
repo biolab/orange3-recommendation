@@ -138,7 +138,7 @@ class TestGlobalAvg(unittest.TestCase):
         global_avg = GlobalAvgLearner(verbose=False)
         learners = [global_avg]
 
-        res = CrossValidation(data, learners, k=5)
+        res = CrossValidation(data, learners, k=3)
         rmse = Orange.evaluation.RMSE(res)
         r2 = Orange.evaluation.R2(res)
 

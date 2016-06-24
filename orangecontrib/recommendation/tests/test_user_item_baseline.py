@@ -151,7 +151,7 @@ class TestUserItemBaseline(unittest.TestCase):
         user_item_baseline = UserItemBaselineLearner(verbose=False)
         learners = [user_item_baseline]
 
-        res = CrossValidation(data, learners, k=5)
+        res = CrossValidation(data, learners, k=3)
         rmse = Orange.evaluation.RMSE(res)
         r2 = Orange.evaluation.R2(res)
 

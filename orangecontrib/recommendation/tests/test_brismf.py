@@ -44,7 +44,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=5, verbose=True)
+        learner = BRISMFLearner(K=2, steps=1, verbose=True)
         recommender = learner(data)
 
         # Compute predictions 1
@@ -74,7 +74,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=5, verbose=False)
+        learner = BRISMFLearner(K=2, steps=1, verbose=False)
         recommender = learner(data)
         print(str(recommender) + ' trained')
 
@@ -96,7 +96,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table(filename)
 
         # Train recommender
-        learner = BRISMFLearner(K=10, steps=5, verbose=False)
+        learner = BRISMFLearner(K=2, steps=1, verbose=False)
         recommender = learner(data)
 
         # Create indices to test
@@ -122,10 +122,10 @@ class TestBRISMF(unittest.TestCase):
             os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
         data = Orange.data.Table(filename)
 
-        brismf = BRISMFLearner(K=10, steps=5, verbose=False)
+        brismf = BRISMFLearner(K=2, steps=1, verbose=False)
         learners = [brismf]
 
-        res = CrossValidation(data, learners, k=5)
+        res = CrossValidation(data, learners, k=3)
         rmse = Orange.evaluation.RMSE(res)
         r2 = Orange.evaluation.R2(res)
 
@@ -135,6 +135,7 @@ class TestBRISMF(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertIsInstance(rmse, np.ndarray)
+
 
     def test_BRISMF_warnings(self):
         # Load data

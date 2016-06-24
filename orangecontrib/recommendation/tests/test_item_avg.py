@@ -99,7 +99,7 @@ class TestItemAvg(unittest.TestCase):
 
         # Compute predictions
         y_pred = recommender(data)
-        y_pred2 = recommender(data[:, recommender.order[0]])
+        y_pred2 = recommender(data[:, recommender.order[1]])
 
         # Compute RMSE
         rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
@@ -146,7 +146,7 @@ class TestItemAvg(unittest.TestCase):
         items_avg = ItemAvgLearner(verbose=False)
         learners = [items_avg]
 
-        res = CrossValidation(data, learners, k=5)
+        res = CrossValidation(data, learners, k=3)
         rmse = Orange.evaluation.RMSE(res)
         r2 = Orange.evaluation.R2(res)
 

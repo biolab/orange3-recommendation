@@ -146,7 +146,7 @@ class TestUserAvg(unittest.TestCase):
         users_avg = UserAvgLearner(verbose=False)
         learners = [users_avg]
 
-        res = CrossValidation(data, learners, k=5)
+        res = CrossValidation(data, learners, k=3)
         rmse = Orange.evaluation.RMSE(res)
         r2 = Orange.evaluation.R2(res)
 

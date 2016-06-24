@@ -63,10 +63,10 @@ class TestCLiMF(unittest.TestCase):
         # filename = '../datasets/binary_data.tab'
         # data = Orange.data.Table(filename)
         #
-        # brismf = CLiMFLearner(K=10, steps=10, alpha=0.0001, beta=0.001, verbose=False)
+        # brismf = CLiMFLearner(K=2, steps=1, alpha=0.0001, beta=0.001, verbose=False)
         # learners = [brismf]
         #
-        # res = CrossValidation(data, learners, k=5)
+        # res = CrossValidation(data, learners, k=3)
         # mrr = MeanReciprocalRank(res)
         #
         # print("Learner  MRR")
