@@ -75,7 +75,7 @@ class TestCLiMF(unittest.TestCase):
     def test_CLiMF_warnings(self):
         # Load data
         filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
+            os.path.join(os.path.dirname(__file__), '../datasets/binary_data.tab'))
         data = Orange.data.Table(filename)
 
         # Train recommender
