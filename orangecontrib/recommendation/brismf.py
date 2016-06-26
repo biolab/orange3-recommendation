@@ -1,6 +1,7 @@
+from Orange.data import Table, Domain, ContinuousVariable, StringVariable
+
 from orangecontrib.recommendation import Learner, Model
 from orangecontrib.recommendation.utils import format_data
-from sklearn.metrics import mean_squared_error
 
 import numpy as np
 import math
@@ -339,6 +340,41 @@ class BRISMFModel(Model):
             predictions = predictions[:, :top]
 
         return predictions
+
+
+    def getPTable(self):
+        latentFactors_P = [ContinuousVariable('K' + str(i + 1))
+                           for i in range(len(self.P[0]))]
+
+        variable = self.original_domain.variables[self.order[0]]
+
+        if isinstance(variable, ContinuousVariable):
+            domain_val = ContinuousVariable(variable.name)
+            values = np.arange(0, len(self.P))
+        else:
+            domain_val = StringVariable(variable.name)
+            values = np.column_stack((variable.values,))
+
+        domain_P = Domain(latentFactors_P, None, [domain_val])
+        return Table(domain_P, self.P, None, values)
+
+
+    def getQTable(self):
+        latentFactors_Q = [ContinuousVariable('K' + str(i + 1))
+                           for i in range(len(self.Q[0]))]
+
+        variable = self.original_domain.variables[self.order[1]]
+
+
+        if isinstance(variable, ContinuousVariable):
+            domain_val = ContinuousVariable(variable.name)
+            values = np.arange(0, len(self.Q))
+        else:
+            domain_val = StringVariable(variable.name)
+            values = np.column_stack((variable.values,))
+
+        domain_Q = Domain(latentFactors_Q, None, [domain_val])
+        return Table(domain_Q, self.Q, None, values)
 
     def __str__(self):
         return self.name

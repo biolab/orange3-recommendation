@@ -1,6 +1,9 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication
+import numpy as np
 
+from Orange.data import Table, Domain, DiscreteVariable, ContinuousVariable, \
+    StringVariable
 
 from Orange.widgets import settings
 from Orange.widgets import gui
@@ -18,6 +21,9 @@ class OWBRISMF(OWBaseLearner):
     priority = 80
 
     LEARNER = BRISMFLearner
+
+    outputs = [("P", Table),
+               ("Q", Table)]
 
     K = settings.Setting(5)
     steps = settings.Setting(25)
@@ -58,6 +64,19 @@ class OWBRISMF(OWBaseLearner):
                 ("Number of iterations", self.steps),
                 ("Learning rate", self.alpha),
                 ("Regularization factor", self.beta))
+
+    def update_model(self):
+        super().update_model()
+
+        P = None
+        Q = None
+        if self.valid_data:
+            P = self.model.getPTable()
+            Q = self.model.getQTable()
+
+        self.send("P", P)
+        self.send("Q", Q)
+
 
 if __name__ == '__main__':
     app = QApplication([])
