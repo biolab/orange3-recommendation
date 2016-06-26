@@ -162,19 +162,19 @@ class CLiMFLearner(Learner):
                 for j in range(len(items)):  #j=items
                     w = items[j]
 
-                    dV = self.g(-f[j]) - beta * V[w]
+                    dV = g(-f[j]) - beta * V[w]
 
                     # For I
-                    vec1 = self.dg(f[j] - f) * \
-                        (1/(1 - self.g(f - f[j])) - 1/(1 - self.g(f[j] - f)))
+                    vec1 = dg(f[j] - f) * \
+                        (1/(1 - g(f - f[j])) - 1/(1 - g(f[j] - f)))
                     dV += np.einsum('i,j->ij', vec1, U[i]).sum(axis=0)
 
                     V[w] += alpha * dV
-                    dU += self.g(-f[j]) * V[w]
+                    dU += g(-f[j]) * V[w]
 
                     # For II
                     vec2 = (V[items[j]] - V[items])
-                    vec3 = self.dg(f - f[j])/(1 - self.g(f - f[j]))
+                    vec3 = dg(f - f[j])/(1 - g(f - f[j]))
                     dU += np.einsum('ij,i->ij', vec2, vec3).sum(axis=0)
 
                 U[i] += alpha * dU
