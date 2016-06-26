@@ -350,7 +350,7 @@ class BRISMFModel(Model):
 
         if isinstance(variable, ContinuousVariable):
             domain_val = ContinuousVariable(variable.name)
-            values = np.arange(0, len(self.P))
+            values = np.atleast_2d(np.arange(0, len(self.P))).T
         else:
             domain_val = StringVariable(variable.name)
             values = np.column_stack((variable.values,))
@@ -365,10 +365,9 @@ class BRISMFModel(Model):
 
         variable = self.original_domain.variables[self.order[1]]
 
-
         if isinstance(variable, ContinuousVariable):
             domain_val = ContinuousVariable(variable.name)
-            values = np.arange(0, len(self.Q))
+            values = np.atleast_2d(np.arange(0, len(self.Q))).T
         else:
             domain_val = StringVariable(variable.name)
             values = np.column_stack((variable.values,))
