@@ -114,8 +114,8 @@ class UserAvgModel(Model):
 
             """
 
-        if len(X[0]) > 1:
-            X = X[:, self.order[0]]
+        # Preserve just the indices of the users
+        X = X[:, self.order[0]]
 
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average

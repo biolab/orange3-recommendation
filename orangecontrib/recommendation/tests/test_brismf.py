@@ -88,6 +88,13 @@ class TestBRISMF(unittest.TestCase):
         # Check correctness
         self.assertGreaterEqual(rmse, 0)
 
+        # Check tables P and Q
+        P = recommender.getPTable()
+        Q = recommender.getQTable()
+        self.assertEqual(P.X.shape[1], Q.X.shape[1])
+
+
+
 
     def test_BRISMF_pairs(self):
         # Load data
@@ -158,7 +165,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_BRISMF_warnings"))
+    suite.addTest(TestBRISMF("test_BRISMF_input_data"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

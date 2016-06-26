@@ -114,8 +114,8 @@ class ItemAvgModel(Model):
 
             """
 
-        if len(X[0]) > 1:
-            X = X[:, self.order[1]]
+        # Preserve just the indices of the items
+        X = X[:, self.order[1]]
 
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average

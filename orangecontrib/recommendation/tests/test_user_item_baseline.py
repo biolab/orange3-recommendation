@@ -163,5 +163,11 @@ class TestUserItemBaseline(unittest.TestCase):
         self.assertIsInstance(rmse, np.ndarray)
 
 if __name__ == "__main__":
-    unittest.main()
+    #unittest.main()
+
+    # Test single test
+    suite = unittest.TestSuite()
+    suite.addTest(TestUserItemBaseline("test_UserItemBaseline_input_data"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 

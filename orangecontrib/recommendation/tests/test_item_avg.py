@@ -99,7 +99,6 @@ class TestItemAvg(unittest.TestCase):
 
         # Compute predictions
         y_pred = recommender(data)
-        y_pred2 = recommender(data[:, recommender.order[1]])
 
         # Compute RMSE
         rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
@@ -107,7 +106,6 @@ class TestItemAvg(unittest.TestCase):
 
         # Check correctness
         self.assertGreaterEqual(rmse, 0)
-        np.testing.assert_equal(y_pred, y_pred2)
 
 
     def test_ItemAvg_pairs(self):
@@ -159,5 +157,12 @@ class TestItemAvg(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    # Test all
+    #unittest.main()
+
+    # Test single test
+    suite = unittest.TestSuite()
+    suite.addTest(TestItemAvg("test_ItemAvg_input_data"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 
