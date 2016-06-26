@@ -13,6 +13,18 @@ import warnings
 
 __all__ = ['CLiMFLearner']
 
+
+def g(x):
+    """sigmoid function"""
+    return sigmoid(x)
+
+
+def dg(x):
+    ex = np.exp(-x)
+    y = ex / (1 + ex) ** 2
+    return y
+
+
 class CLiMFLearner(Learner):
     """ Collaborative Less-is-More Filtering Matrix Factorization
 
@@ -95,16 +107,6 @@ class CLiMFLearner(Learner):
                           V=self.V,
                            order=self.order)
 
-
-
-    def g(self, x):
-        """sigmoid function"""
-        return sigmoid(x)
-
-    def dg(seld, x):
-        ex = np.exp(-x)
-        y = ex / (1 + ex) ** 2
-        return y
 
     def matrix_factorization(self, data, K, steps, alpha, beta, verbose=False):
         """ Factorize either a dense matrix or a sparse matrix into two low-rank

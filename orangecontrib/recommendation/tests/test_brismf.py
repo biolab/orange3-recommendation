@@ -103,6 +103,7 @@ class TestBRISMF(unittest.TestCase):
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, verbose=False)
         recommender = learner(data)
+
         print(str(recommender) + ' trained')
 
         # Compute predictions
