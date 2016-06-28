@@ -1,4 +1,3 @@
-import os
 import math
 import random
 import unittest
@@ -11,36 +10,10 @@ from sklearn.metrics import mean_squared_error
 
 class TestUserAvg(unittest.TestCase):
 
-    # def test_UserAvg_swap_columns(self):
-    #     # Recommender
-    #     learner = UserAvgLearner(verbose=False)
-    #
-    #     # Dataset 1
-    #     filename = os.path.abspath(
-    #         os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-    #     data = Orange.data.Table(filename)
-    #     recommender = learner(data)
-    #     prediction = recommender.predict_items()
-    #     y_pred1 = prediction[data.X[:, recommender.order[0]],
-    #                          data.X[:, recommender.order[1]]]
-    #
-    #     # Dataset 2
-    #     filename = os.path.abspath(
-    #         os.path.join(os.path.dirname(__file__), '../datasets/ratings2.tab'))
-    #     data = Orange.data.Table(filename)
-    #     recommender = learner(data)
-    #     prediction = recommender.predict_items()
-    #     y_pred2 = prediction[data.X[:, recommender.order[0]],
-    #                          data.X[:, recommender.order[1]]]
-    #
-    #     # Compare results
-    #     np.testing.assert_array_equal(y_pred1, y_pred2)
-
-
     def test_UserAvg_correctness(self):
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+
+        # Load data
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserAvgLearner(verbose=False)
@@ -57,10 +30,9 @@ class TestUserAvg(unittest.TestCase):
 
 
     def test_UserAvg_predict_items(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserAvgLearner(verbose=True)
@@ -87,10 +59,10 @@ class TestUserAvg(unittest.TestCase):
 
 
     def test_UserAvg_input_data(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        print(Orange.data.table.dataset_dirs)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserAvgLearner(verbose=False)
@@ -111,10 +83,9 @@ class TestUserAvg(unittest.TestCase):
 
 
     def test_UserAvg_pairs(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserAvgLearner(verbose=False)
@@ -139,9 +110,7 @@ class TestUserAvg(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         users_avg = UserAvgLearner(verbose=False)
         learners = [users_avg]

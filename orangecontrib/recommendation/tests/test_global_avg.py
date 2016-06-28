@@ -38,9 +38,9 @@ class TestGlobalAvg(unittest.TestCase):
 
 
     def test_GlobalAvg_correctness(self):
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+
+        # Load data
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = GlobalAvgLearner(verbose=True)
@@ -51,10 +51,9 @@ class TestGlobalAvg(unittest.TestCase):
 
 
     def test_GlobalAvg_predict_items(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = GlobalAvgLearner(verbose=False)
@@ -81,10 +80,9 @@ class TestGlobalAvg(unittest.TestCase):
 
 
     def test_GlobalAvg_input_data(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = GlobalAvgLearner(verbose=False)
@@ -103,10 +101,9 @@ class TestGlobalAvg(unittest.TestCase):
 
 
     def test_GlobalAvg_pairs(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = GlobalAvgLearner(verbose=False)
@@ -131,9 +128,7 @@ class TestGlobalAvg(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         global_avg = GlobalAvgLearner(verbose=False)
         learners = [global_avg]

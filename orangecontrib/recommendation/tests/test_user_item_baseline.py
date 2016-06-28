@@ -38,10 +38,9 @@ class TestUserItemBaseline(unittest.TestCase):
 
 
     def test_UserAvg_correctness(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserItemBaselineLearner(verbose=False)
@@ -64,10 +63,9 @@ class TestUserItemBaseline(unittest.TestCase):
 
 
     def test_UserItemBaseline_predict_items(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserItemBaselineLearner(verbose=True)
@@ -94,10 +92,9 @@ class TestUserItemBaseline(unittest.TestCase):
 
 
     def test_UserItemBaseline_input_data(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserItemBaselineLearner(verbose=False)
@@ -116,10 +113,9 @@ class TestUserItemBaseline(unittest.TestCase):
 
 
     def test_UserItemBaseline_pairs(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = UserItemBaselineLearner(verbose=False)
@@ -144,9 +140,7 @@ class TestUserItemBaseline(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         user_item_baseline = UserItemBaselineLearner(verbose=False)
         learners = [user_item_baseline]

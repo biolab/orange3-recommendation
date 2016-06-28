@@ -36,28 +36,6 @@ For development mode use::
     python setup.py develop
     
 
-Architecure
------------
-
-```
-orangecontrib
-    |
-    |- recommendation
-       |- datasets
-       |- models
-           |- global_avg
-           |- item_avg
-           |- user_avg
-           |- user_item_baseline
-           |- brismf
-           |- climf
-           |- SDV++*
-           |- TrustSVD*
-       |- tests
-       
-* Not added yet
-```
-
 
 Usage
 -----
@@ -88,15 +66,6 @@ Let's presume that we want to load a dataset, train it and predict its first thr
 
 Now we want to get all the predictions (all items) for a set of users:
 
-    >>> import Orange
-    >>> from orangecontrib.recommendation import BRISMFLearner
-    >>> import numpy as np
-    
-    >>> data = Orange.data.Table('ratings.tab')
-
-    >>> learner = BRISMFLearner(K=10, steps=5, alpha=0.05, beta=0.01)
-    >>> recommender = learner(data)
-
     >>> indices_users = np.array([0, 2, 4])
     >>> prediction = recommender.predict_items(indices_users)
     >>> print(prediction)
@@ -110,13 +79,7 @@ Now we want to get all the predictions (all items) for a set of users:
 Finally, we want to known which of a list of recommender performs better on our dataset. Therefore,
 we perform cross-validation over a list of learners:
 
-    
-    >>> import Orange
-    >>> from Orange.evaluation.testing import CrossValidation
-    >>> from orangecontrib.recommendation import BRISMFLearner
-    
-    >>> data = Orange.data.Table('MovieLens100K.tab')
-    
+        
     >>> global_avg = GlobalAvgLearner()
     >>> items_avg = ItemAvgLearner()
     >>> users_avg = UserAvgLearner()

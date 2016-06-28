@@ -38,10 +38,9 @@ class TestBRISMF(unittest.TestCase):
 
 
     def test_BRISMF_predict_items(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, verbose=True)
@@ -68,10 +67,9 @@ class TestBRISMF(unittest.TestCase):
 
 
     def test_BRISMF_input_data_discrete(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, verbose=False)
@@ -95,10 +93,9 @@ class TestBRISMF(unittest.TestCase):
 
 
     def test_BRISMF_input_data_continuous(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings3.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, verbose=False)
@@ -123,10 +120,9 @@ class TestBRISMF(unittest.TestCase):
 
 
     def test_BRISMF_pairs(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, verbose=False)
@@ -151,9 +147,7 @@ class TestBRISMF(unittest.TestCase):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         brismf = BRISMFLearner(K=2, steps=1, verbose=False)
         learners = [brismf]
@@ -171,10 +165,9 @@ class TestBRISMF(unittest.TestCase):
 
 
     def test_BRISMF_warnings(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/ratings.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, alpha=0.0, verbose=False)

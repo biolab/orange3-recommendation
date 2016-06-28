@@ -14,10 +14,9 @@ class TestCLiMF(unittest.TestCase):
 
 
     def test_CLiMF_input_data(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/binary_data.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('binary_data.tab')
 
         # Train recommender
         learner = CLiMFLearner(K=2, steps=1, alpha=0.0001, beta=0.001, verbose=True)
@@ -78,10 +77,9 @@ class TestCLiMF(unittest.TestCase):
 
 
     def test_CLiMF_exceptions(self):
+
         # Load data
-        filename = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '../datasets/binary_data.tab'))
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('binary_data.tab')
 
         # Train recommender
         learner = CLiMFLearner(K=2, steps=1, alpha=0.0, verbose=False)
