@@ -18,7 +18,7 @@ Let's presume that we want to load a dataset, train it and predict its first thr
 
     >>> import Orange
     >>> from orangecontrib.recommendation import BRISMFLearner
-    >>> data = Orange.data.Table('MovieLens100K.tab')
+    >>> data = Orange.data.Table(movielens100k.tab)
     >>> learner = BRISMFLearner(K=10, steps=5, alpha=0.05, beta=0.01)
     >>> recommender = learner(data)
     >>> prediction = recommender(data[:3])

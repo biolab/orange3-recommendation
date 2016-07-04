@@ -95,7 +95,7 @@ class TestBRISMF(unittest.TestCase):
     def test_BRISMF_input_data_continuous(self):
 
         # Load data
-        data = Orange.data.Table('ratings.tab')
+        data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, verbose=False)

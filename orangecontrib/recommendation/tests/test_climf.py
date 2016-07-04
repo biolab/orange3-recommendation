@@ -13,7 +13,7 @@ import random
 class TestCLiMF(unittest.TestCase):
 
 
-    def test_CLiMF_input_data(self):
+    def test_CLiMF_input_data_continuous(self):
 
         # Load data
         data = Orange.data.Table('binary_data.tab')
@@ -48,10 +48,30 @@ class TestCLiMF(unittest.TestCase):
         mrr = MeanReciprocalRank(results=y_pred, query=all_items_u)
         print('-> MRR (input data): %.3f' % mrr)
 
+        # Check tables U and V
+        U = recommender.getUTable()
+        V = recommender.getVTable()
+        self.assertEqual(U.X.shape[1], V.X.shape[1])
+
         # Check correctness
         self.assertGreaterEqual(mrr, 0)
         np.testing.assert_equal(y_pred, y_pred2)
         np.testing.assert_equal(y_pred, y_pred3)
+
+    def test_CLiMF_input_data_discrete(self):
+
+        # Load data
+        data = Orange.data.Table('binary_data2.tab')
+
+        # Train recommender
+        learner = CLiMFLearner(K=2, steps=1, alpha=0.0001, beta=0.001,
+                               verbose=True)
+        recommender = learner(data)
+
+        # Check tables U and V
+        U = recommender.getUTable()
+        V = recommender.getVTable()
+        self.assertEqual(U.X.shape[1], V.X.shape[1])
 
 
     def test_CLiMF_CV(self):

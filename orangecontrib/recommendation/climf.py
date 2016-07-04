@@ -1,4 +1,4 @@
-from Orange.data import Table
+from Orange.data import Table, Domain, ContinuousVariable, StringVariable
 
 from orangecontrib.recommendation import Learner, Model
 from orangecontrib.recommendation.utils import format_data
@@ -285,6 +285,41 @@ class CLiMFModel(Model):
             predictions = predictions[:, :top_k]
 
         return predictions
+
+
+
+    def getUTable(self):
+        latentFactors_U = [ContinuousVariable('K' + str(i + 1))
+                           for i in range(len(self.U[0]))]
+
+        variable = self.original_domain.variables[self.order[0]]
+
+        if isinstance(variable, ContinuousVariable):
+            domain_val = ContinuousVariable(variable.name)
+            values = np.atleast_2d(np.arange(0, len(self.U))).T
+        else:
+            domain_val = StringVariable(variable.name)
+            values = np.column_stack((variable.values,))
+
+        domain_U = Domain(latentFactors_U, None, [domain_val])
+        return Table(domain_U, self.U, None, values)
+
+
+    def getVTable(self):
+        latentFactors_V = [ContinuousVariable('K' + str(i + 1))
+                           for i in range(len(self.V[0]))]
+
+        variable = self.original_domain.variables[self.order[1]]
+
+        if isinstance(variable, ContinuousVariable):
+            domain_val = ContinuousVariable(variable.name)
+            values = np.atleast_2d(np.arange(0, len(self.V))).T
+        else:
+            domain_val = StringVariable(variable.name)
+            values = np.column_stack((variable.values,))
+
+        domain_V = Domain(latentFactors_V, None, [domain_val])
+        return Table(domain_V, self.V, None, values)
 
 
     def __str__(self):

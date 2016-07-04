@@ -375,5 +375,6 @@ class BRISMFModel(Model):
         domain_Q = Domain(latentFactors_Q, None, [domain_val])
         return Table(domain_Q, self.Q, None, values)
 
+
     def __str__(self):
         return self.name
