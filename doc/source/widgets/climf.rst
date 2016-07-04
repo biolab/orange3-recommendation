@@ -1,6 +1,6 @@
-======
+=====
 CLiMF
-======
+=====
 
 .. figure:: icons/climf.svg
     :width: 64pt
@@ -51,9 +51,3 @@ Description
 Reciprocal Rank with Collaborative Less-is-More Filtering Yue Shi, Martha
 Larson, Alexandros Karatzoglou, Nuria Oliver, Linas Baltrunas, Alan Hanjalic
 ACM RecSys 2012*
-
-
-Example
--------
-
-No example yet for this widget.

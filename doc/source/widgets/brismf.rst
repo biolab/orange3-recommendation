@@ -54,4 +54,11 @@ Society, 2009.*
 Example
 -------
 
-No example yet for this widget.
+
+Below is a simple workflow showing how to use both the *Predictor* and
+the *Learner* output. For the *Predictor* we input the prediction model
+into :doc:`Predictions<../evaluation/predictions>` widget and view the results in :doc:`Data Table<../data/datatable>`. For
+*Learner* we can compare different learners in :doc:`Test&Score<../evaluation/testlearners>` widget. Moreover, we can output both
+the user and item latent features.
+
+.. figure:: images/example.png

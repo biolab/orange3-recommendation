@@ -1,4 +1,9 @@
+##############################
+Scripting (``recommendation``)
+##############################
+
 .. automodule:: orangecontrib.recommendation
+
 
 ========
 Overview
@@ -90,7 +95,7 @@ we perform cross-validation over a list of learners:
 
 
 
-.. index:: .. index:: global_average
+.. index:: global_average
    pair: recommenders; global_average
 
 ==============
@@ -128,7 +133,7 @@ Example
 
 
 
-.. index:: .. index:: user_average
+.. index:: user_average
    pair: recommenders; user_average
 
 ============
@@ -140,7 +145,7 @@ User Average uses the average rating value of a user to make predictions.
 
 .. math::
 	r_{ ui } = \mu_{u}
-	
+
 Example
 -------
 
@@ -167,7 +172,7 @@ Example
 
 
 
-.. index:: .. index:: item_average
+.. index:: item_average
    pair: recommenders; item_average
 
 ============
@@ -178,7 +183,7 @@ Item Average uses the average rating value of an item to make predictions.
 
 .. math::
 	r_{ ui } = \mu_{i}
-	
+
 Example
 -------
 
@@ -205,7 +210,7 @@ Example
 
 
 
-.. index:: .. index:: user_item_baseline
+.. index:: user_item_baseline
    pair: recommenders; user_item_baseline
 
 ==================
@@ -217,7 +222,7 @@ make predictions.
 
 .. math::
 	r_{ ui } = \mu + b_{u} + b_{i}
-	
+
 Example
 -------
 
@@ -245,22 +250,22 @@ Example
 
 
 
-.. index:: .. index:: brismf
+.. index:: brismf
    pair: recommenders; brismf
 
 ======
 BRISMF
 ======
 
-BRISMF (Biased Regularized Incremental Simultaneous Matrix Factorization) is 
+BRISMF (Biased Regularized Incremental Simultaneous Matrix Factorization) is
 factorization-based algorithm for large scale recommendation systems.
 
 The basic idea is to factorize a very sparse matrix into two low-rank matrices
-which represents user and item factors. This can be done by using an iterative 
+which represents user and item factors. This can be done by using an iterative
 approach to minimize the loss function.
- 
+
 User's predictions are defined as follows:
- 
+
 .. math::
 	\hat { r } _{ ui }=\mu +b_{ u }+b_{ i }+{ q }_{ i }^{ T }{ p }_{ u }
 
@@ -268,7 +273,7 @@ User's predictions are defined as follows:
 But in order to compute the two low-rank matrices, first these are randomly initialized and then optimized through a training loss like this:
 
 .. math::
-	\min _{ p*,q*,b* }{ \sum _{ (u,i\in k) }^{  }{ { ({ r }_{ ui }-\mu -b_{ u }-b_{ i }-{ q }_{ i }^{ T }{ p }_{ u }) }^{ 2 }+\lambda ({ \left\| { p }_{ u } \right\|  }^{ 2 }+{ \left\| q_{ i } \right\|  }^{ 2 }+{ { b }_{ u } }^{ 2 }+{ { b }_{ i } }^{ 2 }) }  } 
+	\min _{ p*,q*,b* }{ \sum _{ (u,i\in k) }^{  }{ { ({ r }_{ ui }-\mu -b_{ u }-b_{ i }-{ q }_{ i }^{ T }{ p }_{ u }) }^{ 2 }+\lambda ({ \left\| { p }_{ u } \right\|  }^{ 2 }+{ \left\| q_{ i } \right\|  }^{ 2 }+{ { b }_{ u } }^{ 2 }+{ { b }_{ i } }^{ 2 }) }  }
 
 
 Example
@@ -297,17 +302,17 @@ Example
 
 
 
-.. index:: .. index:: climf
+.. index:: climf
    pair: recommenders; climf
 
 =====
 CLiMF
 =====
 
-CLiMF (Collaborative Less-is-More Filtering) is used in scenarios with binary 
+CLiMF (Collaborative Less-is-More Filtering) is used in scenarios with binary
 relevance data. Hence, it's focused on improving top-k recommendations through
 ranking by directly maximizing the Mean Reciprocal Rank (MRR).
- 
+
 Following a similar technique as other iterative approaches, the two low-rank matrices
 can be randomly initialize and then optimize through a training loss like this:
 
