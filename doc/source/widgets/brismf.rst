@@ -33,6 +33,14 @@ The learning algorithm with the supplied parameters
 Trained recommender. Signal *Predictor* sends the output signal only if
 input *Data* is present.
 
+-  **P**
+
+Latent features of the users
+
+-  **Q**
+
+Latent features of the items
+
 
 Description
 -----------

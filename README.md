@@ -52,26 +52,27 @@ Let's presume that we want to load a dataset, train it and predict its first thr
     >>> import Orange
     >>> from orangecontrib.recommendation import BRISMFLearner
     
-    >>> data = Orange.data.Table('MovieLens100K.tab')
+    >>> data = Orange.data.Table('movielens100k.tab')
     
-    >>> learner = BRISMFLearner(K=10, steps=5, alpha=0.05, beta=0.01)
+    >>> learner = BRISMFLearner(K=15, steps=25, alpha=0.07, beta=0.1)
     >>> recommender = learner(data)
     
     >>> prediction = recommender(data[:3])
     >>> print(prediction)
-    [ 4.19462862  4.09710973  1.11653675]
+    [ 3.79505151  3.75096513  1.293013 ]
     
     
 **Recommend items for set of users:**
 
 Now we want to get all the predictions (all items) for a set of users:
 
-    >>> indices_users = np.array([0, 2, 4])
+    >>> import numpy as np
+    >>> indices_users = np.array([4, 12, 36])
     >>> prediction = recommender.predict_items(indices_users)
     >>> print(prediction)
-    [[ 1.22709168  2.82786491  4.00826241  4.8979855   2.67956549]
-    [ 0.84144603  2.34508053  4.91226517  4.66622242  2.23030677]
-    [ 4.0537457   4.94304479  1.14010409  1.31233216  3.3946432 ]]
+    [[ 1.34743879  4.61513578  3.90757263 ...,  3.03535099  4.08221699 4.26139511]
+     [ 1.16652757  4.5516808   3.9867497  ...,  2.94690548  3.67274108 4.1868596 ]
+     [ 2.74395768  4.04859096  4.04553826 ...,  3.22923456  3.69682699 4.95043435]]
 
     
 **Evaluation:**
@@ -80,11 +81,15 @@ Finally, we want to known which of a list of recommender performs better on our 
 we perform cross-validation over a list of learners:
 
         
+    >>> from orangecontrib.recommendation import GlobalAvgLearner, 
+                                                 ItemAvgLearner,
+                                                 UserAvgLearner,
+                                                 UserItemBaselineLearner
     >>> global_avg = GlobalAvgLearner()
     >>> items_avg = ItemAvgLearner()
     >>> users_avg = UserAvgLearner()
     >>> useritem_baseline = UserItemBaselineLearner()
-    >>> brismf = BRISMFLearner(K=15, steps=15, alpha=0.07, beta=0.1)
+    >>> brismf = BRISMFLearner(K=15, steps=25, alpha=0.07, beta=0.1)
     >>> learners = [global_avg, items_avg, users_avg, useritem_baseline, brismf]
     
     >>> res = Orange.evaluation.CrossValidation(data, learners, k=5)
