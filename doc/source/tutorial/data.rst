@@ -1,5 +1,6 @@
-The Data
-========
+==========
+Input data
+==========
 
 .. index: data
 
