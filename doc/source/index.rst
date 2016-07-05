@@ -14,22 +14,9 @@ Tutorial
 --------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   tutorial/data.rst
-
-Widgets
--------
-
-.. toctree::
-   :maxdepth: 1
-
-   widgets/brismf.rst
-   widgets/climf.rst
-   widgets/global_avg.rst
-   widgets/user_avg.rst
-   widgets/item_avg.rst
-   widgets/user_item_baseline.rst
+   tutorial/tutorial.rst
 
 
 Scripting Reference
@@ -39,6 +26,15 @@ Scripting Reference
    :maxdepth: 2
 
    scripting/recommendation.rst
+
+
+Widgets
+-------
+
+.. toctree::
+   :maxdepth: 2
+
+   widgets/widgets.rst
 
 
 Indices and tables
