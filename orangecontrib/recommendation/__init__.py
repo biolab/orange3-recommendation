@@ -9,7 +9,12 @@ from .climf import *
 
 
 # Load datasets into Orange
-import Orange
-from os.path import abspath, join, dirname
-filename = abspath(join(dirname(__file__), 'datasets'))
-Orange.data.table.dataset_dirs.insert(0, filename)
+def register_datasets():
+   import os
+   import Orange
+   dataset_dir = os.path.join(os.path.dirname(__file__), 'datasets')
+
+   if dataset_dir not in Orange.data.table.dataset_dirs:
+       Orange.data.table.dataset_dirs.append(dataset_dir)
+
+register_datasets()
