@@ -34,7 +34,8 @@ lines from a data set :download:`ratings.tab <code/ratings.tab>`::
 **The third row is mandatory in this kind of datasets**, in order to know which
 attributes correspond to the users (row=1) and which ones to the items (col=1).
 For the case of big datasets, users and items must be specified as a continuous
-attributes due to efficiency issues::
+attributes due to efficiency issues. Here are the first few lines from a data
+set :download:`ratings.tab <code/movielens100k.tab>`::
 
     user            movie         score         tid
     continuous      continuous    continuous    time
