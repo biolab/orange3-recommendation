@@ -10,6 +10,14 @@ Orange3 Recommendation is a Python module that extends Orange3 to include
 support for recommender systems. All features can be combined with powerful data
 mining techniques from the Orange data mining framework.
 
+Tutorial
+--------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorial/data.rst
+
 Widgets
 -------
 
