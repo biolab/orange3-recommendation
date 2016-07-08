@@ -87,23 +87,25 @@ Performance
 
 **MovieLens100K:** (Loading time: 0.428s)
 
-|      Algorithm     |  RMSE | MAE |  Train time |          Settings          |
-|:------------------:|:-----:|:---:|:-----------:|:--------------------------:|
-| Global Average     | 1.126 |  -  |    0.001s   |              -             |
-| Item Average       | 1.000 |  -  |    0.001s   |              -             |
-| User Average       | 1.031 |  -  |    0.001s   |              -             |
-| User-Item Baseline | 0.938 |  -  |    0.001s   |              -             |
-| BRISMF             | 0.823 |  -  | 1.453s/iter | k=15; alpha=0.07; beta=0.1 |
+|      Algorithm     |  RMSE | MAE |  Train time  |          Settings          |
+|:------------------:|:-----:|:---:|:------------:|:--------------------------:|
+| Global Average     | 1.126 |  -  |    0.001s    |              -             |
+| Item Average       | 1.000 |  -  |    0.001s    |              -             |
+| User Average       | 1.031 |  -  |    0.001s    |              -             |
+| User-Item Baseline | 0.938 |  -  |    0.001s    |              -             |
+| BRISMF             | 0.823 |  -  |  1.453s/iter | k=15; alpha=0.07; beta=0.1 |
+| SVD++              | 0.837 |  -  | 15.644s/iter | k=15; alpha=0.07; beta=0.1 |
 
 **MovieLens1M:** (Loading time: 4.535s)
 
-|      Algorithm     |  RMSE | MAE |  Train time  |          Settings          |
-|:------------------:|:-----:|:---:|:------------:|:--------------------------:|
-| Global Average     | 1.117 |  -  |    0.010s    |              -             |
-| Item Average       | 0.975 |  -  |    0.018s    |              -             |
-| User Average       | 1.028 |  -  |    0.021s    |              -             |
-| User-Item Baseline | 0.924 |  -  |    0.027s    |              -             |
-| BRISMF             | 0.872 |  -  | 14.347s/iter | k=15; alpha=0.07; beta=0.1 |
+|      Algorithm     |  RMSE | MAE |  Train time   |          Settings          |
+|:------------------:|:-----:|:---:|:-------------:|:--------------------------:|
+| Global Average     | 1.117 |  -  |    0.010s     |              -             |
+| Item Average       | 0.975 |  -  |    0.018s     |              -             |
+| User Average       | 1.028 |  -  |    0.021s     |              -             |
+| User-Item Baseline | 0.924 |  -  |    0.027s     |              -             |
+| BRISMF             | 0.872 |  -  | 14.347s/iter  | k=15; alpha=0.07; beta=0.1 |
+| SVD++              | 0.896 |  -  | 222.437s/iter | k=15; alpha=0.07; beta=0.1 |
 
 
 **MovieLens10M:** (Loading time: 49.804s)

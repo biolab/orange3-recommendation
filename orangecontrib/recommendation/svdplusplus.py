@@ -155,15 +155,16 @@ class SVDPlusPlusLearner(Learner):
 
             # Compute predictions
             for k in range(0, len(data.Y)):
-                i = data.X[k][self.order[0]]  # Users
-                j = data.X[k][self.order[1]]  # Items
+                i = data.X[k][self.order[0]]  # User
+                j = data.X[k][self.order[1]]  # Item
+                f = feedback[i]  # Implicit data
 
                 b_ui = self.global_average + \
                            bias['dItems'][j] + \
                            bias['dUsers'][i]
 
-                norm_denominator = math.sqrt(len(feedback[i]))
-                tempN = np.sum(Y[feedback[i]], axis=0)
+                norm_denominator = math.sqrt(len(f))
+                tempN = np.sum(Y[f], axis=0)
                 p_plus_y_sum_vector = tempN/norm_denominator + P[i, :]
 
                 rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
@@ -172,15 +173,11 @@ class SVDPlusPlusLearner(Learner):
                 tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
                 tempQ = alpha * 2 * (eij * (P[i] + tempN/norm_denominator) +
                                      beta * Q[j])
-
-                for w in feedback[i]:
-                    tempY = alpha * 2 * (eij * Q[j]/norm_denominator +
-                                         beta * Y[w])
-                    Y[w] -= tempY
+                tempY = alpha * 2 * (eij * Q[j]/norm_denominator + beta * Y[f])
 
                 Q[j] -= tempQ
                 P[i] -= tempP
-
+                Y[f] -= tempY
 
 
             if verbose:
@@ -238,15 +235,16 @@ class SVDPlusPlusLearner(Learner):
     def compute_rmse(self, data, feedback, bias, P, Q, Y):
         sq_error = 0
         for k in range(0, len(data.Y)):
-            i = data.X[k][self.order[0]]  # Users
-            j = data.X[k][self.order[1]]  # Items
+            i = data.X[k][self.order[0]]  # User
+            j = data.X[k][self.order[1]]  # Item
+            f = feedback[i]  # Implicit data
 
             b_ui = self.global_average + \
                    bias['dItems'][j] + \
                    bias['dUsers'][i]
 
-            norm_denominator = math.sqrt(len(feedback[i]))
-            tempN = np.sum(Y[feedback[i]], axis=0)
+            norm_denominator = math.sqrt(len(f))
+            tempN = np.sum(Y[f], axis=0)
             p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
 
             rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
@@ -308,7 +306,6 @@ class SVDPlusPlusModel(Model):
         X[X[:, self.order[1]] >= self.shape[1], self.order[1]] = \
             np.random.randint(low=0, high=self.shape[1])
 
-
         bias = self.global_average + \
                self.bias['dUsers'][X[:, self.order[0]]] + \
                self.bias['dItems'][X[:, self.order[1]]]
@@ -317,13 +314,15 @@ class SVDPlusPlusModel(Model):
         tempQ = self.Q[X[:, self.order[1]]]
 
         base_pred = []
-        for u in X[:, self.order[0]]:
-            j = X[u, self.order[1]]
-            norm_denominator = np.sqrt(len(self.feedback[u]))
-            tempN = np.sum(self.Y[self.feedback[u]], axis=0)
-            p_plus_y_sum_vector = tempN/norm_denominator + tempP[u]
-            q_plus = tempQ[j]
-            base_pred.append(np.dot(p_plus_y_sum_vector, q_plus))
+        for k in range(len(X)):
+            i = X[k, self.order[0]]
+            f = self.feedback[i]  # Implicit data
+
+            norm_denominator = np.sqrt(len(f))
+            tempN = np.sum(self.Y[f], axis=0)
+
+            p_plus_y_sum_vector = tempN/norm_denominator + tempP[k]
+            base_pred.append(np.dot(p_plus_y_sum_vector, tempQ[k]))
 
         predictions = bias + np.asarray(base_pred)
         return predictions
