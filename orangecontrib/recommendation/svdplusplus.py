@@ -8,7 +8,6 @@ import math
 
 import time
 import warnings
-from collections import defaultdict
 
 __all__ = ['SVDPlusPlusLearner']
 
@@ -82,12 +81,12 @@ class SVDPlusPlusLearner(Learner):
         self.global_average = np.mean(data.Y)
 
         users = np.unique(data.X[:, self.order[0]])
-        self.feedback = defaultdict(list)
+        self.feedback = {}
 
         for u in users:
             indices_items = np.where(data.X[:, self.order[0]] == u)
             items = data.X[:, self.order[1]][indices_items]
-            self.feedback[u] = list(items)
+            self.feedback[u] = items
 
         # Factorize matrix
         self.P, self.Q, self.Y, self.bias = self.matrix_factorization(data,
@@ -171,9 +170,8 @@ class SVDPlusPlusLearner(Learner):
                 eij = rij_pred - data.Y[k]
 
                 tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
-                tempQ = alpha * 2 * (eij * (P[i] + tempN/norm_denominator) +
-                                     beta * Q[j])
-                tempY = alpha * 2 * (eij * Q[j]/norm_denominator + beta * Y[f])
+                tempQ = alpha * 2 * (eij * p_plus_y_sum_vector + beta * Q[j])
+                tempY = alpha * 2 * (eij/norm_denominator * Q[j] + beta * Y[f])
 
                 Q[j] -= tempQ
                 P[i] -= tempP
@@ -245,7 +243,7 @@ class SVDPlusPlusLearner(Learner):
 
             norm_denominator = math.sqrt(len(f))
             tempN = np.sum(Y[f], axis=0)
-            p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
+            p_plus_y_sum_vector = tempN/norm_denominator + P[i, :]
 
             rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
 
