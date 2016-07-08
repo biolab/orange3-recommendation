@@ -152,7 +152,6 @@ class BRISMFLearner(Learner):
                            bias['dUsers'][i] + \
                            np.dot(P[i], Q[j])
 
-                # This error goes to infinite for some values of beta
                 eij = rij_pred - data.Y[k]
 
                 tempP = alpha * 2 * (eij * Q[j] + beta * P[i])

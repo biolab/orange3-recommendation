@@ -18,7 +18,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
-        learner = SVDPlusPlusLearner(K=2, steps=1, verbose=False)
+        learner = SVDPlusPlusLearner(K=2, steps=1, verbose=True)
         recommender = learner(data)
 
         print(str(recommender) + ' trained')

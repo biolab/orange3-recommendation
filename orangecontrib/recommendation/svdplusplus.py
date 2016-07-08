@@ -48,11 +48,13 @@ class SVDPlusPlusLearner(Learner):
         self.beta = beta
         self.P = None
         self.Q = None
+        self.Y = None
         self.bias = None
         self.global_average = None
         self.verbose = verbose
         self.shape = None
         self.order = None
+        self.feedback = None
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
@@ -80,27 +82,29 @@ class SVDPlusPlusLearner(Learner):
         self.global_average = np.mean(data.Y)
 
         users = np.unique(data.X[:, self.order[0]])
-        feedback = defaultdict(list)
+        self.feedback = defaultdict(list)
 
         for u in users:
             indices_items = np.where(data.X[:, self.order[0]] == u)
             items = data.X[:, self.order[1]][indices_items]
-            feedback[u] = list(items)
+            self.feedback[u] = list(items)
 
         # Factorize matrix
-        self.P, self.Q, self.bias = self.matrix_factorization(data,
-                                                              feedback,
-                                                              self.K,
-                                                              self.steps,
-                                                              self.alpha,
-                                                              self.beta,
-                                                              self.verbose)
+        self.P, self.Q, self.Y, self.bias = self.matrix_factorization(data,
+                                                                  self.feedback,
+                                                                  self.K,
+                                                                  self.steps,
+                                                                  self.alpha,
+                                                                  self.beta,
+                                                                  self.verbose)
 
         return SVDPlusPlusModel(P=self.P,
                                 Q=self.Q,
+                                Y=self.Y,
                                 bias=self.bias,
                                 global_average=self.global_average,
-                                order=self.order)
+                                order=self.order,
+                                feedback=self.feedback)
 
 
 
@@ -159,36 +163,32 @@ class SVDPlusPlusLearner(Learner):
                            bias['dUsers'][i]
 
                 norm_denominator = math.sqrt(len(feedback[i]))
-                p_plus_y_sum_vector = np.sum(Y[feedback[i]], axis=0)
-                p_plus_y_sum_vector = p_plus_y_sum_vector/norm_denominator +\
-                                      P[i, :]
+                tempN = np.sum(Y[feedback[i]], axis=0)
+                p_plus_y_sum_vector = tempN/norm_denominator + P[i, :]
 
-                rij_pred = np.dot(p_plus_y_sum_vector, Q[j, :])
-                # This error goes to infinite for some values of beta
+                rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
                 eij = rij_pred - data.Y[k]
 
-                y_user = Y[feedback[i]]
                 tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
+                tempQ = alpha * 2 * (eij * (P[i] + tempN/norm_denominator) +
+                                     beta * Q[j])
 
-                for j in feedback[i]:
-                    tempY = alpha * 2 * (
-                    eij * norm_denominator * Q[j] + beta * Y[j])
-                    Y[j] -= tempY
+                for w in feedback[i]:
+                    tempY = alpha * 2 * (eij * Q[j]/norm_denominator +
+                                         beta * Y[w])
+                    Y[w] -= tempY
 
-                for j in feedback[i]:
-                    tempQ = alpha * 2 * (eij * (P[i] + Y[j]) + beta * Q[j])
-                    Q[j] -= tempQ
-
+                Q[j] -= tempQ
                 P[i] -= tempP
 
 
 
             if verbose:
                 print('\tTime: %.3fs' % (time.time() - start))
-                print('\tRMSE: %.3f\n' % self.compute_rmse(data,
-                                                         bias, P, Q))
+                print('\tRMSE: %.3f\n' % self.compute_rmse(data, feedback,
+                                                           bias, P, Q, Y))
 
-        return P, Q, bias
+        return P, Q, Y, bias
 
 
     def compute_bias(self, data, verbose=False):
@@ -235,16 +235,22 @@ class SVDPlusPlusLearner(Learner):
         return bias
 
 
-    def compute_rmse(self, data, bias, P, Q):
+    def compute_rmse(self, data, feedback, bias, P, Q, Y):
         sq_error = 0
         for k in range(0, len(data.Y)):
             i = data.X[k][self.order[0]]  # Users
             j = data.X[k][self.order[1]]  # Items
 
-            rij_pred = self.global_average + \
-                       bias['dItems'][j] + \
-                       bias['dUsers'][i] + \
-                       np.dot(P[i, :], Q[j, :])
+            b_ui = self.global_average + \
+                   bias['dItems'][j] + \
+                   bias['dUsers'][i]
+
+            norm_denominator = math.sqrt(len(feedback[i]))
+            tempN = np.sum(Y[feedback[i]], axis=0)
+            p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
+
+            rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
+
             sq_error += (rij_pred - data.Y[k]) ** 2
 
         # Compute RMSE
@@ -254,7 +260,7 @@ class SVDPlusPlusLearner(Learner):
 
 class SVDPlusPlusModel(Model):
 
-    def __init__(self, P, Q, bias, global_average, order):
+    def __init__(self, P, Q, Y, bias, global_average, order, feedback):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
 
@@ -274,10 +280,12 @@ class SVDPlusPlusModel(Model):
        """
         self.P = P
         self.Q = Q
+        self.Y = Y
         self.bias = bias
         self.global_average = global_average
         self.shape = (len(self.P), len(self.Q))
         self.order = order
+        self.feedback = feedback
 
 
     def predict(self, X):
@@ -308,10 +316,16 @@ class SVDPlusPlusModel(Model):
         tempP = self.P[X[:, self.order[0]]]
         tempQ = self.Q[X[:, self.order[1]]]
 
-        # base_pred = np.multiply(tempP, tempQ)
-        base_pred = np.einsum('ij,ij->i', tempP, tempQ)
-        predictions = bias + base_pred
+        base_pred = []
+        for u in X[:, self.order[0]]:
+            j = X[u, self.order[1]]
+            norm_denominator = np.sqrt(len(self.feedback[u]))
+            tempN = np.sum(self.Y[self.feedback[u]], axis=0)
+            p_plus_y_sum_vector = tempN/norm_denominator + tempP[u]
+            q_plus = tempQ[j]
+            base_pred.append(np.dot(p_plus_y_sum_vector, q_plus))
 
+        predictions = bias + np.asarray(base_pred)
         return predictions
 
 
@@ -397,6 +411,23 @@ class SVDPlusPlusModel(Model):
 
         domain_Q = Domain(latentFactors_Q, None, [domain_val])
         return Table(domain_Q, self.Q, None, values)
+
+
+    def getYTable(self):
+        latentFactors_Y = [ContinuousVariable('K' + str(i + 1))
+                           for i in range(len(self.Y[0]))]
+
+        variable = self.original_domain.variables[self.order[1]]
+
+        if isinstance(variable, ContinuousVariable):
+            domain_val = ContinuousVariable(variable.name)
+            values = np.atleast_2d(np.arange(0, len(self.Y))).T
+        else:
+            domain_val = StringVariable(variable.name)
+            values = np.column_stack((variable.values,))
+
+        domain_Y = Domain(latentFactors_Y, None, [domain_val])
+        return Table(domain_Y, self.Y, None, values)
 
 
     def __str__(self):
