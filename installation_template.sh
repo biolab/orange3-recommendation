@@ -8,3 +8,6 @@ pip install -r requirements.txt
 
 # Finally install Orange in editable/development mode.
 pip install -e .
+
+
+sequentially
