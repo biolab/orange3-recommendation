@@ -2,6 +2,8 @@ import Orange
 from orangecontrib.recommendation.utils import format_data
 
 from scipy.sparse import csr_matrix
+import numpy as np
+from collections import defaultdict
 
 def tab_format():
     # Load data
@@ -20,7 +22,7 @@ def print_dense_matrix():
     filename = '../datasets/ratings2.tab'
     data = Orange.data.Table(filename)
 
-    data, order, shape = format_data.format_data(data)
+    data, order, shape = format_data.preprocess(data)
 
     # Build matrix and print it as a dense
     row = data.X[:, order[0]]
@@ -30,6 +32,25 @@ def print_dense_matrix():
     print(mtx.todense())
 
 
+def create_implicit_data():
+    filename = '../datasets/ratings3.tab'
+    data = Orange.data.Table(filename)
+
+    data, order, shape = format_data.preprocess(data)
+    users = np.unique(data.X[:, order[0]])
+
+    d = defaultdict(list)
+    for u in users:
+        indices_items = np.where(data.X[:, order[0]] == u)
+        items = data.X[:, order[1]][indices_items]
+        d[u] = list(items)
+
+    for key, value in d.items():
+        value2 = ' '.join(str(x) for x in value)
+        print('%d\t%s' % (key, value2))
+    #print(d)
+
+
 if __name__ == "__main__":
     #print_dense_matrix()
-    tab_format()
+    create_implicit_data()

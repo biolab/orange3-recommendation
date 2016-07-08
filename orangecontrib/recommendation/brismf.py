@@ -246,7 +246,8 @@ class BRISMFModel(Model):
             global_average: float
 
             order: (int, int)
-                Tuple with the index of the columns users and items in X. (idx_user, idx_item)
+                Tuple with the index of the columns users and items in X.
+                (idx_user, idx_item)
 
        """
         self.P = P

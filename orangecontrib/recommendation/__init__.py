@@ -6,6 +6,7 @@ from .item_avg import *
 from .user_item_baseline import *
 from .brismf import *
 from .climf import *
+from .svdplusplus import *
 
 
 # Load datasets into Orange
