@@ -7,7 +7,8 @@ if __name__ == "__main__":
         'test_user_avg',
         'test_user_item_baseline',
         'test_brismf',
-        'test_climf'
+        'test_climf',
+        'test_svdplusplus'
     ]
 
     suite = unittest.TestSuite()

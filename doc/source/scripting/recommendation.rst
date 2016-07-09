@@ -180,10 +180,10 @@ User's predictions are defined as follows:
 	\hat { r } _{ ui }=\mu +b_{ u }+b_{ i }+{ q }_{ i }^{ T }{ p }_{ u }
 
 
-But in order to compute the two low-rank matrices, first these are randomly initialized and then optimized through a training loss like this:
+We learn the values of involved parameters by minimizing the regularized squared error function associated with:
 
 .. math::
-	\min _{ p*,q*,b* }{ \sum _{ (u,i\in k) }^{  }{ { ({ r }_{ ui }-\mu -b_{ u }-b_{ i }-{ q }_{ i }^{ T }{ p }_{ u }) }^{ 2 }+\lambda ({ \left\| { p }_{ u } \right\|  }^{ 2 }+{ \left\| q_{ i } \right\|  }^{ 2 }+{ { b }_{ u } }^{ 2 }+{ { b }_{ i } }^{ 2 }) }  }
+	\min _{ p*,q*,b* }{ \sum _{ (u,i\in k) }^{  }{ { ({ r }_{ ui }-\mu -b_{ u }-b_{ i }-{ q }_{ i }^{ T }{ p }_{ u }) }^{ 2 }+\lambda ({ { { b }_{ u } }^{ 2 }+{ { b }_{ i } }^{ 2 }+\left\| { p }_{ u } \right\|  }^{ 2 }+{ \left\| q_{ i } \right\|  }^{ 2 }) }  }
 
 
 Example
@@ -207,6 +207,52 @@ Example
    [ 3.79505151  3.75096513  1.293013 ]
 
 .. autoclass:: BRISMFLearner
+   :members:
+   :special-members: __init__
+
+
+
+.. index:: svdplusplus
+   pair: recommenders; svdplusplus
+
+=====
+SVD++
+=====
+
+SVD++ is matrix factorization model which makes use of implicit feedback
+information.
+
+User's predictions are defined as follows:
+
+.. math::
+	r_{ui} = \mu + b_u + b_i + \left(p_u + \frac{1}{\sqrt{|N(u)|}}\sum_{j\in N(u)} y_j \right)^T q_i
+
+
+We learn the values of involved parameters by minimizing the regularized squared error function associated with:
+
+.. math::
+	\min _{ p*,q*,y*,b* }{ \sum _{ (u,i\in k) }^{  }{ { ({ r }_{ ui }-\mu -b_{ u }-b_{ i }-{ q }_{ i }^{ T }\left( p_{ u }+\frac { 1 }{ \sqrt { |N(u)| }  } \sum _{ j\in N(u) } y_{ j } \right) ) }^{ 2 }+\lambda ({ { { b }_{ u } }^{ 2 }+{ { b }_{ i } }^{ 2 }+\left\| { p }_{ u } \right\|  }^{ 2 }+{ \left\| q_{ i } \right\|  }^{ 2 }+\sum _{ j\in N(u) }{ \left\| y_{ j } \right\|  } ^{ 2 }) }  }
+
+
+Example
+-------
+
+.. code-block:: python
+   :linenos:
+
+   import Orange
+   from orangecontrib.recommendation import SVDPlusPlusLearner
+
+   # Load data and train the model
+   data = Orange.data.Table('movielens100k.tab')
+   learner = SVDPlusPlusLearner(K=15, steps=25, alpha=0.07, beta=0.1)
+   recommender = learner(data)
+
+   # Make predictions
+   prediction = recommender(data[:3])
+   print(prediction)
+
+.. autoclass:: SVDPlusPlusLearner
    :members:
    :special-members: __init__
 

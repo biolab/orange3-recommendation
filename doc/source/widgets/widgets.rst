@@ -10,4 +10,5 @@ Widgets (``recommendation``)
     ./item_avg.rst
     ./user_item_baseline.rst
     ./brismf.rst
+    ./svdplusplus.rst
     ./climf.rst

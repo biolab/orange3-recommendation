@@ -271,7 +271,8 @@ class SVDPlusPlusModel(Model):
             global_average: float
 
             order: (int, int)
-                Tuple with the index of the columns users and items in X. (idx_user, idx_item)
+                Tuple with the index of the columns users and items in X.
+                (idx_user, idx_item)
 
        """
         self.P = P
@@ -366,8 +367,21 @@ class SVDPlusPlusModel(Model):
         tempB = np.tile(np.array(self.bias['dItems']), (len(users), 1))
         bias = bias[:, np.newaxis] + tempB
 
-        base_pred = np.dot(self.P[users], self.Q.T)
-        predictions = bias + base_pred
+        predictions = []
+        for i in range(len(users)):
+            u = users[i]
+            f = self.feedback[u]  # Implicit data
+
+            norm_denominator = np.sqrt(len(f))
+            tempN = np.sum(self.Y[f], axis=0)
+
+            p_plus_y_sum_vector = tempN / norm_denominator + self.P[u]
+            pred = bias[i, :]
+            pred2 = np.dot(p_plus_y_sum_vector, self.Q.T)
+
+            predictions.append(pred + pred2)
+
+        predictions = np.asarray(predictions)
 
         # Return top-k recommendations
         if top is not None:
