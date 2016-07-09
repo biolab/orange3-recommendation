@@ -23,7 +23,8 @@ class OWSVDPlusPlus(OWBaseLearner):
     LEARNER = SVDPlusPlusLearner
 
     outputs = [("P", Table),
-               ("Q", Table)]
+               ("Q", Table),
+               ("Y", Table)]
 
     K = settings.Setting(5)
     steps = settings.Setting(25)

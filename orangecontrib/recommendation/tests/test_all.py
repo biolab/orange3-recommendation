@@ -1,6 +1,7 @@
 import unittest
 
-if __name__ == "__main__":
+
+def run_tests():
     testmodules = [
         'test_global_avg',
         'test_item_avg',
@@ -23,3 +24,7 @@ if __name__ == "__main__":
             suite.addTest(unittest.defaultTestLoader.loadTestsFromName(t))
 
     unittest.TextTestRunner().run(suite)
+
+if __name__ == "__main__":
+    pass
+    # run_tests()
