@@ -47,18 +47,18 @@ Description
 
 **BRISMF** widget uses a biased regularized algorithm to factorize a matrix into
 two low rank matrices as it's explained in *Y. Koren, R. Bell, C. Volinsky,
-Matrix Factorization Techniques for Recommender Sys- tems. IEE Computer
+Matrix Factorization Techniques for Recommender Systems. IEE Computer
 Society, 2009.*
 
 
 Example
 -------
 
-
 Below is a simple workflow showing how to use both the *Predictor* and
 the *Learner* output. For the *Predictor* we input the prediction model
-into :doc:`Predictions<../evaluation/predictions>` widget and view the results in :doc:`Data Table<../data/datatable>`. For
-*Learner* we can compare different learners in :doc:`Test&Score<../evaluation/testlearners>` widget. Moreover, we can output both
-the user and item latent features.
+into `Predictions <http://docs.orange.biolab.si/3/visual-programming/widgets/evaluation/predictions.html>`_
+widget and view the results in `Data Table <http://docs.orange.biolab.si/3/visual-programming/widgets/data/datatable.html>`_.
+For *Learner* we can compare different learners in `Test&Score <http://docs.orange.biolab.si/3/visual-programming/widgets/evaluation/testlearners.html>`_ widget.
 
 .. figure:: images/example.png
+
