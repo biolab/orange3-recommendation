@@ -1,4 +1,4 @@
-from orangecontrib.recommendation import Learner, Model
+from orangecontrib.recommendation.rating import Learner, Model
 from orangecontrib.recommendation.utils import format_data
 
 import numpy as np
@@ -125,10 +125,8 @@ class BRISMFLearner(Learner):
         self.P = None
         self.Q = None
         self.bias = None
-        self.min_rating = min_rating
-        self.max_rating = max_rating
-
-        super().__init__(preprocessors=preprocessors, verbose=verbose)
+        super().__init__(preprocessors=preprocessors, verbose=verbose,
+                         min_rating=min_rating, max_rating=max_rating)
 
     def fit_model(self, data):
         """This function calls the factorization method.

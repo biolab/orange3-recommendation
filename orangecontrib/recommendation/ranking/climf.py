@@ -1,6 +1,4 @@
-from Orange.data import Table, Domain, ContinuousVariable, StringVariable
-
-from orangecontrib.recommendation import Learner, Model
+from orangecontrib.recommendation.ranking import Learner, Model
 from orangecontrib.recommendation.utils import format_data
 
 import numpy as np
@@ -133,9 +131,7 @@ class CLiMFLearner(Learner):
         self.beta = beta
         self.U = None
         self.V = None
-
         super().__init__(preprocessors=preprocessors, verbose=verbose)
-
 
     def fit_model(self, data):
         """This function calls the factorization method.
@@ -162,7 +158,6 @@ class CLiMFLearner(Learner):
         return CLiMFModel(U=self.U, V=self.V)
 
 
-
 class CLiMFModel(Model):
 
     def __init__(self, U, V):
@@ -180,27 +175,6 @@ class CLiMFModel(Model):
        """
         self.U = U
         self.V = V
-
-    def __call__(self, *args, **kwargs):
-        """
-        We need to override the __call__ of the base.model because it transforms
-        the output to 'argmax(probabilities=X)'
-        """
-
-        data = args[0]
-        top_k = None
-        if 'top_k' in kwargs:  # Check if this parameters exists
-            top_k = kwargs['top_k']
-
-        if isinstance(data, np.ndarray):
-            prediction = self.predict(X=data, top_k=top_k)
-        elif isinstance(data, Table):
-            prediction = self.predict(X=data.X.astype(int), top_k=top_k)
-        else:
-            raise TypeError("Unrecognized argument (instance of '{}')"
-                            .format(type(data).__name__))
-
-        return prediction
 
     def predict(self, X, top_k=None):
         """This function returns all the predictions for a set of items.

@@ -36,7 +36,6 @@ class TestBRISMF(unittest.TestCase):
     #     # Compare results
     #     np.testing.assert_array_equal(y_pred1, y_pred2)
 
-
     def test_BRISMF_predict_items(self):
 
         # Load data
@@ -65,7 +64,6 @@ class TestBRISMF(unittest.TestCase):
         self.assertEqual(len_u, num_users)
         self.assertEqual(len_i, num_items)
 
-
     def test_BRISMF_input_data_discrete(self):
 
         # Load data
@@ -90,7 +88,6 @@ class TestBRISMF(unittest.TestCase):
         P = recommender.getPTable()
         Q = recommender.getQTable()
         self.assertEqual(P.X.shape[1], Q.X.shape[1])
-
 
     def test_BRISMF_input_data_continuous(self):
 
@@ -119,7 +116,6 @@ class TestBRISMF(unittest.TestCase):
         Q = recommender.getQTable()
         self.assertEqual(P.X.shape[1], Q.X.shape[1])
 
-
     def test_BRISMF_pairs(self):
 
         # Load data
@@ -143,7 +139,6 @@ class TestBRISMF(unittest.TestCase):
         # Check correctness
         self.assertEqual(len(y_pred), sample_size)
 
-
     def test_BRISMF_CV(self):
         from Orange.evaluation.testing import CrossValidation
 
@@ -164,7 +159,6 @@ class TestBRISMF(unittest.TestCase):
 
         self.assertIsInstance(rmse, np.ndarray)
 
-
     def test_BRISMF_warnings(self):
 
         # Load data
@@ -183,9 +177,9 @@ if __name__ == "__main__":
     # Test all
     # unittest.main()
 
-    # # Test single test
+    # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_BRISMF_input_data_continuous"))
+    suite.addTest(TestBRISMF("test_BRISMF_CV"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

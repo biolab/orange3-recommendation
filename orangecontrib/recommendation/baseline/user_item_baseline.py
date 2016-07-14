@@ -1,5 +1,4 @@
-from orangecontrib.recommendation import Learner, Model
-from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.baseline import Learner, Model
 
 import numpy as np
 

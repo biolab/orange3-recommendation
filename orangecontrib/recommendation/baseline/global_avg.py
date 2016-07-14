@@ -1,4 +1,4 @@
-from orangecontrib.recommendation import Learner, Model
+from orangecontrib.recommendation.baseline import Learner, Model
 
 import numpy as np
 
@@ -20,7 +20,6 @@ class GlobalAvgLearner(Learner):
 
     def __init__(self,preprocessors=None, verbose=False):
         super().__init__(preprocessors=preprocessors, verbose=verbose)
-
 
     def fit_model(self, data):
         """This function calls the fit method.
@@ -48,7 +47,6 @@ class GlobalAvgModel(Model):
        """
         self.global_average = global_average
 
-
     def predict(self, X):
         """This function receives an array of indexes [[idx_user, idx_item]] and
         returns the prediction for these pairs.
@@ -63,7 +61,6 @@ class GlobalAvgModel(Model):
             """
 
         return np.full(len(X), self.global_average)
-
 
     def predict_items(self, users=None, top=None):
         """This function returns all the predictions for a set of items.

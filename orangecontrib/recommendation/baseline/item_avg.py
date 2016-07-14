@@ -1,8 +1,6 @@
-from orangecontrib.recommendation import Learner, Model
-from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.baseline import Learner, Model
 
 import numpy as np
-from scipy import sparse
 
 __all__ = ['ItemAvgLearner']
 
@@ -21,7 +19,6 @@ class ItemAvgLearner(Learner):
     def __init__(self, preprocessors=None, verbose=False):
         self.bias = None
         super().__init__(preprocessors=preprocessors, verbose=verbose)
-
 
     def fit_model(self, data):
         """This function calls the fit method.
@@ -52,7 +49,6 @@ class ItemAvgModel(Model):
        """
         self.bias = bias
 
-
     def predict(self, X):
         """This function receives an array of indexes like [[idx_item]] or
          [[idx_user, idx_item]] and returns the prediction for these pairs.
@@ -71,7 +67,6 @@ class ItemAvgModel(Model):
 
         predictions = self.bias['globalAvg'] + self.bias['dItems'][items]
         return predictions
-
 
     def predict_items(self, users=None, top=None):
         """This function returns all the predictions for a set of items.

@@ -11,19 +11,16 @@ class ModelRecommendation(Model):
 
     def predict_storage(self, data):
         """ Convert data.X variables to integer and calls predict(data.X)
-
         Args:
             data: Orange.data.Table
-
         Returns:
             Array with the recommendations for a given user.
-
         """
 
         # Convert indices to integer and call predict()
-        return self._predict(data.X.astype(int))
+        return self.predict(data.X.astype(int))
 
-    def _predict(self, X):
+    def predict(self, X):
 
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average!!!
@@ -32,21 +29,7 @@ class ModelRecommendation(Model):
         X[X[:, self.order[1]] >= self.shape[1], self.order[1]] = \
             np.random.randint(low=0, high=self.shape[1])
 
-        return self.predict_on_range(self.predict(X))
-
-
-    def predict_on_range(self, predictions):
-        # Just for modeling ratings with latent factors
-        try:
-            if self.min_rating is not None:
-                predictions[predictions < self.min_rating] = self.min_rating
-
-            if self.max_rating is not None:
-                predictions[predictions > self.max_rating] = self.max_rating
-        except AttributeError:
-            pass
-        finally:
-            return predictions
+        return self.predict(X)
 
     def __str__(self):
         return self.name
@@ -56,10 +39,13 @@ class LearnerRecommendation(Learner):
     __returns__ = ModelRecommendation
 
     def __init__(self, preprocessors=None, verbose=False):
-        super().__init__(preprocessors=preprocessors)
         self.shape = (None, None)
         self.order = (0, 1)
         self.verbose = verbose
+        super().__init__(preprocessors=preprocessors)
+
+    def fit_base(self):
+        pass
 
     def fit_storage(self, data):
         """This function calls the fit method.
@@ -74,20 +60,12 @@ class LearnerRecommendation(Learner):
 
         data, self.order, self.shape = format_data.preprocess(data)
 
-        model = self.fit_model(data)
+        model = self.fit_base(data)
         model.shape = self.shape
         model.order = self.order
         model.verbose = self.verbose
 
-        # Just for modeling ratings with latent factors
-        try:
-            model.min_rating = self.min_rating
-            model.max_rating = self.max_rating
-        except AttributeError:
-            pass
-
         return model
-
 
     def compute_bias(self, data, axis='all'):
         """ Compute global average and biases of users and items
