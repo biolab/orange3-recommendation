@@ -1,13 +1,12 @@
 from .base_recommendation import (ModelRecommendation as Model,
                                   LearnerRecommendation as Learner)
-from .global_avg import *
-from .user_avg import *
-from .item_avg import *
-from .user_item_baseline import *
-from .brismf import *
-from .climf import *
-from .svdplusplus import *
-
+from .baseline.global_avg import *
+from .baseline.user_avg import *
+from .baseline.item_avg import *
+from .baseline.user_item_baseline import *
+from .rating.brismf import *
+from .rating.svdplusplus import *
+from .ranking.climf import *
 
 # Load datasets into Orange
 def register_datasets():

@@ -24,9 +24,8 @@ class TestUserAvg(unittest.TestCase):
                                    2.6, 3.6666])
 
         # Compare results
-        np.testing.assert_array_almost_equal(recommender.users_average,
-                                             ground_truth,
-                                             decimal=2)
+        users_avg = recommender.bias['globalAvg'] + recommender.bias['dUsers']
+        np.testing.assert_array_almost_equal(users_avg, ground_truth, decimal=2)
 
 
     def test_UserAvg_predict_items(self):

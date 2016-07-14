@@ -146,11 +146,19 @@ class TestGlobalAvg(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    #unittest.main()
+    # Test all
+    # unittest.main()
 
     # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestGlobalAvg("test_GlobalAvg_input_data"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGlobalAvg("test_GlobalAvg_input_data"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
+
+    data = Orange.data.Table('ratings.tab')
+
+    # Train recommender
+    learner = GlobalAvgLearner(verbose=False)
+    recommender = learner(data)
+    asd =223
 

@@ -98,7 +98,8 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
-        learner = BRISMFLearner(K=2, steps=1, verbose=False)
+        learner = BRISMFLearner(K=2, steps=1, min_rating=0, max_rating=5,
+                                verbose=False)
         recommender = learner(data)
 
         print(str(recommender) + ' trained')
@@ -180,11 +181,11 @@ class TestBRISMF(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    unittest.main()
+    # unittest.main()
 
     # # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestBRISMF("test_BRISMF_input_data_continuous"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestBRISMF("test_BRISMF_input_data_continuous"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 

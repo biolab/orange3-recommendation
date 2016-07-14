@@ -1,9 +1,9 @@
 from orangecontrib.recommendation import Learner, Model
-from orangecontrib.recommendation.utils import format_data
 
 import numpy as np
 
 __all__ = ['GlobalAvgLearner']
+
 
 class GlobalAvgLearner(Learner):
     """ Global Average
@@ -18,19 +18,12 @@ class GlobalAvgLearner(Learner):
 
     name = 'Global average'
 
-    def __init__(self,
-                 preprocessors=None,
-                 verbose=False):
-        self.verbose = verbose
-        self.shape = None
-        self.order = None
-
-        super().__init__(preprocessors=preprocessors)
-        self.params = vars()
+    def __init__(self,preprocessors=None, verbose=False):
+        super().__init__(preprocessors=preprocessors, verbose=verbose)
 
 
-    def fit_storage(self, data):
-        """This function calls the factorization method.
+    def fit_model(self, data):
+        """This function calls the fit method.
 
         Args:
             data: Orange.data.Table
@@ -40,33 +33,20 @@ class GlobalAvgLearner(Learner):
 
         """
 
-        # Optional, can be manage through preprocessors.
-        data, self.order, self.shape = format_data.preprocess(data)
-
-        return GlobalAvgModel(global_average=np.mean(data.Y),
-                              shape=self.shape,
-                              order=self.order)
-
-
+        return GlobalAvgModel(global_average=np.mean(data.Y))
 
 
 class GlobalAvgModel(Model):
 
-    def __init__(self, global_average, shape, order):
+    def __init__(self, global_average):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
 
         Args:
             global_average: float
 
-            shape: (int, int)
-
-            order: (int, int)
-                Tuple with the index of the columns users and items in X. (idx_user, idx_item)
        """
         self.global_average = global_average
-        self.shape = shape
-        self.order = order
 
 
     def predict(self, X):
@@ -83,21 +63,6 @@ class GlobalAvgModel(Model):
             """
 
         return np.full(len(X), self.global_average)
-
-
-    def predict_storage(self, data):
-        """ Convert data.X variables to integer and calls predict(data.X)
-
-        Args:
-            data: Orange.data.Table
-
-        Returns:
-            Array with the recommendations for a given user.
-
-        """
-
-        # Convert indices to integer and call predict()
-        return self.predict(data.X.astype(int))
 
 
     def predict_items(self, users=None, top=None):
@@ -129,6 +94,3 @@ class GlobalAvgModel(Model):
             num_items = top
 
         return np.full((num_users, num_items), self.global_average)
-
-    def __str__(self):
-        return self.name
