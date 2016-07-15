@@ -148,6 +148,25 @@ class TestSVDPlusPlus(unittest.TestCase):
             data
         )
 
+
+    def test_SVDPlusPlus_objective(self):
+        # Load data
+        data = Orange.data.Table('ratings.tab')
+
+        steps = [1, 10, 30]
+        objectives = []
+
+        for step in steps:
+            svdpp = SVDPlusPlusLearner(K=2, steps=step, verbose=False)
+            recommender = svdpp(data)
+            objectives.append(svdpp.compute_objective(data=data, P=svdpp.P, Y=svdpp.Y,
+                                                       Q=svdpp.Q, bias=svdpp.bias,
+                                                       feedback=svdpp.feedback))
+
+        # Assert objective values decrease
+        test = list(map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
+        self.assertTrue(all(test))
+
 if __name__ == "__main__":
     # Test all
     unittest.main()
