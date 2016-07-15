@@ -188,7 +188,7 @@ class TestBRISMF(unittest.TestCase):
         objectives = []
 
         for step in steps:
-            brismf = BRISMFLearner(K=2, steps=step, verbose=False)
+            brismf = BRISMFLearner(K=2, steps=step, verbose=False, random_state=42)
             recommender = brismf(data)
             objectives.append(brismf.compute_objective(data=data, P=brismf.P,
                                                        Q=brismf.Q, bias=brismf.bias))

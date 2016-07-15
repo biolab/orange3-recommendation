@@ -30,6 +30,9 @@ class SVDPlusPlusLearner(Learner):
 
         verbose: boolean, optional (default = False)
             Prints information about the process.
+
+        random_state:
+                Random state or None.
     """
 
     name = 'SVD++'
@@ -40,7 +43,8 @@ class SVDPlusPlusLearner(Learner):
                  alpha=0.005,
                  beta=0.02,
                  preprocessors=None,
-                 verbose=False):
+                 verbose=False,
+                 random_state=None):
         self.K = K
         self.steps = steps
         self.alpha = alpha
@@ -54,6 +58,7 @@ class SVDPlusPlusLearner(Learner):
         self.shape = None
         self.order = None
         self.feedback = None
+        self.random_state = random_state
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
@@ -95,7 +100,8 @@ class SVDPlusPlusLearner(Learner):
                                                                   self.steps,
                                                                   self.alpha,
                                                                   self.beta,
-                                                                  self.verbose)
+                                                                  self.verbose,
+                                                                  self.random_state)
 
         return SVDPlusPlusModel(P=self.P,
                                 Q=self.Q,
@@ -103,12 +109,12 @@ class SVDPlusPlusLearner(Learner):
                                 bias=self.bias,
                                 global_average=self.global_average,
                                 order=self.order,
-                                feedback=self.feedback)
+                                feedback=self.feedback,)
 
 
 
 
-    def matrix_factorization(self, data, feedback, K, steps, alpha, beta, verbose=False):
+    def matrix_factorization(self, data, feedback, K, steps, alpha, beta, verbose=False, random_state=None):
         """ Factorize either a dense matrix or a sparse matrix into two low-rank
          matrices which represents user and item factors.
 
@@ -127,6 +133,9 @@ class SVDPlusPlusLearner(Learner):
             beta: float
                 The regularization parameter.
 
+            random_state:
+                Random state or None.
+
             verbose: boolean, optional
                 If true, it outputs information about the process.
 
@@ -135,6 +144,8 @@ class SVDPlusPlusLearner(Learner):
             , 'delta users')
 
         """
+        if not random_state is None:
+            np.random.seed(random_state)
 
 
         # Initialize factorized matrices randomly

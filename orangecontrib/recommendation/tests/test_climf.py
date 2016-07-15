@@ -124,7 +124,7 @@ class TestCLiMF(unittest.TestCase):
         objectives = []
 
         for step in steps:
-            climf = CLiMFLearner(K=2, steps=step, verbose=False)
+            climf = CLiMFLearner(K=2, steps=step, verbose=False, random_state=42)
             recommender = climf(data)
             objectives.append(climf.compute_objective(X=data.X, Y=data.Y,
                                                       U=climf.U, V=climf.V))
