@@ -143,6 +143,9 @@ class SVDPlusPlusLearner(Learner):
         Q = np.random.rand(num_items, K)  # Item and features
         Y = np.random.randn(num_items, K)
 
+        # TODO: missing parameters w_ij and c_ij as in article
+        # ...
+
         # Compute biases
         bias = self.compute_bias(data)
 
@@ -251,6 +254,37 @@ class SVDPlusPlusLearner(Learner):
 
         # Compute RMSE
         rmse = math.sqrt(sq_error / len(data.Y))
+        return rmse
+
+    def compute_objective(self, data, feedback, bias, P, Q, Y):
+        objective = 0
+        for k in range(0, len(data.Y)):
+            i = data.X[k][self.order[0]]  # User
+            j = data.X[k][self.order[1]]  # Item
+            f = feedback[i]  # Implicit data
+
+            # Prediction
+            b_ui = self.global_average + \
+                   bias['dItems'][j] + \
+                   bias['dUsers'][i]
+
+            norm_denominator = math.sqrt(len(f))
+            tempN = np.sum(Y[f], axis=0)
+            p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
+
+            rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
+
+            objective += (rij_pred - data.Y[k]) ** 2
+
+            # Regularization
+            #TODO: missing parameters w_ij and c_ij as in article to be added in objective function
+            objective += self.beta * (np.linalg.norm(P[i, :]) ** 2
+                                      + np.linalg.norm(Q[j, :]) ** 2
+                                      + bias['dItems'][j] ** 2
+                                      + bias['dUsers'][i] ** 2)
+
+        # Compute RMSE
+        rmse = math.sqrt(objective / len(data.Y))
         return rmse
 
 
