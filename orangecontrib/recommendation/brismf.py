@@ -228,6 +228,28 @@ class BRISMFLearner(Learner):
         return rmse
 
 
+    def compute_objective(self, data, bias, P, Q):
+        objective = 0
+        for k in range(0, len(data.Y)):
+            i = data.X[k][self.order[0]]  # Users
+            j = data.X[k][self.order[1]]  # Items
+
+            # Prediction
+            rij_pred = self.global_average + \
+                       bias['dItems'][j] + \
+                       bias['dUsers'][i] + \
+                       np.dot(P[i, :], Q[j, :])
+            objective += (rij_pred - data.Y[k]) ** 2
+
+            # Regularization
+            objective += self.beta * (np.linalg.norm(P[i, :])**2
+                                      + np.linalg.norm(Q[j, :])**2
+                                      + bias['dItems'][j]**2
+                                      + bias['dUsers'][i]**2)
+        return objective
+
+
+
 class BRISMFModel(Model):
 
     def __init__(self, P, Q, bias, global_average, order):
