@@ -6,6 +6,7 @@ from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
 import numpy as np
 from scipy.special import expit as sigmoid
+from scipy.sparse import dok_matrix
 
 import time
 import random
@@ -206,6 +207,31 @@ class CLiMFLearner(Learner):
 
         print('\tTime MRR: %.3fs' % (time.time() - start))
         return MRR
+
+
+    def compute_objective(self, X, Y, U, V):
+
+        # X and Y are original data
+        # Construct explicit sparse matrix to evaluate the objective function
+        M, N = U.shape[0], V.shape[0]
+        Ys = dok_matrix((M, N))
+        for (i, j), y in zip(X, Y):
+            Ys[i, j] = y
+        Ys = Ys.tocsr()
+
+        W1 = np.log(sigmoid(U.dot(V.T)))
+        W2 = np.zeros(Ys.shape)
+
+        for i in range(M):
+            for j in range(N):
+                W2[i, j] = sum((np.log(1 - Ys[i, k] * sigmoid(U[i, :].dot(V[k, :] - V[j, :])))
+                                       for k in range(N)))
+
+        objective = Ys.multiply(W1 - W2).sum()
+        objective -= self.beta/2.0 * (np.linalg.norm(U, ord="fro")**2
+                                       + np.linalg.norm(V, ord="fro") ** 2)
+
+        return objective
 
 
 class CLiMFModel(Model):
