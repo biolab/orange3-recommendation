@@ -6,6 +6,7 @@ from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
 import numpy as np
 from scipy.special import expit as sigmoid
+from scipy.sparse import dok_matrix
 
 import time
 import random
@@ -49,6 +50,9 @@ class CLiMFLearner(Learner):
 
         verbose: boolean, optional (default = False)
             Prints information about the process.
+
+        random_state:
+                Random state or None.
     """
 
     name = 'CLiMF'
@@ -59,7 +63,8 @@ class CLiMFLearner(Learner):
                  alpha=0.005,
                  beta=0.02,
                  preprocessors=None,
-                 verbose=False):
+                 verbose=False,
+                 random_state=None):
         self.K = K
         self.steps = steps
         self.alpha = alpha
@@ -69,6 +74,7 @@ class CLiMFLearner(Learner):
         self.verbose = verbose
         self.shape = None
         self.order = None
+        self.random_state = random_state
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
@@ -100,7 +106,8 @@ class CLiMFLearner(Learner):
                                                     self.steps,
                                                     self.alpha,
                                                     self.beta,
-                                                    self.verbose)
+                                                    self.verbose,
+                                                    self.random_state)
 
 
         return CLiMFModel(U=self.U,
@@ -108,7 +115,7 @@ class CLiMFLearner(Learner):
                            order=self.order)
 
 
-    def matrix_factorization(self, data, K, steps, alpha, beta, verbose=False):
+    def matrix_factorization(self, data, K, steps, alpha, beta, verbose=False, random_state=None):
         """ Factorize either a dense matrix or a sparse matrix into two low-rank
          matrices which represents user and item factors.
 
@@ -127,6 +134,9 @@ class CLiMFLearner(Learner):
             beta: float
                 The regularization parameter.
 
+            random_state:
+                Random state or None.
+
             verbose: boolean, optional
                 If true, it outputs information about the process.
 
@@ -135,6 +145,9 @@ class CLiMFLearner(Learner):
             , 'delta users')
 
         """
+        if not random_state is None:
+            np.random.seed(random_state)
+
 
         # Initialize factorized matrices randomly
         num_users, num_items = self.shape
@@ -206,6 +219,31 @@ class CLiMFLearner(Learner):
 
         print('\tTime MRR: %.3fs' % (time.time() - start))
         return MRR
+
+
+    def compute_objective(self, X, Y, U, V):
+
+        # X and Y are original data
+        # Construct explicit sparse matrix to evaluate the objective function
+        M, N = U.shape[0], V.shape[0]
+        Ys = dok_matrix((M, N))
+        for (i, j), y in zip(X, Y):
+            Ys[i, j] = y
+        Ys = Ys.tocsr()
+
+        W1 = np.log(sigmoid(U.dot(V.T)))
+        W2 = np.zeros(Ys.shape)
+
+        for i in range(M):
+            for j in range(N):
+                W2[i, j] = sum((np.log(1 - Ys[i, k] * sigmoid(U[i, :].dot(V[k, :] - V[j, :])))
+                                       for k in range(N)))
+
+        objective = Ys.multiply(W1 - W2).sum()
+        objective -= self.beta/2.0 * (np.linalg.norm(U, ord="fro")**2
+                                       + np.linalg.norm(V, ord="fro") ** 2)
+
+        return objective
 
 
 class CLiMFModel(Model):

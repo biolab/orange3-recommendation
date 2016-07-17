@@ -43,7 +43,8 @@ class BRISMFLearner(Learner):
                  alpha=0.005,
                  beta=0.02,
                  preprocessors=None,
-                 verbose=False):
+                 verbose=False,
+                 random_state=None):
         self.K = K
         self.steps = steps
         self.alpha = alpha
@@ -55,6 +56,7 @@ class BRISMFLearner(Learner):
         self.verbose = verbose
         self.shape = None
         self.order = None
+        self.random_state = random_state
 
         super().__init__(preprocessors=preprocessors)
         self.params = vars()
@@ -87,7 +89,8 @@ class BRISMFLearner(Learner):
                                                                 self.steps,
                                                                 self.alpha,
                                                                 self.beta,
-                                                                self.verbose)
+                                                                self.verbose,
+                                                                self.random_state)
 
 
         return BRISMFModel(P=self.P,
@@ -99,7 +102,7 @@ class BRISMFLearner(Learner):
 
 
 
-    def matrix_factorization(self, data, K, steps, alpha, beta, verbose=False):
+    def matrix_factorization(self, data, K, steps, alpha, beta, verbose=False, random_state=None):
         """ Factorize either a dense matrix or a sparse matrix into two low-rank
          matrices which represents user and item factors.
 
@@ -118,6 +121,9 @@ class BRISMFLearner(Learner):
             beta: float
                 The regularization parameter.
 
+            random_state:
+                Random state or None.
+
             verbose: boolean, optional
                 If true, it outputs information about the process.
 
@@ -126,6 +132,8 @@ class BRISMFLearner(Learner):
             , 'delta users')
 
         """
+        if not random_state is None:
+            np.random.seed(random_state)
 
 
         # Initialize factorized matrices randomly
@@ -226,6 +234,28 @@ class BRISMFLearner(Learner):
         # Compute RMSE
         rmse = math.sqrt(sq_error / len(data.Y))
         return rmse
+
+
+    def compute_objective(self, data, bias, P, Q):
+        objective = 0
+        for k in range(0, len(data.Y)):
+            i = data.X[k][self.order[0]]  # Users
+            j = data.X[k][self.order[1]]  # Items
+
+            # Prediction
+            rij_pred = self.global_average + \
+                       bias['dItems'][j] + \
+                       bias['dUsers'][i] + \
+                       np.dot(P[i, :], Q[j, :])
+            objective += (rij_pred - data.Y[k]) ** 2
+
+            # Regularization
+            objective += self.beta * (np.linalg.norm(P[i, :])**2
+                                      + np.linalg.norm(Q[j, :])**2
+                                      + bias['dItems'][j]**2
+                                      + bias['dUsers'][i]**2)
+        return objective
+
 
 
 class BRISMFModel(Model):
