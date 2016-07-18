@@ -29,6 +29,9 @@ class ModelRecommendation(Model):
 
         return prediction
 
+    def compute_objective(self):
+        pass
+
 
 class LearnerRecommendation(Learner):
 

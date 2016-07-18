@@ -115,12 +115,34 @@ class TestCLiMF(unittest.TestCase):
         self.assertRaises(TypeError, recommender, arg)
 
 
+    def test_CLiMF_objective(self):
+
+        # Load data
+        data = Orange.data.Table('binary_data.tab')
+
+        steps = [1, 10, 20]
+        objectives = []
+
+        for step in steps:
+            learner = CLiMFLearner(K=2, steps=step, verbose=False)
+            recommender = learner(data)
+            objectives.append(recommender.compute_objective(X=data.X, Y=data.Y,
+                                                            U=recommender.U,
+                                                            V=recommender.V,
+                                                            beta=learner.beta))
+
+        # Assert objective values *increase*
+        test = list(
+            map(lambda t: t[0] <= t[1], zip(objectives, objectives[1:])))
+        self.assertTrue(all(test))
+
+
 if __name__ == "__main__":
     # Test all
     #unittest.main()
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
+    suite.addTest(TestCLiMF("test_CLiMF_objective"))
     runner = unittest.TextTestRunner()
     runner.run(suite)

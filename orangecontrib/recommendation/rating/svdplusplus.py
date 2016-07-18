@@ -10,8 +10,8 @@ import warnings
 __all__ = ['SVDPlusPlusLearner']
 
 
-def _predict(i, j, globalAvg, dUsers, dItems, P, Q, Y, feedback):
-    b_ui = globalAvg + dUsers[i] + dItems[j]
+def _predict(i, j, global_avg, dUsers, dItems, P, Q, Y, feedback):
+    b_ui = global_avg + dUsers[i] + dItems[j]
 
     norm_denominator = math.sqrt(len(feedback))
     tempN = np.sum(Y[feedback], axis=0)
@@ -22,8 +22,8 @@ def _predict(i, j, globalAvg, dUsers, dItems, P, Q, Y, feedback):
     return rij_pred, p_plus_y_sum_vector, norm_denominator
 
 
-def _predict2(users, items, globalAvg, dUsers, dItems, P, Q, Y, feedback):
-    bias = globalAvg + dUsers[users] + dItems[items]
+def _predict2(users, items, global_avg, dUsers, dItems, P, Q, Y, feedback):
+    bias = global_avg + dUsers[users] + dItems[items]
 
     base_pred = []
     for k in range(len(users)):
@@ -41,8 +41,8 @@ def _predict2(users, items, globalAvg, dUsers, dItems, P, Q, Y, feedback):
     return predictions
 
 
-def _predict3(users, globalAvg, dUsers, dItems, P, Q, Y, feedback):
-    bias = globalAvg + dUsers[users]
+def _predict3(users, global_avg, dUsers, dItems, P, Q, Y, feedback):
+    bias = global_avg + dUsers[users]
     tempB = np.tile(np.array(dItems), (len(users), 1))
     bias = bias[:, np.newaxis] + tempB
 
@@ -291,6 +291,37 @@ class SVDPlusPlusModel(Model):
             predictions = predictions[:, :top]
 
         return predictions
+
+    def compute_objective(self, data, bias, P, Q, Y, beta):
+        objective = 0
+        for k in range(0, len(data.Y)):
+            i = data.X[k][self.order[0]]  # User
+            j = data.X[k][self.order[1]]  # Item
+            f = self.feedback[i]  # Implicit data
+
+            # Prediction
+            b_ui = self.bias['globalAvg'] + \
+                   bias['dItems'][j] + \
+                   bias['dUsers'][i]
+
+            norm_denominator = math.sqrt(len(f))
+            tempN = np.sum(Y[f], axis=0)
+            p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
+
+            rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
+
+            objective += (rij_pred - data.Y[k]) ** 2
+
+            # Regularization
+            # TODO: missing parameters w_ij and c_ij as in article to be added in objective function
+            objective += beta * (np.linalg.norm(P[i, :]) ** 2
+                                      + np.linalg.norm(Q[j, :]) ** 2
+                                      + bias['dItems'][j] ** 2
+                                      + bias['dUsers'][i] ** 2)
+
+        # Compute RMSE
+        rmse = math.sqrt(objective / len(data.Y))
+        return rmse
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]

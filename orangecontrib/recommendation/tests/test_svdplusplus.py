@@ -38,7 +38,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         self.assertEqual(len_u, num_users)
         self.assertEqual(len_i, num_items)
 
-    def test_BRISMF_input_data_discrete(self):
+    def test_SVD_input_data_discrete(self):
         # Load data
         data = Orange.data.Table('ratings.tab')
 
@@ -157,23 +157,50 @@ class TestSVDPlusPlus(unittest.TestCase):
         objectives = []
 
         for step in steps:
-            svdpp = SVDPlusPlusLearner(K=2, steps=step, verbose=False, random_state=42)
-            recommender = svdpp(data)
-            objectives.append(svdpp.compute_objective(data=data, P=svdpp.P, Y=svdpp.Y,
-                                                       Q=svdpp.Q, bias=svdpp.bias,
-                                                       feedback=svdpp.feedback))
+            learner = SVDPlusPlusLearner(K=2, steps=step, random_state=42)
+            recommender = learner(data)
+            objective = recommender.compute_objective(data=data,
+                                                      P=recommender.P,
+                                                      Q=recommender.Q,
+                                                      Y=recommender.Y,
+                                                      bias=recommender.bias,
+                                                      feedback=recommender.feedback)
+            objectives.append(objective)
 
         # Assert objective values decrease
         test = list(map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
 
+    def test_SVDPlusPlus_objective(self):
+        # Load data
+        data = Orange.data.Table('ratings.tab')
+
+        steps = [1, 10, 30]
+        objectives = []
+
+        for step in steps:
+            learner = SVDPlusPlusLearner(K=2, steps=step, verbose=False)
+            recommender = learner(data)
+            objectives.append(
+                recommender.compute_objective(data=data, P=learner.P,
+                                              Y=learner.Y,
+                                              Q=learner.Q,
+                                              bias=learner.bias,
+                                              beta=learner.beta))
+
+        # Assert objective values decrease
+        test = list(
+            map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
+        self.assertTrue(all(test))
+
+
 if __name__ == "__main__":
     # Test all
-    unittest.main()
+    # unittest.main()
 
     # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestSVDPlusPlus("test_SVDPlusPlus_input_data_continuous"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestSVDPlusPlus("test_SVDPlusPlus_objective"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 

@@ -10,14 +10,14 @@ import warnings
 __all__ = ['BRISMFLearner']
 
 
-def _predict(users, items, globalAvg, dUsers, dItems, P, Q, subscripts='i,i'):
-    bias = globalAvg + dUsers[users] + dItems[items]
+def _predict(users, items, global_avg, dUsers, dItems, P, Q, subscripts='i,i'):
+    bias = global_avg + dUsers[users] + dItems[items]
     base_pred = np.einsum(subscripts, P[users, :], Q[items, :])
     return bias + base_pred
 
 
-def _predict_all_items(users, globalAvg, dUsers, dItems, P, Q):
-    bias = globalAvg + dUsers[users]
+def _predict_all_items(users, global_avg, dUsers, dItems, P, Q):
+    bias = global_avg + dUsers[users]
     tempB = np.tile(np.array(dItems), (len(users), 1))
     bias = bias[:, np.newaxis] + tempB
 
@@ -25,8 +25,27 @@ def _predict_all_items(users, globalAvg, dUsers, dItems, P, Q):
     return bias + base_pred
 
 
+def _compute_objective(users, items, global_avg, dUsers, dItems, P, Q, target,
+                       beta):
+    objective = 0
+    subscripts = 'i,i'
+
+    if len(users) > 1:
+        subscripts = 'ij,ij->i'
+    predictions = _predict(users, items, global_avg, dUsers, dItems, P, Q,
+                           subscripts)
+    objective += (predictions - target) ** 2
+
+    # Regularization
+    objective += beta * (np.linalg.norm(P[users, :], axis=1) ** 2
+                         + np.linalg.norm(Q[items, :], axis=1) ** 2
+                         + dItems[items] ** 2
+                         + dUsers[users] ** 2)
+    return objective.sum()
+
+
 def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
-                          verbose=False):
+                          verbose=False, random_state=None):
     """ Factorize either a dense matrix or a sparse matrix into two low-rank
         matrices which represents user and item factors.
 
@@ -45,6 +64,9 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
            beta: float
                The regularization parameter.
 
+           random_state:
+               Random state or None.
+
            verbose: boolean, optional
                If true, it outputs information about the process.
 
@@ -53,6 +75,9 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
            , 'delta users')
 
        """
+
+    if random_state is not None:
+        np.random.seed(random_state)
 
     # Initialize factorized matrices randomly
     num_users, num_items = shape
@@ -117,7 +142,8 @@ class BRISMFLearner(Learner):
     name = 'BRISMF'
 
     def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, min_rating=None,
-                 max_rating=None, preprocessors=None, verbose=False):
+                 max_rating=None, preprocessors=None, verbose=False,
+                 random_state=None):
         self.K = K
         self.steps = steps
         self.alpha = alpha
@@ -125,6 +151,7 @@ class BRISMFLearner(Learner):
         self.P = None
         self.Q = None
         self.bias = None
+        self.random_state = random_state
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
 
@@ -152,13 +179,13 @@ class BRISMFLearner(Learner):
                                                order=self.order, K=self.K,
                                                steps=self.steps,
                                                alpha=self.alpha,
-                                               beta=self.beta, verbose=False)
+                                               beta=self.beta, verbose=False,
+                                               random_state=self.random_state)
 
         return BRISMFModel(P=self.P, Q=self.Q, bias=self.bias)
 
 
 class BRISMFModel(Model):
-
     def __init__(self, P, Q, bias):
         """This model receives a learner and provides and interface to make the
         predictions for a given user.
@@ -194,8 +221,8 @@ class BRISMFModel(Model):
         items = X[:, self.order[1]]
 
         predictions = _predict(users, items, self.bias['globalAvg'],
-                                self.bias['dUsers'], self.bias['dItems'],
-                                self.P, self.Q, 'ij,ij->i')
+                               self.bias['dUsers'], self.bias['dItems'],
+                               self.P, self.Q, 'ij,ij->i')
 
         return predictions
 
@@ -229,6 +256,18 @@ class BRISMFModel(Model):
             predictions = predictions[:, :top]
 
         return predictions
+
+    def compute_objective(self, data, beta):
+        data.X = data.X.astype(int)  # Convert indices to integer
+
+        users = data.X[:, self.order[0]]
+        items = data.X[:, self.order[1]]
+
+        objective = _compute_objective(users, items, self.bias['globalAvg'],
+                                       self.bias['dUsers'],
+                                       self.bias['dItems'], self.P, self.Q,
+                                       data.Y, beta)
+        return objective
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]
