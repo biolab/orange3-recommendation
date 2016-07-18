@@ -24,10 +24,8 @@ class TestUserAvg(unittest.TestCase):
                                    2.6, 3.6666])
 
         # Compare results
-        np.testing.assert_array_almost_equal(recommender.users_average,
-                                             ground_truth,
-                                             decimal=2)
-
+        users_avg = recommender.bias['globalAvg'] + recommender.bias['dUsers']
+        np.testing.assert_array_almost_equal(users_avg, ground_truth, decimal=2)
 
     def test_UserAvg_predict_items(self):
 
@@ -57,7 +55,6 @@ class TestUserAvg(unittest.TestCase):
         self.assertEqual(len_u, num_users)
         self.assertEqual(len_i, num_items)
 
-
     def test_UserAvg_input_data(self):
 
         # Load data
@@ -81,7 +78,6 @@ class TestUserAvg(unittest.TestCase):
         self.assertGreaterEqual(rmse, 0)
         np.testing.assert_equal(y_pred, y_pred2)
 
-
     def test_UserAvg_pairs(self):
 
         # Load data
@@ -104,7 +100,6 @@ class TestUserAvg(unittest.TestCase):
 
         # Check correctness
         self.assertEqual(len(y_pred), sample_size)
-
 
     def test_ItemAvg_CV(self):
         from Orange.evaluation.testing import CrossValidation

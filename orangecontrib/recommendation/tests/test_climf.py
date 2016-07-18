@@ -124,13 +124,16 @@ class TestCLiMF(unittest.TestCase):
         objectives = []
 
         for step in steps:
-            climf = CLiMFLearner(K=2, steps=step, verbose=False, random_state=42)
-            recommender = climf(data)
-            objectives.append(climf.compute_objective(X=data.X, Y=data.Y,
-                                                      U=climf.U, V=climf.V))
+            learner = CLiMFLearner(K=2, steps=step, verbose=False)
+            recommender = learner(data)
+            objectives.append(recommender.compute_objective(X=data.X, Y=data.Y,
+                                                            U=recommender.U,
+                                                            V=recommender.V,
+                                                            beta=learner.beta))
 
         # Assert objective values *increase*
-        test = list(map(lambda t: t[0] <= t[1], zip(objectives, objectives[1:])))
+        test = list(
+            map(lambda t: t[0] <= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
 
 

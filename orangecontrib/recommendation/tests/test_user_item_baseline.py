@@ -59,7 +59,7 @@ class TestUserItemBaseline(unittest.TestCase):
         np.testing.assert_array_almost_equal(recommender.bias['dUsers'],
                                              ground_truth_dUsers,
                                              decimal=2)
-        self.assertAlmostEqual(recommender.global_average, 3.17857, places=2)
+        self.assertAlmostEqual(recommender.bias['globalAvg'], 3.17857, places=2)
 
 
     def test_UserItemBaseline_predict_items(self):

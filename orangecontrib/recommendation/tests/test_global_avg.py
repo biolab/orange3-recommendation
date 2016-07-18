@@ -36,7 +36,6 @@ class TestGlobalAvg(unittest.TestCase):
     #     # Compare results
     #     np.testing.assert_array_equal(y_pred1, y_pred2)
 
-
     def test_GlobalAvg_correctness(self):
 
         # Load data
@@ -48,7 +47,6 @@ class TestGlobalAvg(unittest.TestCase):
 
         print('Global average: %.5f' % recommender.global_average)
         self.assertAlmostEqual(recommender.global_average, 3.17857, places=2)
-
 
     def test_GlobalAvg_predict_items(self):
 
@@ -78,7 +76,6 @@ class TestGlobalAvg(unittest.TestCase):
         self.assertEqual(len_u, num_users)
         self.assertEqual(len_i, num_items)
 
-
     def test_GlobalAvg_input_data(self):
 
         # Load data
@@ -98,7 +95,6 @@ class TestGlobalAvg(unittest.TestCase):
 
         # Check correctness
         self.assertGreaterEqual(rmse, 0)
-
 
     def test_GlobalAvg_pairs(self):
 
@@ -123,7 +119,6 @@ class TestGlobalAvg(unittest.TestCase):
         # Check correctness
         self.assertEqual(len(y_pred), sample_size)
 
-
     def test_GlobalAvg_CV(self):
         from Orange.evaluation.testing import CrossValidation
 
@@ -146,11 +141,11 @@ class TestGlobalAvg(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    #unittest.main()
+    # Test all
+    unittest.main()
 
     # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestGlobalAvg("test_GlobalAvg_input_data"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
-
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGlobalAvg("test_GlobalAvg_input_data"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)

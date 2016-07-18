@@ -1,7 +1,9 @@
 import Orange
+from Orange.data import Table, Domain, ContinuousVariable, StringVariable
 
 from scipy import sparse
 import numpy as np
+
 
 def preprocess(data):
     """Transforms the raw data read by Orange into something that this
@@ -41,10 +43,14 @@ def preprocess(data):
     order = (idx_users, idx_items)
     shape = (users, items)
 
+    # Range ratings
+    # min_rating = np.min(data.Y)
+    # max_rating = np.max(data.Y)
+
     # Convert to integer
     data.X = data.X.astype(int)
 
-    return data, order, shape
+    return data, order, shape  #, min_rating, max_rating
 
 
 def build_sparse_matrix(row, col, values, shape):
@@ -70,3 +76,18 @@ def build_sparse_matrix(row, col, values, shape):
     """
 
     return sparse.csr_matrix((values, (row, col)), shape=shape)
+
+
+def latent_factors_table(variable, matrix):
+    factors_name = [ContinuousVariable('K' + str(i + 1))
+                     for i in range(len(matrix[0, :]))]
+
+    if isinstance(variable, ContinuousVariable):
+        domain_val = ContinuousVariable(variable.name)
+        values = np.atleast_2d(np.arange(0, len(matrix))).T
+    else:
+        domain_val = StringVariable(variable.name)
+        values = np.column_stack((variable.values,))
+
+    tDomain = Domain(factors_name, None, [domain_val])
+    return Table(tDomain, matrix, None, values)

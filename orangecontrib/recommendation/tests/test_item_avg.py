@@ -51,9 +51,8 @@ class TestItemAvg(unittest.TestCase):
         ground_truth = np.asarray([3.2, 3.6, 2.7142, 3.2, 3.3333])
 
         # Compare results
-        np.testing.assert_array_almost_equal(recommender.items_average,
-                                             ground_truth,
-                                             decimal=2)
+        items_avg = recommender.bias['globalAvg'] + recommender.bias['dItems']
+        np.testing.assert_array_almost_equal(items_avg, ground_truth, decimal=2)
 
 
     def test_ItemAvg_predict_items(self):
