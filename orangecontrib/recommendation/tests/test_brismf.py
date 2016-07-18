@@ -173,6 +173,27 @@ class TestBRISMF(unittest.TestCase):
             data
         )
 
+
+    def test_BRISMF_objective(self):
+
+        # Load data
+        data = Orange.data.Table('ratings.tab')
+
+        steps      = [1, 10, 30]
+        objectives = []
+
+        for step in steps:
+            brismf = BRISMFLearner(K=2, steps=step, verbose=False, random_state=42)
+            recommender = brismf(data)
+            objectives.append(brismf.compute_objective(data=data, P=brismf.P,
+                                                       Q=brismf.Q, bias=brismf.bias))
+
+        # Assert objective values decrease
+        test = list(map(lambda t: t[0]>=t[1], zip(objectives, objectives[1:])))
+        self.assertTrue(all(test))
+
+
+
 if __name__ == "__main__":
     # Test all
     # unittest.main()

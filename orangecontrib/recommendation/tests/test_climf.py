@@ -121,6 +121,6 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_CLiMF_input_data_continuous"))
+    suite.addTest(TestCLiMF("test_CLiMF_input_data"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
