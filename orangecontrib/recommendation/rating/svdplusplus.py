@@ -313,7 +313,6 @@ class SVDPlusPlusModel(Model):
             objective += (rij_pred - data.Y[k]) ** 2
 
             # Regularization
-            # TODO: missing parameters w_ij and c_ij as in article to be added in objective function
             objective += beta * (np.linalg.norm(P[i, :]) ** 2
                                       + np.linalg.norm(Q[j, :]) ** 2
                                       + bias['dItems'][j] ** 2
