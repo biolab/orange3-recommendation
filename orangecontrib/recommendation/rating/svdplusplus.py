@@ -331,5 +331,6 @@ class SVDPlusPlusModel(Model):
         return format_data.latent_factors_table(variable, self.Q)
 
     def getYTable(self):
+        domain_name = 'Implicit feedback'
         variable = self.original_domain.variables[self.order[1]]
-        return format_data.latent_factors_table(variable, self.Y)
+        return format_data.latent_factors_table(variable, self.Y, domain_name)

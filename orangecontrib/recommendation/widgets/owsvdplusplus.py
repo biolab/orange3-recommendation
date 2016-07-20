@@ -75,7 +75,7 @@ class OWSVDPlusPlus(OWBaseLearner):
         if self.valid_data:
             P = self.model.getPTable()
             Q = self.model.getQTable()
-            Y = self.model.getQTable()
+            Y = self.model.getYTable()
 
         self.send("P", P)
         self.send("Q", Q)

@@ -78,7 +78,7 @@ def build_sparse_matrix(row, col, values, shape):
     return sparse.csr_matrix((values, (row, col)), shape=shape)
 
 
-def latent_factors_table(variable, matrix):
+def latent_factors_table(variable, matrix, domain_name=None):
     factors_name = [ContinuousVariable('K' + str(i + 1))
                      for i in range(len(matrix[0, :]))]
 
@@ -89,5 +89,8 @@ def latent_factors_table(variable, matrix):
         domain_val = StringVariable(variable.name)
         values = np.column_stack((variable.values,))
 
-    tDomain = Domain(factors_name, None, [domain_val])
+    if domain_name is None:
+        domain_name = domain_val
+
+    tDomain = Domain(factors_name, None, [domain_name])
     return Table(tDomain, matrix, None, values)
