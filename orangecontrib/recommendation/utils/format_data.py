@@ -82,15 +82,17 @@ def latent_factors_table(variable, matrix, domain_name=None):
     factors_name = [ContinuousVariable('K' + str(i + 1))
                      for i in range(len(matrix[0, :]))]
 
+    if domain_name is None:
+        dname = variable.name
+    else:
+        dname = domain_name
+
     if isinstance(variable, ContinuousVariable):
-        domain_val = ContinuousVariable(variable.name)
+        domain_val = ContinuousVariable(dname)
         values = np.atleast_2d(np.arange(0, len(matrix))).T
     else:
-        domain_val = StringVariable(variable.name)
+        domain_val = StringVariable(dname)
         values = np.column_stack((variable.values,))
 
-    if domain_name is None:
-        domain_name = domain_val
-
-    tDomain = Domain(factors_name, None, [domain_name])
+    tDomain = Domain(factors_name, None, [domain_val])
     return Table(tDomain, matrix, None, values)
