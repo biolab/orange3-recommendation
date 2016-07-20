@@ -259,7 +259,7 @@ class SVDPlusPlusModel(Model):
                                 self.bias['dUsers'], self.bias['dItems'],
                                 self.P, self.Q, self.Y, self.feedback)
 
-        return predictions
+        return super().predict_on_range(predictions)
 
     def predict_items(self, users=None, top=None):
         """This function returns all the predictions for a set of items.
@@ -290,7 +290,7 @@ class SVDPlusPlusModel(Model):
         if top is not None:
             predictions = predictions[:, :top]
 
-        return predictions
+        return super().predict_on_range(predictions)
 
     def compute_objective(self, data, bias, P, Q, Y, beta):
         objective = 0
