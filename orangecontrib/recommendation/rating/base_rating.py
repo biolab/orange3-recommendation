@@ -7,17 +7,6 @@ __all__ = ["LearnerRecommendation", "ModelRecommendation"]
 
 class ModelRecommendation(Model):
 
-    def _predict(self, X):
-
-        # Check if all indices exist. If not, return random index.
-        # On average, random indices is equivalent to return a global_average!!!
-        X[X[:, self.order[0]] >= self.shape[0], self.order[0]] = \
-            np.random.randint(low=0, high=self.shape[0])
-        X[X[:, self.order[1]] >= self.shape[1], self.order[1]] = \
-            np.random.randint(low=0, high=self.shape[1])
-
-        return self.predict_on_range(self.predict(X))
-
     def predict_on_range(self, predictions):
         # Just for modeling ratings with latent factors
         try:
