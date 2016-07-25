@@ -68,9 +68,9 @@ def _compute_objective(users, items, global_avg, dUsers, dItems, P, Q, target,
     return objective.sum()
 
 
-def _matrix_factorization(ratings, feedback, trust, bias, shape, order, K,
-                          steps, alpha, beta, beta_trust, verbose=False,
-                          random_state=None):
+def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
+                          order, K, steps, alpha, beta, beta_trust,
+                          verbose=False, random_state=None):
     """ Factorize either a dense matrix or a sparse matrix into two low-rank
         matrices which represents user and item factors.
 
@@ -112,7 +112,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, order, K,
     P = np.random.rand(num_users, K)  # User and features
     Q = np.random.rand(num_items, K)  # Item and features
     Y = np.random.randn(num_users, K)
-    W = np.random.randn(num_users, K)
+    W = np.random.randn(trust_users, K)
 
     globalAvg = bias['globalAvg']
     dItems = bias['dItems']
@@ -130,11 +130,15 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, order, K,
         tempQ = np.zeros(Q.shape)
         tempY = np.zeros(Y.shape)
         tempW = np.zeros(W.shape)
+        if verbose:
+            start2 = time.time()
 
         # Optimize rating prediction
+        count = 0
+        total = len(ratings.nonzero()[0])
         for u, j in zip(*ratings.nonzero()):
-            if verbose:
-                start2 = time.time()
+            count += 1
+            print(str(count) + ' out of ' + str(total))
 
             items_rated_by_u = ratings[u, :].nonzero()[1]
             trustees_u = trust[u, :].nonzero()[1]
@@ -171,8 +175,8 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, order, K,
                     users_who_rated_i = ratings[:, i].nonzero()[0]
                     norm_Ui = math.sqrt(len(users_who_rated_i))
                     tempY[i, :] = tempY1 + (beta/norm_Ui) * Y[i, :]
-            if verbose:
-                print('\tTime iter ratings1: %.3fs' % (time.time() - start2))
+            # if verbose:
+            #     print('\tTime iter ratings1: %.3fs' % (time.time() - start2))
 
             if verbose:
                 start2 = time.time()
@@ -183,8 +187,8 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, order, K,
                     trusters_v = trust[:, v].nonzero()[0]
                     norm_Tv = math.sqrt(len(trusters_v))
                     tempW[v, :] = tempW1 + (beta/norm_Tv) * W[v, :]
-            if verbose:
-                print('\tTime iter ratings2: %.3fs' % (time.time() - start2))
+        if verbose:
+            print('\tTime iter ratings2: %.3fs' % (time.time() - start2))
 
         # Optimize trust prediction
         for u, v in zip(*trust.nonzero()):
@@ -253,6 +257,7 @@ class TrustSVDLearner(Learner):
         self.beta_trust = beta_trust
         self.feedback = feedback
         self.trust = trust
+        self.trust_users = None
         self.random_state = random_state
         self.P = None
         self.Q = None
@@ -296,18 +301,19 @@ class TrustSVDLearner(Learner):
         # Transform trust matrix to sparse
         max_row = np.max(self.trust.X[:, 0])
         max_col = np.max(self.trust.X[:, 1])
-        max_user_t = int(max(max_user, max(max_row, max_col))) + 1
-        shape_trust = (max_user_t, max_user_t)
+        self.trust_users = int(max(max_user, max(max_row, max_col))) + 1
         self.trust = sparse.csr_matrix((self.trust.Y,
                                         (self.trust.X[:, 0],
                                          self.trust.X[:, 1])),
-                                       shape=shape_trust)
+                                       shape=(self.trust_users,
+                                              self.trust_users))
 
         # Factorize matrix
         self.P, self.Q, self.Y, self.W = \
             _matrix_factorization(ratings=data, feedback=self.feedback,
                                   trust=self.trust, bias=self.bias,
-                                  shape=self.shape, order=self.order, K=self.K,
+                                  shape=self.shape, trust_users=self.trust_users,
+                                  order=self.order, K=self.K,
                                   steps=self.steps, alpha=self.alpha,
                                   beta=self.beta, beta_trust=self.beta_trust,
                                   verbose=self.verbose,
