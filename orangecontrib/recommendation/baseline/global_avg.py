@@ -21,7 +21,7 @@ class GlobalAvgLearner(Learner):
     def __init__(self,preprocessors=None, verbose=False):
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
-    def fit_model(self, data):
+    def fit_storage(self, data):
         """This function calls the fit method.
 
         Args:
@@ -31,8 +31,10 @@ class GlobalAvgLearner(Learner):
             Model object (GlobalAvgModel).
 
         """
+        data = super().prepare_fit(data)
 
-        return GlobalAvgModel(global_average=np.mean(data.Y))
+        model = GlobalAvgModel(global_average=np.mean(data.Y))
+        return super().prepare_model(model)
 
 
 class GlobalAvgModel(Model):

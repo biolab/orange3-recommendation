@@ -134,7 +134,7 @@ class CLiMFLearner(Learner):
         self.V = None
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
-    def fit_model(self, data):
+    def fit_storage(self, data):
         """This function calls the factorization method.
 
         Args:
@@ -144,6 +144,7 @@ class CLiMFLearner(Learner):
             Model object (BRISMFModel).
 
         """
+        data = super().prepare_fit(data)
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
@@ -156,7 +157,8 @@ class CLiMFLearner(Learner):
                                                alpha=self.alpha,
                                                beta=self.beta, verbose=False)
 
-        return CLiMFModel(U=self.U, V=self.V)
+        model = CLiMFModel(U=self.U, V=self.V)
+        return super().prepare_model(model)
 
 
 class CLiMFModel(Model):

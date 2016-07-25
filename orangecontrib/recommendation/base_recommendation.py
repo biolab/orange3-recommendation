@@ -44,10 +44,7 @@ class LearnerRecommendation(Learner):
         self.verbose = verbose
         super().__init__(preprocessors=preprocessors)
 
-    def fit_base(self):
-        pass
-
-    def fit_storage(self, data):
+    def prepare_fit(self, data):
         """This function calls the fit method.
 
         Args:
@@ -59,12 +56,12 @@ class LearnerRecommendation(Learner):
         """
 
         data, self.order, self.shape = format_data.preprocess(data)
+        return data
 
-        model = self.fit_base(data)
+    def prepare_model(self, model):
         model.shape = self.shape
         model.order = self.order
         model.verbose = self.verbose
-
         return model
 
     def compute_bias(self, data, axis='all'):

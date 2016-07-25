@@ -155,7 +155,7 @@ class BRISMFLearner(Learner):
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
 
-    def fit_model(self, data):
+    def fit_storage(self, data):
         """This function calls the factorization method.
 
         Args:
@@ -165,6 +165,7 @@ class BRISMFLearner(Learner):
             Model object (BRISMFModel).
 
         """
+        data = super().prepare_fit(data)
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
@@ -182,7 +183,8 @@ class BRISMFLearner(Learner):
                                                beta=self.beta, verbose=False,
                                                random_state=self.random_state)
 
-        return BRISMFModel(P=self.P, Q=self.Q, bias=self.bias)
+        model = BRISMFModel(P=self.P, Q=self.Q, bias=self.bias)
+        return super().prepare_model(model)
 
 
 class BRISMFModel(Model):

@@ -22,7 +22,7 @@ class UserItemBaselineLearner(Learner):
         self.bias = None
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
-    def fit_model(self, data):
+    def fit_storage(self, data):
         """This function calls the fit method.
 
         Args:
@@ -32,10 +32,13 @@ class UserItemBaselineLearner(Learner):
             Model object (UserItemBaselineModel).
 
         """
+        data = super().prepare_fit(data)
 
         # Compute biases and global average
         self.bias = self.compute_bias(data, 'all')
-        return UserItemBaselineModel(bias=self.bias)
+
+        model = UserItemBaselineModel(bias=self.bias)
+        return super().prepare_model(model)
 
 
 class UserItemBaselineModel(Model):

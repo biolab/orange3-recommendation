@@ -78,6 +78,17 @@ def build_sparse_matrix(row, col, values, shape):
     return sparse.csr_matrix((values, (row, col)), shape=shape)
 
 
+def generate_implicit_feedback(data, order):
+    users = np.unique(data.X[:, order[0]])
+    feedback = {}
+
+    for u in users:
+        indices_items = np.where(data.X[:, order[0]] == u)
+        items = data.X[:, order[1]][indices_items]
+        feedback[u] = items
+    return feedback
+
+
 def latent_factors_table(variable, matrix, domain_name=None):
     factors_name = [ContinuousVariable('K' + str(i + 1))
                      for i in range(len(matrix[0, :]))]

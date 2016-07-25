@@ -20,7 +20,7 @@ class ItemAvgLearner(Learner):
         self.bias = None
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
-    def fit_model(self, data):
+    def fit_storage(self, data):
         """This function calls the fit method.
 
         Args:
@@ -30,10 +30,13 @@ class ItemAvgLearner(Learner):
             Model object (ItemAvgModel).
 
         """
+        data = super().prepare_fit(data)
 
         # Compute biases and global average
         self.bias = self.compute_bias(data, 'items')
-        return ItemAvgModel(bias=self.bias)
+
+        model = ItemAvgModel(bias=self.bias)
+        return super().prepare_model(model)
 
 
 class ItemAvgModel(Model):

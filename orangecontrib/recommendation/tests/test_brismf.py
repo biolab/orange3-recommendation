@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_BRISMF_objective"))
+    suite.addTest(TestBRISMF("test_BRISMF_input_data_continuous"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

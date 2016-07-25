@@ -65,7 +65,7 @@ def _predict3(users, global_avg, dUsers, dItems, P, Q, Y, feedback):
 
 
 def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
-                          alpha, beta, verbose=False):
+                          alpha, beta, verbose=False, random_state=None):
 
     """ Factorize either a dense matrix or a sparse matrix into two low-rank
      matrices which represents user and item factors.
@@ -85,6 +85,9 @@ def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
         beta: float
             The regularization parameter.
 
+        random_state:
+               Random state or None.
+
         verbose: boolean, optional
             If true, it outputs information about the process.
 
@@ -93,11 +96,14 @@ def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
 
     """
 
+    if random_state is not None:
+        np.random.seed(random_state)
+
     # Initialize factorized matrices randomly
     num_users, num_items = shape
     P = np.random.rand(num_users, K)  # User and features
     Q = np.random.rand(num_items, K)  # Item and features
-    Y = np.random.randn(num_items, K)
+    Y = np.random.randn(num_users, K)
 
     globalAvg = bias['globalAvg']
     dItems = bias['dItems']
@@ -125,8 +131,8 @@ def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
             tempQ = alpha * 2 * (eij * p_plus_y_sum_vector + beta * Q[j])
             tempY = alpha * 2 * (eij / norm_denominator * Q[j] + beta * Y[f])
 
-            Q[j] -= tempQ
             P[i] -= tempP
+            Q[j] -= tempQ
             Y[f] -= tempY
 
         if verbose:
@@ -159,7 +165,8 @@ class SVDPlusPlusLearner(Learner):
     name = 'SVD++'
 
     def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, min_rating=None,
-                 max_rating=None, preprocessors=None, verbose=False):
+                 max_rating=None, feedback=None, preprocessors=None,
+                 verbose=False, random_state=None):
         self.K = K
         self.steps = steps
         self.alpha = alpha
@@ -169,10 +176,11 @@ class SVDPlusPlusLearner(Learner):
         self.Y = None
         self.bias = None
         self.feedback = None
+        self.random_state = random_state
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
 
-    def fit_model(self, data):
+    def fit_storage(self, data):
         """This function calls the factorization method.
 
         Args:
@@ -182,6 +190,7 @@ class SVDPlusPlusLearner(Learner):
             Model object (BRISMFModel).
 
         """
+        data = super().prepare_fit(data)
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
@@ -191,7 +200,9 @@ class SVDPlusPlusLearner(Learner):
         self.bias = self.compute_bias(data, 'all')
 
         # Generate implicit feedback using the explicit ratings of the data
-        self.feedback = self.generate_implicit_feedback(data)
+        if self.feedback is None:
+            self.feedback = format_data.generate_implicit_feedback(data,
+                                                                   self.order)
 
         # Factorize matrix
         self.P, self.Q, self.Y =\
@@ -199,20 +210,11 @@ class SVDPlusPlusLearner(Learner):
                                   feedback=self.feedback, shape=self.shape,
                                   order=self.order, K=self.K, steps=self.steps,
                                   alpha=self.alpha, beta=self.beta,
-                                  verbose=False)
+                                  verbose=False, random_state=self.random_state)
 
-        return SVDPlusPlusModel(P=self.P, Q=self.Q, Y=self.Y, bias=self.bias,
-                                feedback=self.feedback)
-
-    def generate_implicit_feedback(self, data):
-        users = np.unique(data.X[:, self.order[0]])
-        feedback = {}
-
-        for u in users:
-            indices_items = np.where(data.X[:, self.order[0]] == u)
-            items = data.X[:, self.order[1]][indices_items]
-            feedback[u] = items
-        return feedback
+        model = SVDPlusPlusModel(P=self.P, Q=self.Q, Y=self.Y, bias=self.bias,
+                                 feedback=self.feedback)
+        return super().prepare_model(model)
 
 
 class SVDPlusPlusModel(Model):
