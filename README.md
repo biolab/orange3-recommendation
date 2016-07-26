@@ -9,6 +9,9 @@ Orange3 Recommendation
 Orange3 Recommendation is a Python module that extends [Orange3](http://orange.biolab.si) to include support for recommender systems.
 All features can be combined with powerful data mining techniques from the Orange data mining framework.
 
+**The library is still in development**, further modifications have to be done in *BRISMF*, *SVD++* and *trustSVD* 
+related with efficiency, correcting bugs, adding options (learning the bias instead of using the stardard deviation 
+by default) and adding more algorithms
 
 Dependencies
 ============
