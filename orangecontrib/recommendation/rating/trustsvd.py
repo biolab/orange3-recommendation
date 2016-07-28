@@ -131,6 +131,13 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
 
     user_col = order[0]
     item_col = order[1]
+
+    users_cached = defaultdict(list)
+    items_cached = defaultdict(list)
+    trusters_cached = defaultdict(list)
+    trustees_cached = defaultdict(list)
+    feedback_cached = defaultdict(list)
+
     # Factorize matrix using SGD
     for step in range(steps):
         if verbose:
@@ -141,12 +148,6 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
         tempQ = np.zeros(Q.shape)
         tempY = np.zeros(Y.shape)
         tempW = np.zeros(W.shape)
-
-        users_cached = defaultdict(list)
-        items_cached = defaultdict(list)
-        trusters_cached = defaultdict(list)
-        trustees_cached = defaultdict(list)
-        feedback_cached = defaultdict(list)
 
         if verbose:
             start2 = time.time()
@@ -394,6 +395,7 @@ class TrustSVDModel(Model):
                             self.Q, self.Y, self.W, feedback_u, trustees_u)
             predictions.append(pred[0])
 
+        predictions = np.asarray(predictions)
         return super().predict_on_range(np.asarray(predictions))
 
     def predict_items(self, users=None, top=None):

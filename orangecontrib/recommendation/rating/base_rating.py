@@ -31,3 +31,8 @@ class LearnerRecommendation(Learner):
         self.min_rating = min_rating
         self.max_rating = max_rating
         super().__init__(preprocessors=preprocessors, verbose=verbose)
+
+    def prepare_model(self, model):
+        model.min_rating = self.min_rating
+        model.max_rating = self.max_rating
+        return super().prepare_model(model)

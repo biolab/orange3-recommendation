@@ -63,7 +63,6 @@ class TestSVDPlusPlus(unittest.TestCase):
         self.assertEqual(P.X.shape[1], Q.X.shape[1])
 
     def test_SVDPlusPlus_input_data_continuous(self):
-        pass
         # Load data
         data = Orange.data.Table('ratings3.tab')
 
@@ -159,9 +158,9 @@ class TestSVDPlusPlus(unittest.TestCase):
             learner = SVDPlusPlusLearner(K=2, steps=step, verbose=False)
             recommender = learner(data)
             objectives.append(
-                recommender.compute_objective(data=data, P=learner.P,
-                                              Y=learner.Y,
-                                              Q=learner.Q,
+                recommender.compute_objective(data=data, P=recommender.P,
+                                              Q=recommender.Q,
+                                              Y=recommender.Y,
                                               bias=learner.bias,
                                               beta=learner.beta))
 

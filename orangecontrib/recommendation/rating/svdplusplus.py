@@ -3,69 +3,58 @@ from orangecontrib.recommendation.utils import format_data
 
 import numpy as np
 import math
+from collections import defaultdict
 
 import time
 import warnings
 
 __all__ = ['SVDPlusPlusLearner']
 
+def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, feedback):
+    bias = global_avg + dUsers[u] + dItems[j]
 
-def _predict(i, j, global_avg, dUsers, dItems, P, Q, Y, feedback):
-    b_ui = global_avg + dUsers[i] + dItems[j]
+    # Implicit feedback
+    norm_feedback = math.sqrt(len(feedback))
+    if norm_feedback > 0:
+        y_sum = np.sum(Y[feedback, :], axis=0)
+        y_term = y_sum / norm_feedback
+    else:
+        y_term = 0
 
-    norm_denominator = math.sqrt(len(feedback))
-    tempN = np.sum(Y[feedback], axis=0)
-    p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
+    # Compute base
+    p_enhanced = P[u, :] + y_term
+    base_pred = np.einsum('i,i', p_enhanced, Q[j, :])
 
-    rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
-
-    return rij_pred, p_plus_y_sum_vector, norm_denominator
-
-
-def _predict2(users, items, global_avg, dUsers, dItems, P, Q, Y, feedback):
-    bias = global_avg + dUsers[users] + dItems[items]
-
-    base_pred = []
-    for k in range(len(users)):
-        i = users[k]
-        j = items[k]
-        f = feedback[i]  # Implicit data
-
-        norm_denominator = np.sqrt(len(f))
-        tempN = np.sum(Y[f], axis=0)
-
-        p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
-        base_pred.append(np.dot(p_plus_y_sum_vector, Q[j, :]))
-
-    predictions = bias + np.asarray(base_pred)
-    return predictions
+    return bias + base_pred, y_term, norm_feedback
 
 
-def _predict3(users, global_avg, dUsers, dItems, P, Q, Y, feedback):
-    bias = global_avg + dUsers[users]
-    tempB = np.tile(np.array(dItems), (len(users), 1))
-    bias = bias[:, np.newaxis] + tempB
+def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, feedback):
+    bias = global_avg + dUsers[u] + dItems
 
-    predictions = []
-    for i in range(len(users)):
-        u = users[i]
-        f = feedback[u]  # Implicit data
+    # Implicit feedback
+    norm_feedback = math.sqrt(len(feedback))
+    if norm_feedback > 0:
+        y_sum = np.sum(Y[feedback, :], axis=0)
+        y_term = y_sum / norm_feedback
+    else:
+        y_term = 0
 
-        norm_denominator = np.sqrt(len(f))
-        tempN = np.sum(Y[f], axis=0)
+    # Compute base
+    p_enhanced = P[u, :] + y_term
 
-        p_plus_y_sum_vector = tempN / norm_denominator + P[u, :]
-        pred = bias[i, :]
-        pred2 = np.dot(p_plus_y_sum_vector, Q.T)
+    base_pred = np.dot(p_enhanced, Q.T)
+    return bias + base_pred
 
-        predictions.append(pred + pred2)
+def save_in_cache(matrix, key, cache):
+    if key not in cache:
+        if key < matrix.shape[0]:
+            cache[key] = matrix.rows[key]
+        else:
+            cache[key] = []
+    return cache[key]
 
-    predictions = np.asarray(predictions)
-    return predictions
-
-
-def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
-                          alpha, beta, verbose=False, random_state=None):
+def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
+                      alpha, beta,verbose=False, random_state=None):
 
     """ Factorize either a dense matrix or a sparse matrix into two low-rank
      matrices which represents user and item factors.
@@ -103,7 +92,7 @@ def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
     num_users, num_items = shape
     P = np.random.rand(num_users, K)  # User and features
     Q = np.random.rand(num_items, K)  # Item and features
-    Y = np.random.randn(num_users, K)
+    Y = np.random.randn(num_items, K)
 
     globalAvg = bias['globalAvg']
     dItems = bias['dItems']
@@ -111,6 +100,10 @@ def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
 
     user_col = order[0]
     item_col = order[1]
+
+    users_cached = defaultdict(list)
+    feedback_cached = defaultdict(list)
+
     # Factorize matrix using SGD
     for step in range(steps):
         if verbose:
@@ -118,27 +111,36 @@ def _matrix_factorization(data, bias, feedback, shape, order, K, steps,
             print('- Step: %d' % (step + 1))
 
         # Compute predictions
-        for k in range(0, len(data.Y)):
-            i = data.X[k][user_col]  # User
-            j = data.X[k][item_col]  # Item
-            f = feedback[i]  # Implicit data
+        for u, j in zip(*ratings.nonzero()):
 
-            rij_pred, p_plus_y_sum_vector, norm_denominator = \
-                _predict(i, j, globalAvg, dUsers, dItems, P, Q, Y, f)
-            eij = rij_pred - data.Y[k]
+            # if there is no feedback, infer it from the ratings
+            if feedback is None:
+                feedback_u = save_in_cache(ratings, u, users_cached)
+            else:
+                feedback_u = save_in_cache(feedback, u, feedback_cached)
 
-            tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
-            tempQ = alpha * 2 * (eij * p_plus_y_sum_vector + beta * Q[j])
-            tempY = alpha * 2 * (eij / norm_denominator * Q[j] + beta * Y[f])
+            ruj_pred, y_term, norm_feedback = \
+                _predict(u, j, globalAvg, dUsers, dItems, P, Q, Y, feedback_u)
+            eij = ruj_pred - ratings[u, j]
 
-            P[i] -= tempP
+            tempP = alpha * 2 * (eij * Q[j, :] + beta * P[u, :])
+            tempQ = alpha * 2 * (eij * (P[u, :] + y_term) + beta * Q[j, :])
+
+            if norm_feedback > 0:
+                for i in feedback_u:
+                    Y[i] -= alpha * 2 * ((eij/norm_feedback) * Q[j, :] +
+                                         beta * Y[i])
+
+            P[u] -= tempP
             Q[j] -= tempQ
-            Y[f] -= tempY
 
         if verbose:
             print('\tTime: %.3fs' % (time.time() - start))
 
-    return P, Q, Y
+    if feedback is None:
+        feedback = users_cached
+
+    return P, Q, Y, feedback
 
 
 class SVDPlusPlusLearner(Learner):
@@ -175,7 +177,7 @@ class SVDPlusPlusLearner(Learner):
         self.Q = None
         self.Y = None
         self.bias = None
-        self.feedback = None
+        self.feedback = feedback
         self.random_state = random_state
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
@@ -199,15 +201,15 @@ class SVDPlusPlusLearner(Learner):
         # Compute biases and global average
         self.bias = self.compute_bias(data, 'all')
 
-        # Generate implicit feedback using the explicit ratings of the data
-        if self.feedback is None:
-            self.feedback = format_data.generate_implicit_feedback(data,
-                                                                   self.order)
-
+        # Transform rating matrix to sparse
+        data = format_data.build_sparse_matrix(data.X[:, self.order[0]],
+                                               data.X[:, self.order[1]],
+                                               data.Y,
+                                               self.shape).tolil()
         # Factorize matrix
-        self.P, self.Q, self.Y =\
-            _matrix_factorization(data=data, bias=self.bias,
-                                  feedback=self.feedback, shape=self.shape,
+        self.P, self.Q, self.Y, self.feedback = \
+            _matrix_factorization(ratings=data,feedback=self.feedback,
+                                  bias=self.bias, shape=self.shape,
                                   order=self.order, K=self.K, steps=self.steps,
                                   alpha=self.alpha, beta=self.beta,
                                   verbose=False, random_state=self.random_state)
@@ -259,10 +261,24 @@ class SVDPlusPlusModel(Model):
         users = X[:, self.order[0]]
         items = X[:, self.order[1]]
 
-        predictions = _predict2(users, items, self.bias['globalAvg'],
-                                self.bias['dUsers'], self.bias['dItems'],
-                                self.P, self.Q, self.Y, self.feedback)
+        predictions = []
+        feedback_cached = defaultdict(list)
+        isFeedbackADict = isinstance(self.feedback, dict)
 
+        for i in range(0, len(users)):
+            u = users[i]
+
+            if isFeedbackADict:
+                feedback_u = self.feedback[u]
+            else:
+                feedback_u = save_in_cache(self.feedback, u, feedback_cached)
+
+            pred = _predict(u, items[i], self.bias['globalAvg'],
+                            self.bias['dUsers'], self.bias['dItems'], self.P,
+                            self.Q, self.Y, feedback_u)
+            predictions.append(pred[0])
+
+        predictions = np.asarray(predictions)
         return super().predict_on_range(predictions)
 
     def predict_items(self, users=None, top=None):
@@ -286,9 +302,25 @@ class SVDPlusPlusModel(Model):
         if users is None:
             users = np.asarray(range(0, len(self.bias['dUsers'])))
 
-        predictions = _predict3(users, self.bias['globalAvg'],
-                                self.bias['dUsers'], self.bias['dItems'],
-                                self.P, self.Q, self.Y, self.feedback)
+        predictions = []
+        feedback_cached = defaultdict(list)
+        isFeedbackADict = isinstance(self.feedback, dict)
+
+        for i in range(0, len(users)):
+            u = users[i]
+
+            if isFeedbackADict:
+                feedback_u = self.feedback[u]
+            else:
+                feedback_u = save_in_cache(self.feedback, u, feedback_cached)
+
+            pred = _predict_all_items(u, self.bias['globalAvg'],
+                                      self.bias['dUsers'], self.bias['dItems'],
+                                      self.P, self.Q, self.Y, feedback_u,)
+            predictions.append(pred)
+
+        predictions = np.asarray(predictions)
+
 
         # Return top-k recommendations
         if top is not None:
@@ -298,32 +330,37 @@ class SVDPlusPlusModel(Model):
 
     def compute_objective(self, data, bias, P, Q, Y, beta):
         objective = 0
-        for k in range(0, len(data.Y)):
-            i = data.X[k][self.order[0]]  # User
-            j = data.X[k][self.order[1]]  # Item
-            f = self.feedback[i]  # Implicit data
+
+        # Transform rating matrix to sparse
+        ratings = format_data.build_sparse_matrix(data.X[:, self.order[0]],
+                                                  data.X[:, self.order[1]],
+                                                  data.Y, self.shape).tolil()
+
+        # Compute predictions
+        for u, j in zip(*ratings.nonzero()):
+            feedback_u = self.feedback[u]
 
             # Prediction
             b_ui = self.bias['globalAvg'] + \
                    bias['dItems'][j] + \
-                   bias['dUsers'][i]
+                   bias['dUsers'][u]
 
-            norm_denominator = math.sqrt(len(f))
-            tempN = np.sum(Y[f], axis=0)
-            p_plus_y_sum_vector = tempN / norm_denominator + P[i, :]
+            norm_denominator = math.sqrt(len(feedback_u))
+            tempN = np.sum(Y[feedback_u], axis=0)
+            p_plus_y_sum_vector = tempN / norm_denominator + P[u, :]
 
             rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
 
-            objective += (rij_pred - data.Y[k]) ** 2
+            objective += (rij_pred - ratings[u, j]) ** 2
 
             # Regularization
-            objective += beta * (np.linalg.norm(P[i, :]) ** 2
+            objective += beta * (np.linalg.norm(P[u, :]) ** 2
                                       + np.linalg.norm(Q[j, :]) ** 2
                                       + bias['dItems'][j] ** 2
-                                      + bias['dUsers'][i] ** 2)
+                                      + bias['dUsers'][u] ** 2)
 
         # Compute RMSE
-        rmse = math.sqrt(objective / len(data.Y))
+        rmse = math.sqrt(objective / float(ratings.nnz))
         return rmse
 
     def getPTable(self):

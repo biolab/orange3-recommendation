@@ -9,7 +9,7 @@ from orangecontrib.recommendation import *
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
-@unittest.skip("Class skipped: Too big to test")
+#@unittest.skip("Class skipped: Too big to test")
 class TestBigDataset(unittest.TestCase):
 
     def test_learners(self):
@@ -68,15 +68,19 @@ class TestBigDataset(unittest.TestCase):
     def test_CV(self):
         from Orange.evaluation.testing import CrossValidation
         # Load data
-        filename = 'movielens100k.tab'
-        data = Orange.data.Table(filename)
+        data = Orange.data.Table('filmtrust/ratings_small.tab')
+        trust = Orange.data.Table('filmtrust/trust_small.tab')
 
         global_avg = GlobalAvgLearner()
         items_avg = ItemAvgLearner()
         users_avg = UserAvgLearner()
         useritem_baseline = UserItemBaselineLearner()
         brismf = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.1)
-        learners = [global_avg, items_avg, users_avg, useritem_baseline, brismf]
+        svdpp = SVDPlusPlusLearner(K=15, steps=10, alpha=0.07, beta=0.1)
+        trustsvd = TrustSVDLearner(K=15, steps=10, alpha=0.07, beta=0.1,
+                                   beta_trust=0.05, trust=trust)
+        learners = [global_avg, items_avg, users_avg, useritem_baseline,
+                    brismf, svdpp, trustsvd]
 
         res = CrossValidation(data, learners, k=5)
         rmse = Orange.evaluation.RMSE(res)
@@ -92,10 +96,10 @@ class TestBigDataset(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    unittest.main()
+    # unittest.main()
 
     # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestBigDataset("test_learners"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestBigDataset("test_CV"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)

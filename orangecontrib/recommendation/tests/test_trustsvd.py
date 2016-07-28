@@ -17,7 +17,7 @@ class TestTrustSVD(unittest.TestCase):
 
         # Train recommender
         learner = TrustSVDLearner(K=2, steps=1, alpha=0.07, beta=0.1,
-                                  beta_trust=0.05, trust=trust, verbose=True)
+                                  beta_trust=0.05, trust=trust, verbose=False)
         recommender = learner(ratings)
 
         # Compute predictions 1
@@ -46,7 +46,7 @@ class TestTrustSVD(unittest.TestCase):
 
         # Train recommender
         learner = TrustSVDLearner(K=2, steps=1, alpha=0.07, beta=0.1,
-                                  beta_trust=0.05, trust=trust, verbose=True)
+                                  beta_trust=0.05, trust=trust, verbose=False)
         recommender = learner(ratings)
 
         print(str(recommender) + ' trained')
@@ -79,7 +79,7 @@ class TestTrustSVD(unittest.TestCase):
         trust = Orange.data.Table('filmtrust/trust_small.tab')
 
         trustsvd = TrustSVDLearner(K=2, steps=1, alpha=0.07, beta=0.1,
-                                   beta_trust=0.05, trust=trust, verbose=True)
+                                   beta_trust=0.05, trust=trust, verbose=False)
         learners = [trustsvd]
 
         res = CrossValidation(ratings, learners, k=3)
@@ -100,7 +100,7 @@ class TestTrustSVD(unittest.TestCase):
 
         # Train recommender
         learner = TrustSVDLearner(K=15, steps=1, alpha=0.0, beta=0.1,
-                                  beta_trust=0.05, trust=trust, verbose=True)
+                                  beta_trust=0.05, trust=trust, verbose=False)
 
         self.assertWarns(UserWarning, learner, data)
 
@@ -116,7 +116,7 @@ class TestTrustSVD(unittest.TestCase):
         # for step in steps:
         #     learner = TrustSVDLearner(K=15, steps=step, alpha=0.07, beta=0.1,
         #                               beta_trust=0.05, trust=trust,
-        #                               verbose=True)
+        #                               verbose=False)
         #     recommender = learner(ratings)
         #     objectives.append(
         #         recommender.compute_objective(data=ratings, beta=learner.beta,
