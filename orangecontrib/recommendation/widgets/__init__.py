@@ -43,10 +43,10 @@ WIDGET_HELP_PATH = (
 - 'manager.svg' icon made by [Freepik] from [www.flaticon.com]
 - 'ranking.svg' icon made by [Freepik] from [www.flaticon.com]
 - 'candidates-ranking-graphic.svg' icon made by [Freepik] from [www.flaticon.com]
+- 'trustsvd.svg' icon made by [Zurb] from [www.flaticon.com]
 
 - 'organization.svg' icon made by [Freepik] from [www.flaticon.com]
 - 'task.svg' icon made by [Freepik] from [www.flaticon.com]
 - 'list.svg' icon made by [Freepik] from [www.flaticon.com]
-- 'ranking.svg' icon made by [Freepik] from [www.flaticon.com]
 - 'ranking.svg' icon made by [Freepik] from [www.flaticon.com]
 """
