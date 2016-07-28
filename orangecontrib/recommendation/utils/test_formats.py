@@ -51,6 +51,46 @@ def create_implicit_data():
     #print(d)
 
 
+def indices_in_range(data, min_index, max_index, max_pairs):
+    logical_r_users = np.logical_and(data[:, 0] >= min_index,
+                                     data[:, 0] <= max_index)
+    logical_items_users = np.logical_and(data[:, 1] >= min_index,
+                                         data[:, 1] <= max_index)
+    indices_r_small = np.where(logical_r_users & logical_items_users)[0]
+
+    MAX_PAIRS = 30
+    if len(indices_r_small) > max_pairs:
+        sample_indices = np.random.choice(len(indices_r_small), size=MAX_PAIRS,
+                                          replace=False)
+        indices_r_small = indices_r_small[sample_indices]
+    return indices_r_small
+
+
+def create_trust_data():
+    MIN_INDEX = 0
+    MAX_INDEX = 200
+    MAX_PAIRS = 50
+
+    # Sample ratings
+    data_r = Orange.data.Table('filmtrust/ratings.tab')
+    indices_r_small = indices_in_range(data_r.X, MIN_INDEX, MAX_INDEX, MAX_PAIRS)
+    new_r = data_r.X[indices_r_small, :]
+    print(new_r)
+    data_r.X = new_r.astype(int)
+    Orange.data.Table.save(data_r, "ratings_t_small.tab")
+
+    # Sample trust
+    data_t = Orange.data.Table('filmtrust/trust.tab')
+    indices_t_small = indices_in_range(data_t.X, MIN_INDEX, MAX_INDEX,
+                                       MAX_PAIRS)
+    new_t = data_t.X[indices_t_small, :]
+    print(new_t)
+    data_t.X = new_t.astype(int)
+    Orange.data.Table.save(data_t, 'trust_small.tab')
+
+    asdasd = 23
+
 if __name__ == "__main__":
     #print_dense_matrix()
-    create_implicit_data()
+    #create_implicit_data()
+    create_trust_data()
