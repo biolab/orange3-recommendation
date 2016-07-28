@@ -6,6 +6,7 @@ from .baseline.item_avg import *
 from .baseline.user_item_baseline import *
 from .rating.brismf import *
 from .rating.svdplusplus import *
+from .rating.trustsvd import *
 from .ranking.climf import *
 
 # Load datasets into Orange
