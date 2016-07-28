@@ -198,6 +198,8 @@ class CLiMFModel(Model):
 
         """
 
+        super().prepare_predict(X)
+
         # Compute scores
         predictions = np.dot(self.U[X], self.V.T)
 

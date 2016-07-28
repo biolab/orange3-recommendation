@@ -254,6 +254,8 @@ class SVDPlusPlusModel(Model):
 
             """
 
+        super().prepare_predict(X)
+
         users = X[:, self.order[0]]
         items = X[:, self.order[1]]
 

@@ -64,6 +64,7 @@ class ItemAvgModel(Model):
                 Array with the recommendations for a given user.
 
             """
+        super().prepare_predict(X)
 
         # Preserve just the indices of the items
         items = X[:, self.order[1]]

@@ -9,7 +9,8 @@ def run_tests():
         'test_user_item_baseline',
         'test_brismf',
         'test_climf',
-        'test_svdplusplus'
+        'test_svdplusplus',
+        'test_trustsvd'
     ]
 
     suite = unittest.TestSuite()

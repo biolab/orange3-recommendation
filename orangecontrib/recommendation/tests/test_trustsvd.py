@@ -72,25 +72,26 @@ class TestTrustSVD(unittest.TestCase):
 
 
     def test_TrustSVD_CV(self):
-        pass
-        # from Orange.evaluation.testing import CrossValidation
-        #
-        # # Load data
-        # data = Orange.data.Table('ratings3.tab')
-        #
-        # svdpp = SVDPlusPlusLearner(K=2, steps=1, verbose=False)
-        # learners = [svdpp]
-        #
-        # res = CrossValidation(data, learners, k=3)
-        # rmse = Orange.evaluation.RMSE(res)
-        # r2 = Orange.evaluation.R2(res)
-        #
-        # print("Learner  RMSE  R2")
-        # for i in range(len(learners)):
-        #     print(
-        #         "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
-        #
-        # self.assertIsInstance(rmse, np.ndarray)
+        from Orange.evaluation.testing import CrossValidation
+
+        # Load data
+        ratings = Orange.data.Table('filmtrust/ratings_small.tab')
+        trust = Orange.data.Table('filmtrust/trust_small.tab')
+
+        trustsvd = TrustSVDLearner(K=2, steps=1, alpha=0.07, beta=0.1,
+                                   beta_trust=0.05, trust=trust, verbose=True)
+        learners = [trustsvd]
+
+        res = CrossValidation(ratings, learners, k=3)
+        rmse = Orange.evaluation.RMSE(res)
+        r2 = Orange.evaluation.R2(res)
+
+        print("Learner  RMSE  R2")
+        for i in range(len(learners)):
+            print(
+                "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
+
+        self.assertIsInstance(rmse, np.ndarray)
 
     def test_TrustSVD_warnings(self):
         # Load data
@@ -129,11 +130,11 @@ class TestTrustSVD(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    unittest.main()
+    # unittest.main()
 
     # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestTrustSVD("test_TrustSVD_predict_items"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestTrustSVD("test_TrustSVD_CV"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 

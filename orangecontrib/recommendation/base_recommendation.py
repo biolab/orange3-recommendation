@@ -20,7 +20,7 @@ class ModelRecommendation(Model):
         # Convert indices to integer and call predict()
         return self.predict(data.X.astype(int))
 
-    def predict(self, X):
+    def prepare_predict(self, X):
 
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average!!!
@@ -29,7 +29,7 @@ class ModelRecommendation(Model):
         X[X[:, self.order[1]] >= self.shape[1], self.order[1]] = \
             np.random.randint(low=0, high=self.shape[1])
 
-        return self.predict(X)
+        return X
 
     def __str__(self):
         return self.name

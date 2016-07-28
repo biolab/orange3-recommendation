@@ -369,6 +369,8 @@ class TrustSVDModel(Model):
 
             """
 
+        super().prepare_predict(X)
+
         users = X[:, self.order[0]]
         items = X[:, self.order[1]]
 
@@ -443,19 +445,6 @@ class TrustSVDModel(Model):
             predictions = predictions[:, :top]
 
         return super().predict_on_range(predictions)
-
-    # def compute_objective(self, data, beta, beta_trust):
-    #     data.X = data.X.astype(int)  # Convert indices to integer
-    #
-    #     users = data.X[:, self.order[0]]
-    #     items = data.X[:, self.order[1]]
-    #
-    #     objective = _compute_objective(users, items,  self.bias['globalAvg'],
-    #                                   self.bias['dUsers'], self.bias['dItems'],
-    #                                   self.P, self.Q, self.Y, self.W,
-    #                                   self.feedback, self.trust, beta,
-    #                                    beta_trust)
-    #     return objective
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]

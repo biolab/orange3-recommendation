@@ -64,6 +64,8 @@ class UserAvgModel(Model):
 
             """
 
+        super().prepare_predict(X)
+
         # Preserve just the indices of the items
         users = X[:, self.order[0]]
 
