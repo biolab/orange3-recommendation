@@ -45,13 +45,15 @@ def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, feedback):
     base_pred = np.dot(p_enhanced, Q.T)
     return bias + base_pred
 
-def save_in_cache(matrix, key, cache):
-    if key not in cache:
-        if key < matrix.shape[0]:
-            cache[key] = matrix.rows[key]
-        else:
-            cache[key] = []
-    return cache[key]
+
+def save_in_cache(matrix, key, cache, transpose=False):
+    res = cache.get(key)
+    if res is None:
+        if transpose:
+            matrix = matrix.T
+        res = cache[key] = matrix.rows[key] if key < matrix.shape[0] else []
+    return res
+
 
 def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
                       alpha, beta,verbose=False, random_state=None):
@@ -111,6 +113,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
             print('- Step: %d' % (step + 1))
 
         # Compute predictions
+        objective = 0
         for u, j in zip(*ratings.nonzero()):
 
             # if there is no feedback, infer it from the ratings
@@ -123,19 +126,31 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
                 _predict(u, j, globalAvg, dUsers, dItems, P, Q, Y, feedback_u)
             eij = ruj_pred - ratings[u, j]
 
-            tempP = alpha * 2 * (eij * Q[j, :] + beta * P[u, :])
-            tempQ = alpha * 2 * (eij * (P[u, :] + y_term) + beta * Q[j, :])
+            # Update gradients
+            tempP = alpha * -2 * (eij * Q[j, :] - beta * P[u, :])
+            tempQ = alpha * -2 * (eij * (P[u, :] + y_term) - beta * Q[j, :])
 
             if norm_feedback > 0:
                 for i in feedback_u:
-                    Y[i] -= alpha * 2 * ((eij/norm_feedback) * Q[j, :] +
-                                         beta * Y[i])
+                    Y[i, :] += alpha * -2 * (eij/norm_feedback * Q[j, :]
+                                            - beta * Y[i, :])
+            P[u] += tempP
+            Q[j] += tempQ
 
-            P[u] -= tempP
-            Q[j] -= tempQ
+            # Loss function
+            if verbose:
+                objective += eij ** 2
+                temp_y = np.sum(Y[feedback_u, :], axis=0)
+                objective += beta * (bias['dUsers'][u] ** 2 +
+                                     bias['dItems'][j] ** 2 +
+                                     np.linalg.norm(P[u, :]) ** 2
+                                     + np.linalg.norm(Q[j, :]) ** 2
+                                     + np.linalg.norm(temp_y) ** 2)
 
         if verbose:
+            print('\tLoss: %.3f' % objective)
             print('\tTime: %.3fs' % (time.time() - start))
+            print('')
 
     if feedback is None:
         feedback = users_cached
@@ -207,15 +222,21 @@ class SVDPlusPlusLearner(Learner):
                                                data.Y,
                                                self.shape).tolil()
         # Factorize matrix
-        self.P, self.Q, self.Y, self.feedback = \
+        self.P, self.Q, self.Y, new_feedback = \
             _matrix_factorization(ratings=data,feedback=self.feedback,
                                   bias=self.bias, shape=self.shape,
                                   order=self.order, K=self.K, steps=self.steps,
                                   alpha=self.alpha, beta=self.beta,
-                                  verbose=False, random_state=self.random_state)
+                                  verbose=self.verbose,
+                                  random_state=self.random_state)
 
+        # Set as feedback the inferred feedback when no feedback has been given
+        if self.feedback is not None:
+            new_feedback = self.feedback
+
+        # Build model
         model = SVDPlusPlusModel(P=self.P, Q=self.Q, Y=self.Y, bias=self.bias,
-                                 feedback=self.feedback)
+                                 feedback=new_feedback)
         return super().prepare_model(model)
 
 
@@ -355,9 +376,9 @@ class SVDPlusPlusModel(Model):
 
             # Regularization
             objective += beta * (np.linalg.norm(P[u, :]) ** 2
-                                      + np.linalg.norm(Q[j, :]) ** 2
-                                      + bias['dItems'][j] ** 2
-                                      + bias['dUsers'][u] ** 2)
+                                 + np.linalg.norm(Q[j, :]) ** 2
+                                 + bias['dItems'][j] ** 2
+                                 + bias['dUsers'][u] ** 2)
 
         # Compute RMSE
         rmse = math.sqrt(objective / float(ratings.nnz))
@@ -373,5 +394,20 @@ class SVDPlusPlusModel(Model):
 
     def getYTable(self):
         domain_name = 'Implicit feedback'
-        variable = self.original_domain.variables[self.order[1]]
+        variable = self.original_domain.variables[self.order[0]]
         return format_data.latent_factors_table(variable, self.Y, domain_name)
+
+
+
+if __name__ == "__main__":
+    import Orange
+    from sklearn.metrics import mean_squared_error
+
+    print('Loading data...')
+    ratings = Orange.data.Table('filmtrust/ratings.tab')
+
+    start = time.time()
+    learner = SVDPlusPlusLearner(K=15, steps=1, alpha=0.007, beta=0.1,
+                                 verbose=True)
+    recommender = learner(ratings)
+    print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))

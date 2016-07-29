@@ -95,7 +95,7 @@ class TestBRISMF(unittest.TestCase):
         data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
-        learner = BRISMFLearner(K=2, steps=1, min_rating=0, max_rating=5,
+        learner = BRISMFLearner(K=5, steps=10, min_rating=0, max_rating=5,
                                 verbose=False)
         recommender = learner(data)
 
@@ -160,18 +160,13 @@ class TestBRISMF(unittest.TestCase):
         self.assertIsInstance(rmse, np.ndarray)
 
     def test_BRISMF_warnings(self):
-
         # Load data
         data = Orange.data.Table('ratings.tab')
 
         # Train recommender
         learner = BRISMFLearner(K=2, steps=1, alpha=0.0, verbose=False)
 
-        self.assertWarns(
-            UserWarning,
-            learner,
-            data
-        )
+        self.assertWarns(UserWarning, learner, data)
 
     def test_BRISMF_objective(self):
         # Load data

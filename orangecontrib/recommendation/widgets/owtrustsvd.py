@@ -22,6 +22,8 @@ class OWTrustSVD(OWBaseLearner):
 
     LEARNER = TrustSVDLearner
 
+    MISSING_DATA_WARNING = 0
+
     inputs = [("Trust information ", Table, "set_trust"),
               ("Feedback information", Table, "set_feedback")]
 
@@ -81,6 +83,15 @@ class OWTrustSVD(OWBaseLearner):
                 ("Regularization factor", self.beta),
                 ("Regularization factor (Trust)", self.beta_trust))
 
+    def update_learner(self):
+        if self.trust is None:
+            self.warning(self.MISSING_DATA_WARNING,
+                         "Trust data input is needed.")
+            return
+        else:
+            self.warning(self.MISSING_DATA_WARNING)
+        super().update_learner()
+
     def update_model(self):
         super().update_model()
 
@@ -101,9 +112,11 @@ class OWTrustSVD(OWBaseLearner):
 
     def set_trust(self, trust):
         self.trust = trust
+        self.update_learner()
 
     def set_feedback(self, feedback):
         self.feedback = feedback
+        self.update_learner()
 
 
 if __name__ == '__main__':

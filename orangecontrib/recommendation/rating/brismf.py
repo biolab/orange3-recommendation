@@ -25,25 +25,6 @@ def _predict_all_items(users, global_avg, dUsers, dItems, P, Q):
     return bias + base_pred
 
 
-def _compute_objective(users, items, global_avg, dUsers, dItems, P, Q, target,
-                       beta):
-    objective = 0
-    subscripts = 'i,i'
-
-    if len(users) > 1:
-        subscripts = 'ij,ij->i'
-    predictions = _predict(users, items, global_avg, dUsers, dItems, P, Q,
-                           subscripts)
-    objective += (predictions - target) ** 2
-
-    # Regularization
-    objective += beta * (np.linalg.norm(P[users, :], axis=1) ** 2
-                         + np.linalg.norm(Q[items, :], axis=1) ** 2
-                         + dItems[items] ** 2
-                         + dUsers[users] ** 2)
-    return objective.sum()
-
-
 def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
                           verbose=False, random_state=None):
     """ Factorize either a dense matrix or a sparse matrix into two low-rank
@@ -90,13 +71,16 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
 
     user_col = order[0]
     item_col = order[1]
+
     # Factorize matrix using SGD
     for step in range(steps):
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
 
+
         # Compute predictions
+        objective = 0
         for k in range(0, len(data.Y)):
             i = data.X[k][user_col]  # Users
             j = data.X[k][item_col]  # Items
@@ -104,13 +88,23 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
             rij_pred = _predict(i, j, globalAvg, dUsers, dItems, P, Q)
             eij = rij_pred - data.Y[k]
 
-            tempP = alpha * 2 * (eij * Q[j] + beta * P[i])
-            tempQ = alpha * 2 * (eij * P[i] + beta * Q[j])
-            P[i] -= tempP
-            Q[j] -= tempQ
+            tempP = alpha * -2 * (eij * Q[j] - beta * P[i])
+            tempQ = alpha * -2 * (eij * P[i] - beta * Q[j])
+            P[i] += tempP
+            Q[j] += tempQ
+
+            # Loss function
+            if verbose:
+                objective += eij ** 2
+                objective += beta * (bias['dUsers'][i] ** 2 +
+                                     bias['dItems'][j] ** 2 +
+                                     np.linalg.norm(P[i, :]) ** 2
+                                     + np.linalg.norm(Q[j, :]) ** 2)
 
         if verbose:
+            print('\tLoss: %.3f' % objective)
             print('\tTime: %.3fs' % (time.time() - start))
+            print('')
 
     return P, Q
 
@@ -180,7 +174,8 @@ class BRISMFLearner(Learner):
                                                order=self.order, K=self.K,
                                                steps=self.steps,
                                                alpha=self.alpha,
-                                               beta=self.beta, verbose=False,
+                                               beta=self.beta,
+                                               verbose=self.verbose,
                                                random_state=self.random_state)
 
         model = BRISMFModel(P=self.P, Q=self.Q, bias=self.bias)
@@ -267,11 +262,24 @@ class BRISMFModel(Model):
         users = data.X[:, self.order[0]]
         items = data.X[:, self.order[1]]
 
-        objective = _compute_objective(users, items, self.bias['globalAvg'],
-                                       self.bias['dUsers'],
-                                       self.bias['dItems'], self.P, self.Q,
-                                       data.Y, beta)
-        return objective
+        globalAvg = self.bias['globalAvg']
+        dItems = self.bias['dItems']
+        dUsers = self.bias['dUsers']
+
+        objective = 0
+        subscripts = 'i,i'
+
+        if len(users) > 1:
+            subscripts = 'ij,ij->i'
+        predictions = _predict(users, items, globalAvg, dUsers, dItems, self.P,
+                               self.Q, subscripts)
+        objective += (predictions - data.Y) ** 2
+
+        # Regularization
+        objective += beta * (np.linalg.norm(self.P[users, :], axis=1) ** 2
+                             + np.linalg.norm(self.Q[items, :], axis=1) ** 2
+                             + dItems[items] ** 2 + dUsers[users] ** 2)
+        return objective.sum()
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]

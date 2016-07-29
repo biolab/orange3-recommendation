@@ -22,6 +22,8 @@ class OWSVDPlusPlus(OWBaseLearner):
 
     LEARNER = SVDPlusPlusLearner
 
+    inputs = [("Feedback information", Table, "set_feedback")]
+
     outputs = [("P", Table),
                ("Q", Table),
                ("Y", Table)]
@@ -81,6 +83,9 @@ class OWSVDPlusPlus(OWBaseLearner):
         self.send("Q", Q)
         self.send("Y", Y)
 
+    def set_feedback(self, feedback):
+        self.feedback = feedback
+        self.update_learner()
 
 if __name__ == '__main__':
     app = QApplication([])

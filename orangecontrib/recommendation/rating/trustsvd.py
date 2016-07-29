@@ -68,13 +68,20 @@ def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
     return bias + base_pred
 
 
-def save_in_cache(matrix, key, cache):
-    if key not in cache:
-        if key < matrix.shape[0]:
-            cache[key] = matrix.rows[key]
-        else:
-            cache[key] = []
-    return cache[key]
+# from functools import lru_cache
+#
+# @lru_cache(100000)
+# def save_in_cache(matrix, key):
+#     return matrix.rows[key] if key < matrix.shape[0] else []
+
+
+def save_in_cache(matrix, key, cache, transpose=False):
+    res = cache.get(key)
+    if res is None:
+        if transpose:
+            matrix = matrix.T
+        res = cache[key] = matrix.rows[key] if key < matrix.shape[0] else []
+    return res
 
 
 def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
@@ -153,12 +160,14 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
             start2 = time.time()
 
         # Optimize rating prediction
+        objective = 0
         for u, j in zip(*ratings.nonzero()):
             if verbose:
                 start2 = time.time()
 
             items_rated_by_u = save_in_cache(ratings, u, users_cached)
-            users_who_rated_j = save_in_cache(ratings.T, j, items_cached)
+            users_who_rated_j = save_in_cache(ratings, j, items_cached,
+                                              transpose=True)
             trustees_u = save_in_cache(trust, u, trusters_cached)
 
             # if there is no feedback, infer it from the ratings
@@ -175,25 +184,28 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
 
             # Gradient P
             tempP[u, :] = euj * Q[j, :] + \
-                          beta * (1/norm_feedback) * P[u, :]  # P: Part 1
+                          (beta/norm_feedback) * P[u, :]  # P: Part 1
 
             # Gradient Q
+            norm_Uj = math.sqrt(len(users_who_rated_j))
             tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + \
-                          beta * Q[j, :]/math.sqrt(len(users_who_rated_j))
+                          (beta/norm_Uj) * Q[j, :]
 
             # Gradient Y
             if norm_feedback > 0:
-                tempY1 = euj * (1/norm_feedback) * Q[j, :]
+                tempY1 = (euj/norm_feedback) * Q[j, :]
                 for i in items_rated_by_u:
-                    users_who_rated_i = save_in_cache(ratings.T, i, items_cached)
+                    users_who_rated_i = save_in_cache(ratings, i, items_cached,
+                                                      transpose=True)
                     norm_Ui = math.sqrt(len(users_who_rated_i))
                     tempY[i, :] = tempY1 + (beta/norm_Ui) * Y[i, :]
 
             # Gradient W
             if norm_trust > 0:
-                tempW1 = euj * (1/norm_trust) * Q[j, :]  # W: Part 1
+                tempW1 = (euj/norm_trust) * Q[j, :]  # W: Part 1
                 for v in trustees_u:
-                    trusters_v = save_in_cache(trust.T, v, trustees_cached)
+                    trusters_v = save_in_cache(trust, v, trustees_cached,
+                                               transpose=True)
                     norm_Tv = math.sqrt(len(trusters_v))
                     tempW[v, :] = tempW1 + (beta/norm_Tv) * W[v, :]
             if verbose:
@@ -202,8 +214,8 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
 
         # Optimize trust prediction
         for u, v in zip(*trust.nonzero()):
-            if verbose:
-                start2 = time.time()
+            # if verbose:
+            #     start2 = time.time()
 
             tuv_pred = np.dot(W[v, :], P[u, :])
             euv = tuv_pred - trust[u, v]
@@ -213,21 +225,22 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
             norm_trust = math.sqrt(len(trustees_u))
 
             # Gradient of P and W
-            tempP[u, :] += beta_trust * euv * W[v, :] + \
-                           beta_trust * (1/norm_trust) * P[u, :]  # P: Part 2
+            tempP[u, :] += beta_trust * (euv * W[v, :] +
+                                         P[u, :]/norm_trust)  # P: Part 2
             tempW[v, :] += beta_trust * euv * P[u, :]  # W: Part 2
 
-            if verbose:
-                print('\tTime iter trust: %.3fs' % (time.time() - start2))
+            # if verbose:
+            #     print('\tTime iter trust: %.3fs' % (time.time() - start2))
 
         P -= alpha * tempP
         Q -= alpha * tempQ
         Y -= alpha * tempY
         W -= alpha * tempW
 
-        if verbose:
-            print('\tTime step: %.3fs' % (time.time() - start))
-            #sys.exit(0)
+    if verbose:
+        print('\tLoss: %.3f' % objective)
+        print('\tTime: %.3fs' % (time.time() - start))
+        print('')
 
     if feedback is None:
         feedback = users_cached
@@ -317,7 +330,7 @@ class TrustSVDLearner(Learner):
                                               max_col + 1)).tolil()
 
         # Factorize matrix
-        self.P, self.Q, self.Y, self.W, self.feedback = \
+        self.P, self.Q, self.Y, self.W, new_feedback = \
             _matrix_factorization(ratings=data, feedback=self.feedback,
                                   trust=self.trust, bias=self.bias,
                                   shape=self.shape, trust_users=self.trust_users,
@@ -327,9 +340,13 @@ class TrustSVDLearner(Learner):
                                   verbose=self.verbose,
                                   random_state=self.random_state)
 
+        # Set as feedback the inferred feedback when no feedback has been given
+        if self.feedback is not None:
+            new_feedback = self.feedback
+
         # Build model
         model = TrustSVDModel(P=self.P, Q=self.Q, Y=self.Y, W=self.W,
-                              bias=self.bias, feedback=self.feedback,
+                              bias=self.bias, feedback=new_feedback,
                               trust=self.trust)
         return super().prepare_model(model)
 
@@ -458,12 +475,12 @@ class TrustSVDModel(Model):
 
     def getYTable(self):
         domain_name = 'Implicit feedback'
-        variable = self.original_domain.variables[self.order[1]]
+        variable = self.original_domain.variables[self.order[0]]
         return format_data.latent_factors_table(variable, self.Y, domain_name)
 
     def getWTable(self):
         domain_name = 'Trust-feature'
-        variable = self.original_domain.variables[self.order[1]]
+        variable = self.original_domain.variables[self.order[0]]
         return format_data.latent_factors_table(variable, self.W, domain_name)
 
 

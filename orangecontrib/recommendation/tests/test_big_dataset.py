@@ -76,8 +76,8 @@ class TestBigDataset(unittest.TestCase):
         users_avg = UserAvgLearner()
         useritem_baseline = UserItemBaselineLearner()
         brismf = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.1)
-        svdpp = SVDPlusPlusLearner(K=15, steps=10, alpha=0.07, beta=0.1)
-        trustsvd = TrustSVDLearner(K=15, steps=10, alpha=0.07, beta=0.1,
+        svdpp = SVDPlusPlusLearner(K=15, steps=10, alpha=0.007, beta=0.1)
+        trustsvd = TrustSVDLearner(K=15, steps=10, alpha=0.007, beta=0.1,
                                    beta_trust=0.05, trust=trust)
         learners = [global_avg, items_avg, users_avg, useritem_baseline,
                     brismf, svdpp, trustsvd]
@@ -92,7 +92,6 @@ class TestBigDataset(unittest.TestCase):
                 "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
         self.assertEqual(1, 1)
-
 
 if __name__ == "__main__":
     # Test all

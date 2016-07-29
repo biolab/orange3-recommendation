@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestTrustSVD("test_TrustSVD_CV"))
+    suite.addTest(TestTrustSVD("test_TrustSVD_input_data_continuous"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

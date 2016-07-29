@@ -132,7 +132,6 @@ class TestSVDPlusPlus(unittest.TestCase):
 
         self.assertIsInstance(rmse, np.ndarray)
 
-
     def test_SVDPlusPlus_warnings(self):
 
         # Load data
@@ -141,11 +140,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         # Train recommender
         learner = SVDPlusPlusLearner(K=2, steps=1, alpha=0.0, verbose=False)
 
-        self.assertWarns(
-            UserWarning,
-            learner,
-            data
-        )
+        self.assertWarns(UserWarning, learner, data)
 
     def test_SVDPlusPlus_objective(self):
         # Load data
