@@ -69,8 +69,7 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
     dItems = bias['dItems']
     dUsers = bias['dUsers']
 
-    user_col = order[0]
-    item_col = order[1]
+    user_col, item_col = order
 
     # Factorize matrix using SGD
     for step in range(steps):
@@ -82,8 +81,8 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
         # Compute predictions
         objective = 0
         for k in range(0, len(data.Y)):
-            i = data.X[k][user_col]  # Users
-            j = data.X[k][item_col]  # Items
+            i = data.X[k, user_col]  # Users
+            j = data.X[k, item_col]  # Items
 
             rij_pred = _predict(i, j, globalAvg, dUsers, dItems, P, Q)
             eij = rij_pred - data.Y[k]
