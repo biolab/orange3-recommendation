@@ -68,20 +68,48 @@ def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
     return bias + base_pred
 
 
-# from functools import lru_cache
-#
-# @lru_cache(100000)
-# def save_in_cache(matrix, key):
-#     return matrix.rows[key] if key < matrix.shape[0] else []
-
-
-def save_in_cache(matrix, key, cache, transpose=False):
+def save_in_cache(matrix, key, cache):
     res = cache.get(key)
     if res is None:
-        if transpose:
-            matrix = matrix.T
-        res = cache[key] = matrix.rows[key] if key < matrix.shape[0] else []
+        if key < matrix.shape[0]:
+            res = np.asarray(matrix.rows[key])
+        else:
+            res = []
+        cache[key] = res
     return res
+
+
+def cache_in_array(matrix, index, cache):
+    res = cache[index]
+    if res == 0:
+        res = cache[index] = math.sqrt(len(matrix.rows[index]))
+    return res
+
+
+def cache_in_array_v(matrix, indices, cache):
+    """
+    Vectorize function to cache in an array. I tried to avoid this by using
+    numpy.vectorize() but the code is pretty slow.
+    """
+
+    f_res = np.zeros(len(indices))
+
+    # Get values
+    values = cache[indices]
+
+    # Get indices
+    known_idx = values.nonzero()[0]
+    unknown_idx = np.where(values == 0)[0]
+
+    if len(known_idx) > 0:
+        f_res[known_idx] = values[known_idx]
+
+    if len(unknown_idx) > 0:
+        for i, key in enumerate(indices[unknown_idx]):
+            idx = unknown_idx[i]
+            f_res[idx] = cache[key] = math.sqrt(len(matrix.rows[key]))
+
+    return f_res
 
 
 def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
@@ -139,11 +167,21 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
     user_col = order[0]
     item_col = order[1]
 
+    # Cache rows
+    # From 2 days to 30s
     users_cached = defaultdict(list)
-    items_cached = defaultdict(list)
     trusters_cached = defaultdict(list)
-    trustees_cached = defaultdict(list)
     feedback_cached = defaultdict(list)
+
+    # Cache norms (slower than list, but allows vectorization)
+    # Lists: 6s; Arrays: 12s -> vectorized: 2s
+    norm_I = np.zeros(num_items)
+    norm_Tr = np.zeros(num_users)
+    norm_Tc = np.zeros(num_users)
+
+    # Precompute transpose (most costly operation)
+    ratings_T = ratings.T
+    trust_T = trust.T
 
     # Factorize matrix using SGD
     for step in range(steps):
@@ -161,14 +199,13 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
 
         # Optimize rating prediction
         objective = 0
-        for u, j in zip(*ratings.nonzero()):
-            if verbose:
-                start2 = time.time()
+        for tuple_r in zip(*ratings.nonzero()):
+            u, j = tuple_r[user_col], tuple_r[item_col]
 
+            # Store lists in cache
             items_rated_by_u = save_in_cache(ratings, u, users_cached)
-            users_who_rated_j = save_in_cache(ratings, j, items_cached,
-                                              transpose=True)
             trustees_u = save_in_cache(trust, u, trusters_cached)
+
 
             # if there is no feedback, infer it from the ratings
             if feedback is None:
@@ -187,50 +224,41 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
                           (beta/norm_feedback) * P[u, :]  # P: Part 1
 
             # Gradient Q
-            norm_Uj = math.sqrt(len(users_who_rated_j))
+            norm_Uj = cache_in_array(ratings_T, j, norm_I)
             tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + \
                           (beta/norm_Uj) * Q[j, :]
 
+            # I tried to clean the code vectorizing the function cache_in_array,
+            # using
             # Gradient Y
             if norm_feedback > 0:
                 tempY1 = (euj/norm_feedback) * Q[j, :]
-                for i in items_rated_by_u:
-                    users_who_rated_i = save_in_cache(ratings, i, items_cached,
-                                                      transpose=True)
-                    norm_Ui = math.sqrt(len(users_who_rated_i))
-                    tempY[i, :] = tempY1 + (beta/norm_Ui) * Y[i, :]
+                norms = cache_in_array_v(ratings_T, items_rated_by_u, norm_I)
+                norm_b = (beta/np.atleast_2d(norms))
+                tempY[items_rated_by_u, :] = tempY1 + \
+                                      np.multiply(norm_b.T, Y[items_rated_by_u, :])
 
             # Gradient W
             if norm_trust > 0:
                 tempW1 = (euj/norm_trust) * Q[j, :]  # W: Part 1
-                for v in trustees_u:
-                    trusters_v = save_in_cache(trust, v, trustees_cached,
-                                               transpose=True)
-                    norm_Tv = math.sqrt(len(trusters_v))
-                    tempW[v, :] = tempW1 + (beta/norm_Tv) * W[v, :]
-            if verbose:
-                print('\tTime iter rating: %.3fs' % (time.time() - start2))
-        # sys.exit(0)
+                norms = cache_in_array_v(trust_T, trustees_u, norm_Tc)
+                norm_b = (beta/np.atleast_2d(norms))
+                tempW[trustees_u, :] = tempW1 + \
+                                      np.multiply(norm_b.T, W[trustees_u, :])
 
         # Optimize trust prediction
-        for u, v in zip(*trust.nonzero()):
-            # if verbose:
-            #     start2 = time.time()
+        for tuple_t in zip(*trust.nonzero()):
+            u, v = tuple_t[user_col], tuple_t[item_col]
 
             tuv_pred = np.dot(W[v, :], P[u, :])
             euv = tuv_pred - trust[u, v]
 
-            # Get indices of the users who are trusted by u
-            trustees_u = save_in_cache(trust, u, trusters_cached)
-            norm_trust = math.sqrt(len(trustees_u))
-
             # Gradient of P and W
-            tempP[u, :] += beta_trust * (euv * W[v, :] +
-                                         P[u, :]/norm_trust)  # P: Part 2
-            tempW[v, :] += beta_trust * euv * P[u, :]  # W: Part 2
+            norm_trust = cache_in_array(trust, u, norm_Tr)
 
-            # if verbose:
-            #     print('\tTime iter trust: %.3fs' % (time.time() - start2))
+            tempP[u, :] += beta_trust * \
+                           (euv * W[v, :] + P[u, :]/norm_trust)  # P: Part 2
+            tempW[v, :] += beta_trust * euv * P[u, :]  # W: Part 2
 
         P -= alpha * tempP
         Q -= alpha * tempQ
@@ -497,7 +525,7 @@ if __name__ == "__main__":
     learner = TrustSVDLearner(K=15, steps=1, alpha=0.07, beta=0.1,
                               beta_trust=0.05, trust=trust, verbose=True)
     recommender = learner(ratings)
-    print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
+    print('- Time (TrustSVD): %.3fs' % (time.time() - start))
 
     # prediction = recommender.predict(ratings, trust)
     # rmse = math.sqrt(mean_squared_error(ratings.Y, ))
