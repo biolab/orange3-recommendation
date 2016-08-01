@@ -21,6 +21,16 @@ Data set.
 
 Preprocessed data.
 
+-  **Trust information**
+
+Trust information. The weights of the connections can be integer or float
+(binary relations can represented by 0 or 1).
+
+-  **Feedback information**
+
+Implicit feedback information.
+Optional, if None (default), it will be inferred from the ratings.
+
 **Outputs**:
 
 -  **Learner**
@@ -67,5 +77,5 @@ into `Predictions <http://docs.orange.biolab.si/3/visual-programming/widgets/eva
 widget and view the results in `Data Table <http://docs.orange.biolab.si/3/visual-programming/widgets/data/datatable.html>`_.
 For *Learner* we can compare different learners in `Test&Score <http://docs.orange.biolab.si/3/visual-programming/widgets/evaluation/testlearners.html>`_ widget.
 
-.. figure:: images/example.png
+.. figure:: images/example2.png
 
