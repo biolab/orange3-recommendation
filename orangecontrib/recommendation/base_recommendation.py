@@ -14,6 +14,7 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
         self.order = (0, 1)
 
     def prepare_predict(self, X):
+        # TODO: CORRECT INDICES!!! THIS IS NOT CORRECT!!!!
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average!!!
         idxs_users_missing = np.where(X[:, self.order[0]] >= self.shape[0])[0]
