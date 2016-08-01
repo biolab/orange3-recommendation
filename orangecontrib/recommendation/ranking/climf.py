@@ -1,4 +1,4 @@
-from orangecontrib.recommendation.rating import Learner, Model
+from orangecontrib.recommendation.ranking import Learner, Model
 from orangecontrib.recommendation.utils.format_data import feature_matrix
 
 from scipy.special import expit as sigmoid
