@@ -191,11 +191,11 @@ class TestBRISMF(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    # unittest.main()
+    unittest.main()
 
-    # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_BRISMF_objective"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # # Test single test
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestBRISMF("test_BRISMF_objective"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
 

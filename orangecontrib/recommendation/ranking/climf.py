@@ -1,5 +1,8 @@
 from orangecontrib.recommendation.ranking import Learner, Model
-from orangecontrib.recommendation.utils.format_data import feature_matrix
+from orangecontrib.recommendation.utils.format_data import *
+from orangecontrib.recommendation.utils.datacaching import cache_rows
+
+from collections import defaultdict
 
 from scipy.special import expit as sigmoid
 from scipy.sparse import dok_matrix
@@ -9,6 +12,7 @@ import time
 import warnings
 
 __all__ = ['CLiMFLearner']
+__sparse_format__ = lil_matrix
 
 
 def _g(x):
@@ -22,7 +26,7 @@ def _dg(x):
     return y
 
 
-def _matrix_factorization(ratings, shape, order, K, steps, alpha, beta,
+def _matrix_factorization(ratings, shape, K, steps, alpha, beta,
                           verbose=False, random_state=None):
     # Seed the generator
     if random_state is not None:
@@ -35,8 +39,11 @@ def _matrix_factorization(ratings, shape, order, K, steps, alpha, beta,
     U = 0.01 * np.random.rand(num_users, K)  # User-feature matrix
     V = 0.01 * np.random.rand(num_items, K)  # Item-feature matrix
 
+    # Cache rows
+    users_cached = defaultdict(list)
+
     # Get positional index of base columns
-    user_col, item_col = order
+    user_col, item_col = (0, 1)
 
     # Factorize matrix using SGD
     for step in range(steps):
@@ -50,7 +57,7 @@ def _matrix_factorization(ratings, shape, order, K, steps, alpha, beta,
             dU = -beta * U[i]
 
             # Precompute f (f[j] = <U[i], V[j]>)
-            items = ratings.X[ratings.X[:, user_col] == i][:, item_col]
+            items = cache_rows(ratings, i, users_cached)
             f = np.einsum('j,ij->i', U[i], V[items])
 
             for j in range(len(items)):  # j=items
@@ -124,8 +131,6 @@ class CLiMFLearner(Learner):
         self.steps = steps
         self.alpha = alpha
         self.beta = beta
-        self.U = None
-        self.V = None
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
     def fit_storage(self, data):
@@ -148,15 +153,17 @@ class CLiMFLearner(Learner):
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well.", stacklevel=2)
 
+        # Transform ratings matrix into a sparse matrix
+        data = table2sparse(data, self.shape, self.order,
+                            type=__sparse_format__)
+
         # Factorize matrix
-        self.U, self.V = _matrix_factorization(ratings=data, shape=self.shape,
-                                               order=self.order, K=self.K,
-                                               steps=self.steps,
-                                               alpha=self.alpha,
-                                               beta=self.beta, verbose=False)
+        U, V = _matrix_factorization(ratings=data, shape=self.shape, K=self.K,
+                                     steps=self.steps, alpha=self.alpha,
+                                     beta=self.beta, verbose=False)
 
         # Construct model
-        model = CLiMFModel(U=self.U, V=self.V)
+        model = CLiMFModel(U=U, V=V)
         return super().prepare_model(model)
 
 
@@ -165,6 +172,7 @@ class CLiMFModel(Model):
     def __init__(self, U, V):
         self.U = U
         self.V = V
+        super().__init__()
 
     def predict(self, X, top_k=None):
         """Perform predictions on samples in X for all items.

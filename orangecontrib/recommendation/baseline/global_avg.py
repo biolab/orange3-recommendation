@@ -44,6 +44,7 @@ class GlobalAvgModel(Model):
 
     def __init__(self, global_average):
         self.global_average = global_average
+        super().__init__()
 
     def predict(self, X):
         """Perform predictions on samples in X.

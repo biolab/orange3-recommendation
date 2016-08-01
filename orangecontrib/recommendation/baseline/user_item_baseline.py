@@ -19,7 +19,6 @@ class UserItemBaselineLearner(Learner):
     name = 'User-Item Baseline'
 
     def __init__(self, preprocessors=None, verbose=False):
-        self.bias = None
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
     def fit_storage(self, data):
@@ -38,10 +37,10 @@ class UserItemBaselineLearner(Learner):
         data = super().prepare_fit(data)
 
         # Compute biases and global average
-        self.bias = self.compute_bias(data, 'all')
+        bias = self.compute_bias(data, 'all')
 
         # Construct model
-        model = UserItemBaselineModel(bias=self.bias)
+        model = UserItemBaselineModel(bias=bias)
         return super().prepare_model(model)
 
 
@@ -49,6 +48,7 @@ class UserItemBaselineModel(Model):
 
     def __init__(self, bias):
         self.bias = bias
+        super().__init__()
 
     def predict(self, X):
         """Perform predictions on samples in X.

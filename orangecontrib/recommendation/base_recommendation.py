@@ -9,6 +9,10 @@ __all__ = ["LearnerRecommendation", "ModelRecommendation"]
 
 class ModelRecommendation(Model, metaclass=ABCMeta):
 
+    def __init__(self):
+        self.shape = (None, None)
+        self.order = (0, 1)
+
     def prepare_predict(self, X):
 
         # Check if all indices exist. If not, return random index.
@@ -32,7 +36,8 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
         """
 
         # Convert indices to integer and call predict()
-        return self.predict(data.X.astype(int))
+        data, self.order, _ = format_data.preprocess(data)
+        return self.predict(data.X)
 
     def __str__(self):
         return self.name
@@ -63,7 +68,6 @@ class LearnerRecommendation(Learner):
 
     def prepare_model(self, model):
         model.shape = self.shape
-        model.order = self.order
         model.verbose = self.verbose
         return model
 

@@ -1,6 +1,5 @@
 from orangecontrib.recommendation.rating import Learner, Model
-from orangecontrib.recommendation.utils.format_data \
-    import sparse_matrix_2d, feature_matrix
+from orangecontrib.recommendation.utils.format_data import *
 from orangecontrib.recommendation.utils.datacaching \
     import cache_norms, cache_rows
 
@@ -12,6 +11,7 @@ import time
 import warnings
 
 __all__ = ['TrustSVDLearner']
+__sparse_format__ = lil_matrix
 
 
 def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
@@ -69,9 +69,9 @@ def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
 
 
 # TODO: Change name trust_users
-def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
-                          order, K, steps, alpha, beta, beta_trust,
-                          verbose=False, random_state=None):
+def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
+                          steps, alpha, beta, beta_t, verbose=False,
+                          random_state=None):
 
     # Seed the generator
     if random_state is not None:
@@ -79,7 +79,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
 
     # Get featured matrices dimensions
     num_users, num_items = shape
-    num_users = max(num_users, trust_users)
+    num_users = max(num_users, shape_t[0])
 
     # Initialize low-rank matrices
     P = np.random.rand(num_users, K)  # User-feature matrix
@@ -91,9 +91,6 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
     globalAvg = bias['globalAvg']
     dItems = bias['dItems']
     dUsers = bias['dUsers']
-
-    # Get positional index of base columns
-    user_col, item_col = order
 
     # Cache rows
     # >>> From 2 days to 30s
@@ -125,8 +122,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
 
         # Optimize rating prediction
         objective = 0
-        for tuple_r in zip(*ratings.nonzero()):
-            u, j = tuple_r[user_col], tuple_r[item_col]
+        for u, j in zip(*ratings.nonzero()):
 
             # Store lists in cache
             items_rated_by_u = cache_rows(ratings, u, users_cached)
@@ -170,8 +166,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
                                       np.multiply(norm_b.T, W[trustees_u, :])
 
         # Optimize trust prediction
-        for tuple_t in zip(*trust.nonzero()):
-            u, v = tuple_t[user_col], tuple_t[item_col]
+        for u, v in zip(*trust.nonzero()):
 
             tuv_pred = np.dot(W[v, :], P[u, :])
             euv = tuv_pred - trust[u, v]
@@ -179,9 +174,9 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
             # Gradients of P and W
             norm_trust = cache_norms(trust, u, norm_Tr)
 
-            tempP[u, :] += beta_trust * \
+            tempP[u, :] += beta_t * \
                            (euv * W[v, :] + P[u, :]/norm_trust)  # P: Part 2
-            tempW[v, :] += beta_trust * euv * P[u, :]  # W: Part 2
+            tempW[v, :] += beta_t * euv * P[u, :]  # W: Part 2
 
         P -= alpha * tempP
         Q -= alpha * tempQ
@@ -221,7 +216,7 @@ class TrustSVDLearner(Learner):
         beta: float, optional
             The regularization for the ratings.
 
-        beta_trust: float, optional
+        beta_t: float, optional
             The regularization for the trust.
 
         min_rating: float, optional
@@ -251,23 +246,35 @@ class TrustSVDLearner(Learner):
 
     name = 'TrustSVD'
 
-    def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, beta_trust=0.05,
+    def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, beta_t=0.05,
                  min_rating=None, max_rating=None, feedback=None, trust=None,
                  preprocessors=None, verbose=False, random_state=None):
         self.K = K
         self.steps = steps
         self.alpha = alpha
         self.beta = beta
-        self.beta_trust = beta_trust
-        self.feedback = feedback
-        self.trust = trust
-        self.trust_users = None
+        self.beta_t = beta_t
         self.random_state = random_state
-        self.P = None
-        self.Q = None
-        self.Y = None
-        self.W = None
-        self.bias = None
+
+        self.feedback = feedback
+        if feedback is not None:
+            self.feedback, order_f, self.shape_f = preprocess(feedback)
+
+            # Transform feedback matrix into a sparse matrix
+            self.feedback = table2sparse(self.feedback, self.shape_f,
+                                         order_f, type=__sparse_format__)
+
+        self.trust = trust
+        if trust is not None:
+            self.trust, order_t, self.shape_t = preprocess(trust)
+            max_trow = int(np.max(self.trust.X[:, order_t[0]]))
+            max_tcol = int(np.max(self.trust.X[:, order_t[1]]))
+            self.shape_t = (max_trow + 1, max_tcol + 1)
+
+            # Transform trust matrix into a sparse matrix
+            self.trust = table2sparse(self.trust, self.shape_t, order_t,
+                                      type=__sparse_format__)
+
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
 
@@ -292,31 +299,19 @@ class TrustSVDLearner(Learner):
                           "well.", stacklevel=2)
 
         # Compute biases (not need it if learnt)
-        self.bias = self.compute_bias(data, 'all')
+        bias = self.compute_bias(data, 'all')
 
-        # Transform rating matrix into CSR sparse matrix (...and then to LIL)
-        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
-                                col=data.X[:, self.order[1]],
-                                data=data.Y, shape=self.shape).tolil()
-
-        # Transform trust matrix into a CSR sparse matrix (...and then to LIL)
-        max_trow = int(np.max(self.trust.X[:, 0]))
-        max_tcol = int(np.max(self.trust.X[:, 1]))
-        t_shape = (max_trow + 1, max_tcol + 1)
-        self.trust_users = max(max_trow, max_tcol) + 1
-        self.trust = sparse_matrix_2d(row=self.trust.X[:, self.order[0]],
-                                      col=self.trust.X[:, self.order[1]],
-                                      data=self.trust.Y, shape=t_shape).tolil()
+        # Transform ratings matrix into a sparse matrix
+        data = table2sparse(data, self.shape, self.order,
+                            type=__sparse_format__)
 
         # Factorize matrix
-        self.P, self.Q, self.Y, self.W, new_feedback = \
+        P, Q, Y, W, new_feedback = \
             _matrix_factorization(ratings=data, feedback=self.feedback,
-                                  trust=self.trust, bias=self.bias,
-                                  shape=self.shape,
-                                  trust_users=self.trust_users,
-                                  order=self.order, K=self.K, steps=self.steps,
-                                  alpha=self.alpha, beta=self.beta,
-                                  beta_trust=self.beta_trust,
+                                  trust=self.trust, bias=bias,
+                                  shape=self.shape, shape_t=self.shape_t,
+                                  K=self.K, steps=self.steps, alpha=self.alpha,
+                                  beta=self.beta, beta_t=self.beta_t,
                                   verbose=self.verbose,
                                   random_state=self.random_state)
 
@@ -325,9 +320,8 @@ class TrustSVDLearner(Learner):
             new_feedback = self.feedback
 
         # Construct model
-        model = TrustSVDModel(P=self.P, Q=self.Q, Y=self.Y, W=self.W,
-                              bias=self.bias, feedback=new_feedback,
-                              trust=self.trust)
+        model = TrustSVDModel(P=P, Q=Q, Y=Y, W=W, bias=bias,
+                              feedback=new_feedback, trust=self.trust)
         return super().prepare_model(model)
 
 
@@ -341,6 +335,7 @@ class TrustSVDModel(Model):
         self.bias = bias
         self.feedback = feedback
         self.trust = trust
+        super().__init__()
 
     def predict(self, X):
         """Perform predictions on samples in X.
@@ -467,8 +462,8 @@ if __name__ == "__main__":
     trust = Orange.data.Table('filmtrust/trust.tab')
 
     start = time.time()
-    learner = TrustSVDLearner(K=15, steps=1, alpha=0.07, beta=0.1,
-                              beta_trust=0.05, trust=trust, verbose=True)
+    learner = TrustSVDLearner(K=15, steps=1, alpha=0.07, beta=0.1, beta_t=0.05,
+                              trust=trust, verbose=True)
     recommender = learner(ratings)
     print('- Time (TrustSVD): %.3fs' % (time.time() - start))
 

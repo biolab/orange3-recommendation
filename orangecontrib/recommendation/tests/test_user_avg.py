@@ -102,7 +102,7 @@ class TestUserAvg(unittest.TestCase):
         # Check correctness
         self.assertEqual(len(y_pred), sample_size)
 
-    def test_ItemAvg_CV(self):
+    def test_UserAvg_CV(self):
         from Orange.evaluation.testing import CrossValidation
 
         # Load data

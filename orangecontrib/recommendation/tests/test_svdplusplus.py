@@ -157,7 +157,7 @@ class TestSVDPlusPlus(unittest.TestCase):
                 recommender.compute_objective(data=data, P=recommender.P,
                                               Q=recommender.Q,
                                               Y=recommender.Y,
-                                              bias=learner.bias,
+                                              bias=recommender.bias,
                                               beta=learner.beta))
 
         # Assert objective values decrease

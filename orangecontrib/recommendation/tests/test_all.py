@@ -29,4 +29,4 @@ def run_tests():
 
 if __name__ == "__main__":
     pass
-    #run_tests()
+    run_tests()

@@ -1,12 +1,12 @@
 from orangecontrib.recommendation.rating import Learner, Model
-from orangecontrib.recommendation.utils.format_data \
-    import sparse_matrix_2d, feature_matrix
+from orangecontrib.recommendation.utils.format_data import *
 
 import numpy as np
 import time
 import warnings
 
 __all__ = ['BRISMFLearner']
+__sparse_format__ = lil_matrix
 
 
 def _predict(users, items, global_avg, dUsers, dItems, P, Q, subscripts='i,i'):
@@ -24,7 +24,7 @@ def _predict_all_items(users, global_avg, dUsers, dItems, P, Q):
     return bias + base_pred
 
 
-def _matrix_factorization(ratings, bias, shape, order, K, steps, alpha, beta,
+def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
                           verbose=False, random_state=None):
 
     # Seed the generator
@@ -43,9 +43,6 @@ def _matrix_factorization(ratings, bias, shape, order, K, steps, alpha, beta,
     dItems = bias['dItems']
     dUsers = bias['dUsers']
 
-    # Get positional index of base columns
-    user_col, item_col = order
-
     # Factorize matrix using SGD
     for step in range(steps):
         if verbose:
@@ -54,8 +51,7 @@ def _matrix_factorization(ratings, bias, shape, order, K, steps, alpha, beta,
 
         # Optimize rating prediction
         objective = 0
-        for tuple_r in zip(*ratings.nonzero()):
-            u, j = tuple_r[user_col], tuple_r[item_col]
+        for u, j in zip(*ratings.nonzero()):
 
             rij_pred = _predict(u, j, globalAvg, dUsers, dItems, P, Q)
             eij = rij_pred - ratings[u, j]
@@ -126,9 +122,6 @@ class BRISMFLearner(Learner):
         self.steps = steps
         self.alpha = alpha
         self.beta = beta
-        self.P = None
-        self.Q = None
-        self.bias = None
         self.random_state = random_state
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
@@ -154,23 +147,20 @@ class BRISMFLearner(Learner):
                           "well.", stacklevel=2)
 
         # Compute biases (not need it if learnt)
-        self.bias = self.compute_bias(data, 'all')
+        bias = self.compute_bias(data, 'all')
 
-        # Transform rating matrix into CSR sparse matrix (...and then to LIL)
-        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
-                                col=data.X[:, self.order[1]],
-                                data=data.Y, shape=self.shape).tolil()
+        # Transform ratings matrix into a sparse matrix
+        data = table2sparse(data, self.shape, self.order,
+                            type=__sparse_format__)
 
         # Factorize matrix
-        self.P, self.Q = _matrix_factorization(ratings=data, bias=self.bias,
-                                               shape=self.shape,
-                                               order=self.order, K=self.K,
-                                               steps=self.steps,
-                                               alpha=self.alpha, beta=self.beta,
-                                               verbose=self.verbose,
-                                               random_state=self.random_state)
+        P, Q = _matrix_factorization(ratings=data, bias=bias, shape=self.shape,
+                                     K=self.K, steps=self.steps,
+                                     alpha=self.alpha, beta=self.beta,
+                                     verbose=self.verbose,
+                                     random_state=self.random_state)
 
-        model = BRISMFModel(P=self.P, Q=self.Q, bias=self.bias)
+        model = BRISMFModel(P=P, Q=Q, bias=bias)
         return super().prepare_model(model)
 
 
@@ -179,6 +169,7 @@ class BRISMFModel(Model):
         self.P = P
         self.Q = Q
         self.bias = bias
+        super().__init__()
 
     def predict(self, X):
         """Perform predictions on samples in X.

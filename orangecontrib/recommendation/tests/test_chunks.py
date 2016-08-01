@@ -1,7 +1,7 @@
 from orangecontrib.recommendation.utils.format_data import sparse_matrix_2d
 from orangecontrib.recommendation.evaluation import ReciprocalRank
 
-from scipy.sparse import csr_matrix
+from scipy.sparse import *
 
 import unittest
 import numpy as np
@@ -14,9 +14,9 @@ class TestChunks(unittest.TestCase):
         col = np.array([0, 2, 2, 0, 1, 2])
         data = np.array([1, 2, 3, 4, 5, 6])
         shape = (3, 3)
-        sparse_matrix = sparse_matrix_2d(row, col, data, shape)
+        sparse_matrix = sparse_matrix_2d(row, col, data, shape, lil_matrix)
 
-        self.assertIsInstance(sparse_matrix, csr_matrix)
+        self.assertIsInstance(sparse_matrix, lil_matrix)
 
 
     def test_Chunks_ReciprocalRank(self):

@@ -17,7 +17,6 @@ class UserAvgLearner(Learner):
     name = 'User average'
 
     def __init__(self, preprocessors=None, verbose=False):
-        self.bias = None
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
     def fit_storage(self, data):
@@ -36,10 +35,10 @@ class UserAvgLearner(Learner):
         data = super().prepare_fit(data)
 
         # Compute biases and global average
-        self.bias = self.compute_bias(data, 'users')
+        bias = self.compute_bias(data, 'users')
 
         # Construct model
-        model = UserAvgModel(bias=self.bias)
+        model = UserAvgModel(bias=bias)
         return super().prepare_model(model)
 
 
@@ -47,6 +46,7 @@ class UserAvgModel(Model):
 
     def __init__(self, bias):
         self.bias = bias
+        super().__init__()
 
     def predict(self, X):
         """Perform predictions on samples in X.

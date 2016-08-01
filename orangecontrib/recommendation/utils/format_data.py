@@ -1,7 +1,9 @@
 from Orange.data import Table, Domain, ContinuousVariable, StringVariable
 
+from scipy.sparse import *
+
 import numpy as np
-from scipy import sparse
+import warnings
 
 
 def preprocess(data):
@@ -30,25 +32,38 @@ def preprocess(data):
 
     """
 
-    # Get index of column with the 'col' attribute set to 1 (col=1)
-    col_attributes = [a for a in data.domain.attributes + data.domain.metas
-                      if a.attributes.get("col")]
-    col_attribute = col_attributes[0] if len(
-        col_attributes) == 1 else print("warning")
+    try:
+        # Get index of column with the 'col' attribute set to 1 (col=1)
+        col_attributes = [a for a in data.domain.attributes + data.domain.metas
+                          if a.attributes.get("col")]
+        col_attribute = col_attributes[0] if len(
+            col_attributes) == 1 else print("warning")
 
-    # Get index of column with the 'row' attribute set to 1 (row=1)
-    row_attributes = [a for a in data.domain.attributes + data.domain.metas
-                      if a.attributes.get("row")]
-    row_attribute = row_attributes[0] if len(
-        row_attributes) == 1 else print("warning")
+        # Get index of column with the 'row' attribute set to 1 (row=1)
+        row_attributes = [a for a in data.domain.attributes + data.domain.metas
+                          if a.attributes.get("row")]
+        row_attribute = row_attributes[0] if len(
+            row_attributes) == 1 else print("warning")
 
-    # Get indices of the columns
-    idx_items = data.domain.variables.index(col_attribute)
-    idx_users = data.domain.variables.index(row_attribute)
+        # Get indices of the columns
+        idx_items = data.domain.variables.index(col_attribute)
+        idx_users = data.domain.variables.index(row_attribute)
+
+    except Exception as e:
+        idx_items = 1
+        idx_users = 0
+        warnings.warn('Row/Column metadata not found. Applying heuristics '
+                      '{users: col=0, items: col=1}')
 
     # Find the highest value on each column
-    users = int(np.max(data.X[:, idx_users]) + 1)
-    items = int(np.max(data.X[:, idx_items]) + 1)
+    try:
+        users = int(np.max(data.X[:, idx_users]) + 1)
+    except ValueError as e:
+        users = 0
+    try:
+        items = int(np.max(data.X[:, idx_items]) + 1)
+    except ValueError as e:
+        items = 0
 
     # Construct tuples
     order = (idx_users, idx_items)
@@ -60,8 +75,35 @@ def preprocess(data):
     return data, order, shape
 
 
-def sparse_matrix_2d(row, col, data, shape):
-    """ Constructs a 2D sparse matrix.
+def table2sparse(data, shape, order, type=lil_matrix):
+    """Constructs a 2D sparse matrix from an Orange.data.Table
+
+        Note:
+            This methods sort the columns (=> [rows, cols])
+
+        Args:
+            data: Orange.data.Table
+
+            shape: (int, int)
+               Tuple of integers with the shape of the matrix
+
+            order: (int, int)
+               Tuple of integers with the index of the base columns
+
+            type: scipy.sparse.*
+               Type of matrix to return (csr_matrix, lil_matrix,...)
+
+        Returns:
+            matrix: scipy.sparse
+
+        """
+
+    return sparse_matrix_2d(row=data.X[:, order[0]], col=data.X[:, order[1]],
+                            data=data.Y, shape=shape, type=type)
+
+
+def sparse_matrix_2d(row, col, data, shape, type=lil_matrix):
+    """Constructs a 2D sparse matrix.
 
     Given the indices of the rows, columns and value
     this constructs a sparse matrix of size 'shape'
@@ -79,12 +121,36 @@ def sparse_matrix_2d(row, col, data, shape):
         shape: (int, int)
            Tuple of integers with the shape of the matrix
 
+        type: scipy.sparse.*
+           Type of matrix to return (csr_matrix, lil_matrix,...)
+
     Returns:
-        Compressed Sparse Row matrix
+        matrix: scipy.sparse
 
     """
 
-    return sparse.csr_matrix((data, (row, col)), shape=shape)
+    # Construct sparse matrix
+    matrix = coo_matrix((data, (row, col)), shape=shape)
+
+    # Set sparse matrix type
+    if type == csc.csc_matrix:
+        matrix = matrix.tocsc()
+    elif type == csr.csr_matrix:
+        matrix = matrix.tocsr()
+    elif type == bsr.bsr_matrix:
+        matrix = matrix.tobsr()
+    elif type == lil.lil_matrix:
+        matrix = matrix.tolil()
+    elif type == dok.dok_matrix:
+        matrix = matrix.todok()
+    elif type == coo.coo_matrix:
+        pass
+    elif type == dia.dia_matrix:
+        matrix = matrix.todia()
+    else:
+        raise TypeError('Unknown sparse matrix format')
+
+    return matrix
 
 
 def feature_matrix(variable, matrix, domain_name=None):

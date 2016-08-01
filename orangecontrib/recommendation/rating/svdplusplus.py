@@ -1,6 +1,5 @@
 from orangecontrib.recommendation.rating import Learner, Model
-from orangecontrib.recommendation.utils.format_data \
-    import sparse_matrix_2d, feature_matrix
+from orangecontrib.recommendation.utils.format_data import *
 
 from collections import defaultdict
 
@@ -10,6 +9,7 @@ import time
 import warnings
 
 __all__ = ['SVDPlusPlusLearner']
+__sparse_format__ = lil_matrix
 
 
 def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, feedback):
@@ -59,7 +59,7 @@ def save_in_cache(matrix, key, cache):
     return res
 
 
-def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
+def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
                       alpha, beta,verbose=False, random_state=None):
 
     # Seed the generator
@@ -79,9 +79,6 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
     dItems = bias['dItems']
     dUsers = bias['dUsers']
 
-    # Get positional index of base columns
-    user_col, item_col = order
-
     # Cache rows
     users_cached = defaultdict(list)
     feedback_cached = defaultdict(list)
@@ -94,8 +91,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
 
         # Optimize rating prediction
         objective = 0
-        for tuple_r in zip(*ratings.nonzero()):
-            u, j = tuple_r[user_col], tuple_r[item_col]
+        for u, j in zip(*ratings.nonzero()):
 
             # if there is no feedback, infer it from the ratings
             if feedback is None:
@@ -194,12 +190,16 @@ class SVDPlusPlusLearner(Learner):
         self.steps = steps
         self.alpha = alpha
         self.beta = beta
-        self.P = None
-        self.Q = None
-        self.Y = None
-        self.bias = None
-        self.feedback = feedback
         self.random_state = random_state
+
+        self.feedback = feedback
+        if feedback is not None:
+            self.feedback, order_f, self.shape_f = preprocess(feedback)
+
+            # Transform feedback matrix into a sparse matrix
+            self.feedback = table2sparse(self.feedback, self.shape_f,
+                                         order_f, type=__sparse_format__)
+
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
 
@@ -224,20 +224,18 @@ class SVDPlusPlusLearner(Learner):
                           "well.", stacklevel=2)
 
         # Compute biases (not need it if learnt)
-        self.bias = self.compute_bias(data, 'all')
+        bias = self.compute_bias(data, 'all')
 
-        # Transform rating matrix into CSR sparse matrix (...and then to LIL)
-        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
-                                col=data.X[:, self.order[1]],
-                                data=data.Y, shape=self.shape).tolil()
+        # Transform ratings matrix into a sparse matrix
+        data = table2sparse(data, self.shape, self.order,
+                            type=__sparse_format__)
 
         # Factorize matrix
-        self.P, self.Q, self.Y, new_feedback = \
+        P, Q, Y, new_feedback = \
             _matrix_factorization(ratings=data,feedback=self.feedback,
-                                  bias=self.bias, shape=self.shape,
-                                  order=self.order, K=self.K, steps=self.steps,
-                                  alpha=self.alpha, beta=self.beta,
-                                  verbose=self.verbose,
+                                  bias=bias, shape=self.shape, K=self.K,
+                                  steps=self.steps, alpha=self.alpha,
+                                  beta=self.beta, verbose=self.verbose,
                                   random_state=self.random_state)
 
         # Set as feedback the inferred feedback when no feedback has been given
@@ -245,7 +243,7 @@ class SVDPlusPlusLearner(Learner):
             new_feedback = self.feedback
 
         # Construct model
-        model = SVDPlusPlusModel(P=self.P, Q=self.Q, Y=self.Y, bias=self.bias,
+        model = SVDPlusPlusModel(P=P, Q=Q, Y=Y, bias=bias,
                                  feedback=new_feedback)
         return super().prepare_model(model)
 
@@ -258,6 +256,7 @@ class SVDPlusPlusModel(Model):
         self.Y = Y
         self.bias = bias
         self.feedback = feedback
+        super().__init__()
 
     def predict(self, X):
         """Perform predictions on samples in X.
@@ -401,7 +400,6 @@ class SVDPlusPlusModel(Model):
 
 if __name__ == "__main__":
     import Orange
-    from sklearn.metrics import mean_squared_error
 
     print('Loading data...')
     ratings = Orange.data.Table('filmtrust/ratings.tab')

@@ -33,7 +33,7 @@ class OWTrustSVD(OWBaseLearner):
     steps = settings.Setting(25)
     alpha = settings.Setting(0.07)
     beta = settings.Setting(0.1)
-    beta_trust = settings.Setting(0.05)
+    beta_t = settings.Setting(0.05)
     trust = None
     feedback = None
 
@@ -57,7 +57,7 @@ class OWTrustSVD(OWBaseLearner):
                        alignment=Qt.AlignRight,
                        controlWidth=90, callback=self.settings_changed)
 
-        gui.doubleSpin(box, self, "beta_trust", minv=1e-4, maxv=1e+4, step=1e-4,
+        gui.doubleSpin(box, self, "beta_t", minv=1e-4, maxv=1e+4, step=1e-4,
                        label="Regularization factor (Trust):", decimals=4,
                        alignment=Qt.AlignRight,
                        controlWidth=90, callback=self.settings_changed)
@@ -68,7 +68,7 @@ class OWTrustSVD(OWBaseLearner):
             steps=self.steps,
             alpha=self.alpha,
             beta=self.beta,
-            beta_trust=self.beta_trust,
+            beta_t=self.beta_t,
             trust=self.trust,
             feedback=self.feedback
         )
@@ -78,7 +78,7 @@ class OWTrustSVD(OWBaseLearner):
                 ("Number of iterations", self.steps),
                 ("Learning rate", self.alpha),
                 ("Regularization factor", self.beta),
-                ("Regularization factor (Trust)", self.beta_trust))
+                ("Regularization factor (Trust)", self.beta_t))
 
     def update_learner(self):
         if self.trust is None:
