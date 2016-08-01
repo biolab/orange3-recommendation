@@ -10,7 +10,8 @@ def run_tests():
         'test_brismf',
         'test_climf',
         'test_svdplusplus',
-        'test_trustsvd'
+        'test_trustsvd',
+        'test_chunks'
     ]
 
     suite = unittest.TestSuite()
@@ -28,4 +29,4 @@ def run_tests():
 
 if __name__ == "__main__":
     pass
-    run_tests()
+    #run_tests()

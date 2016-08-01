@@ -1,15 +1,14 @@
-import os
+import Orange
+from orangecontrib.recommendation import *
+
+from sklearn.metrics import mean_squared_error
+
 import math
 import time
 import unittest
 
-import Orange
-from orangecontrib.recommendation import *
 
-import numpy as np
-from sklearn.metrics import mean_squared_error
-
-#@unittest.skip("Class skipped: Too big to test")
+@unittest.skip("Class skipped: Too big to test")
 class TestBigDataset(unittest.TestCase):
 
     def test_learners(self):
