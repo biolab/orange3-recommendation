@@ -3,9 +3,9 @@ from orangecontrib.recommendation import *
 
 from sklearn.metrics import mean_squared_error
 
+import unittest
 import math
 import time
-import unittest
 
 
 @unittest.skip("Class skipped: Too big to test")

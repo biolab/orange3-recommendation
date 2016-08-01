@@ -1,7 +1,6 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication
 
-
 from Orange.widgets import settings
 from Orange.widgets import gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner

@@ -1,10 +1,7 @@
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication
-import numpy as np
 
-from Orange.data import Table, Domain, DiscreteVariable, ContinuousVariable, \
-    StringVariable
-
+from Orange.data import Table
 from Orange.widgets import settings
 from Orange.widgets import gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner

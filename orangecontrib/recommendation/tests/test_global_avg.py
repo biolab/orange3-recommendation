@@ -1,13 +1,12 @@
-import os
-import math
-import random
-import unittest
-
 import Orange
 from orangecontrib.recommendation import GlobalAvgLearner
 
-import numpy as np
 from sklearn.metrics import mean_squared_error
+
+import unittest
+import numpy as np
+import math
+import random
 
 class TestGlobalAvg(unittest.TestCase):
 

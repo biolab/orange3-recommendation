@@ -1,10 +1,11 @@
-import unittest
-
 from orangecontrib.recommendation.utils.format_data import sparse_matrix_2d
 from orangecontrib.recommendation.evaluation import ReciprocalRank
 
 from scipy.sparse import csr_matrix
+
+import unittest
 import numpy as np
+
 
 class TestChunks(unittest.TestCase):
 

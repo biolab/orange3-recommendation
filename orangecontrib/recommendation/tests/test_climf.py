@@ -1,11 +1,8 @@
-import os
-import math
-import unittest
-
 import Orange
 from orangecontrib.recommendation import CLiMFLearner
 from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
+import unittest
 import numpy as np
 import random
 
