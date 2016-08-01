@@ -11,4 +11,5 @@ Widgets (``recommendation``)
     ./user_item_baseline.rst
     ./brismf.rst
     ./svdplusplus.rst
+    ./trustsvd.rst
     ./climf.rst
