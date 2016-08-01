@@ -187,7 +187,8 @@ class BRISMFModel(Model):
 
         """
 
-        super().prepare_predict(X)
+        # Prepare data (set valid indices for non-existing (CV))
+        idxs_missing = super().prepare_predict(X)
 
         users = X[:, self.order[0]]
         items = X[:, self.order[1]]
@@ -196,6 +197,8 @@ class BRISMFModel(Model):
                                self.bias['dUsers'], self.bias['dItems'],
                                self.P, self.Q, 'ij,ij->i')
 
+        # Set predictions for non-existing indices (CV)
+        predictions = self.fix_predictions(predictions, self.bias, idxs_missing)
         return super().predict_on_range(predictions)
 
     def predict_items(self, users=None, top=None):

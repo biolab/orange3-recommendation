@@ -274,13 +274,13 @@ class SVDPlusPlusModel(Model):
 
         """
 
-        # Prepare data
-        super().prepare_predict(X)
+        # Prepare data (set valid indices for non-existing (CV))
+        idxs_missing = super().prepare_predict(X)
 
         users = X[:, self.order[0]]
         items = X[:, self.order[1]]
 
-        predictions = []
+        predictions = np.zeros(len(X))
         feedback_cached = defaultdict(list)
         isFeedbackADict = isinstance(self.feedback, dict)
 
@@ -292,12 +292,12 @@ class SVDPlusPlusModel(Model):
             else:
                 feedback_u = save_in_cache(self.feedback, u, feedback_cached)
 
-            pred = _predict(u, items[i], self.bias['globalAvg'],
-                            self.bias['dUsers'], self.bias['dItems'], self.P,
-                            self.Q, self.Y, feedback_u)
-            predictions.append(pred[0])
+            predictions[i] = _predict(u, items[i], self.bias['globalAvg'],
+                              self.bias['dUsers'], self.bias['dItems'], self.P,
+                              self.Q, self.Y, feedback_u)[0]
 
-        predictions = np.asarray(predictions)
+        # Set predictions for non-existing indices (CV)
+        predictions = self.fix_predictions(predictions, self.bias, idxs_missing)
         return super().predict_on_range(predictions)
 
     def predict_items(self, users=None, top=None):

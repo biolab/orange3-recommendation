@@ -62,9 +62,7 @@ class GlobalAvgModel(Model):
 
         """
 
-        # Prepare data
-        super().prepare_predict(X)
-
+        # No need to prepare the data
         return np.full(len(X), self.global_average)
 
     def predict_items(self, users=None, top=None):

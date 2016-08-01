@@ -14,15 +14,36 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
         self.order = (0, 1)
 
     def prepare_predict(self, X):
-
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average!!!
-        X[X[:, self.order[0]] >= self.shape[0], self.order[0]] = \
-            np.random.randint(low=0, high=self.shape[0])
-        X[X[:, self.order[1]] >= self.shape[1], self.order[1]] = \
-            np.random.randint(low=0, high=self.shape[1])
+        idxs_users_missing = np.where(X[:, self.order[0]] >= self.shape[0])[0]
+        idxs_items_missing = np.where(X[:, self.order[1]] >= self.shape[1])[0]
 
-        return X
+        # Check if all indices exist. If not, return 'dumb_index'.
+        dumb_index = 0
+        X[idxs_users_missing, self.order[0]] = dumb_index
+        X[idxs_items_missing, self.order[1]] = dumb_index
+
+        return idxs_users_missing, idxs_items_missing
+
+    def fix_predictions(self, predictions, bias, indices_missing):
+        idxs_users_missing, idxs_items_missing = indices_missing
+
+        # Set average when neither the user nor the item exist
+        g_avg = bias['globalAvg']
+        common_indices = np.intersect1d(idxs_users_missing, idxs_items_missing)
+        predictions[common_indices] = g_avg
+
+        # Only items exist (return average + {dItem})
+        if 'dItems' in bias:
+            missing_items = np.setdiff1d(idxs_items_missing, common_indices)
+            predictions[missing_items] = g_avg + bias['dItems'][missing_items]
+
+        # Only users exist (return average + {dUser})
+        if 'dUsers' in bias:
+            missing_users = np.setdiff1d(idxs_users_missing, common_indices)
+            predictions[missing_users] = g_avg + bias['dUsers'][missing_users]
+        return predictions
 
     @abstractmethod
     def predict(self): pass
