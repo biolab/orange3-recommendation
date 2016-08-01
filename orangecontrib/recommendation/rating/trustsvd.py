@@ -1,11 +1,13 @@
 from orangecontrib.recommendation.rating import Learner, Model
-from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.utils.format_data \
+    import sparse_matrix_2d, feature_matrix
+from orangecontrib.recommendation.utils.datacaching \
+    import cache_norms, cache_rows
+
+from collections import defaultdict
 
 import numpy as np
-from scipy import sparse
-from collections import defaultdict
 import math
-import sys
 import time
 import warnings
 
@@ -24,7 +26,6 @@ def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
     else:
         y_term = 0
 
-
     # Trust information
     norm_trust = math.sqrt(len(trustees))
     if norm_trust > 0:
@@ -32,7 +33,6 @@ def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
         w_term = w_sum / norm_trust
     else:
         w_term = 0
-
 
     # Compute base
     p_enhanced = P[u, :] + (y_term + w_term)
@@ -68,113 +68,41 @@ def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
     return bias + base_pred
 
 
-def save_in_cache(matrix, key, cache):
-    res = cache.get(key)
-    if res is None:
-        if key < matrix.shape[0]:
-            res = np.asarray(matrix.rows[key])
-        else:
-            res = []
-        cache[key] = res
-    return res
-
-
-def cache_in_array(matrix, index, cache):
-    res = cache[index]
-    if res == 0:
-        res = cache[index] = math.sqrt(len(matrix.rows[index]))
-    return res
-
-
-def cache_in_array_v(matrix, indices, cache):
-    """
-    Vectorize function to cache in an array. I tried to avoid this by using
-    numpy.vectorize() but the code is pretty slow.
-    """
-
-    f_res = np.zeros(len(indices))
-
-    # Get values
-    values = cache[indices]
-
-    # Get indices
-    known_idx = values.nonzero()[0]
-    unknown_idx = np.where(values == 0)[0]
-
-    if len(known_idx) > 0:
-        f_res[known_idx] = values[known_idx]
-
-    if len(unknown_idx) > 0:
-        for i, key in enumerate(indices[unknown_idx]):
-            idx = unknown_idx[i]
-            f_res[idx] = cache[key] = math.sqrt(len(matrix.rows[key]))
-
-    return f_res
-
-
+# TODO: Change name trust_users
 def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
                           order, K, steps, alpha, beta, beta_trust,
                           verbose=False, random_state=None):
-    """ Factorize either a dense matrix or a sparse matrix into two low-rank
-        matrices which represents user and item factors.
 
-       Args:
-           data: Sparse
-
-           K: int
-               The number of latent factors.
-
-           steps: int
-               The number of epochs of stochastic gradient descent.
-
-           alpha: float
-               The learning rate of stochastic gradient descent.
-
-           beta: float
-               The regularization parameter (general purpose).
-
-           beta_trust: float
-               The regularization parameter for the trust.
-
-           random_state:
-               Random state or None.
-
-           verbose: boolean, optional
-               If true, it outputs information about the process.
-
-       Returns:
-           P (matrix, UxK), Q (matrix, KxI) and bias (dictionary, 'delta items'
-           , 'delta users')
-
-       """
-
+    # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
 
-    # Initialize factorized matrices randomly
+    # Get featured matrices dimensions
     num_users, num_items = shape
     num_users = max(num_users, trust_users)
 
-    P = np.random.rand(num_users, K)  # User and features
-    Q = np.random.rand(num_items, K)  # Item and features
-    Y = np.random.randn(num_items, K)
-    W = np.random.randn(num_users, K)
+    # Initialize low-rank matrices
+    P = np.random.rand(num_users, K)  # User-feature matrix
+    Q = np.random.rand(num_items, K)  # Item-feature matrix
+    Y = np.random.randn(num_items, K)  # Feedback-feature matrix
+    W = np.random.randn(num_users, K)  # Trust-feature matrix
 
+    # Compute bias (not need it if learnt)
     globalAvg = bias['globalAvg']
     dItems = bias['dItems']
     dUsers = bias['dUsers']
 
-    user_col = order[0]
-    item_col = order[1]
+    # Get positional index of base columns
+    user_col, item_col = order
 
     # Cache rows
-    # From 2 days to 30s
+    # >>> From 2 days to 30s
     users_cached = defaultdict(list)
     trusters_cached = defaultdict(list)
     feedback_cached = defaultdict(list)
 
     # Cache norms (slower than list, but allows vectorization)
-    # Lists: 6s; Arrays: 12s -> vectorized: 2s
+    # >>>  Lists: 6s; Arrays: 12s -> vectorized: 2s
     norm_I = np.zeros(num_items)
     norm_Tr = np.zeros(num_users)
     norm_Tc = np.zeros(num_users)
@@ -188,14 +116,12 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
-
+        
+        # To update the gradients at the same time
         tempP = np.zeros(P.shape)
         tempQ = np.zeros(Q.shape)
         tempY = np.zeros(Y.shape)
         tempW = np.zeros(W.shape)
-
-        if verbose:
-            start2 = time.time()
 
         # Optimize rating prediction
         objective = 0
@@ -203,17 +129,16 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
             u, j = tuple_r[user_col], tuple_r[item_col]
 
             # Store lists in cache
-            items_rated_by_u = save_in_cache(ratings, u, users_cached)
-            trustees_u = save_in_cache(trust, u, trusters_cached)
-
+            items_rated_by_u = cache_rows(ratings, u, users_cached)
+            trustees_u = cache_rows(trust, u, trusters_cached)
 
             # if there is no feedback, infer it from the ratings
             if feedback is None:
                 feedback_u = items_rated_by_u
             else:
-                feedback_u = save_in_cache(feedback, u, feedback_cached)
+                feedback_u = cache_rows(feedback, u, feedback_cached)
 
-            # Prediction
+            # Prediction and error
             ruj_pred, y_term, w_term, norm_feedback, norm_trust\
                 = _predict(u, j, globalAvg, dUsers, dItems, P, Q, Y, W,
                            feedback_u, trustees_u)
@@ -224,16 +149,14 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
                           (beta/norm_feedback) * P[u, :]  # P: Part 1
 
             # Gradient Q
-            norm_Uj = cache_in_array(ratings_T, j, norm_I)
+            norm_Uj = cache_norms(ratings_T, j, norm_I)
             tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + \
                           (beta/norm_Uj) * Q[j, :]
 
-            # I tried to clean the code vectorizing the function cache_in_array,
-            # using
             # Gradient Y
             if norm_feedback > 0:
                 tempY1 = (euj/norm_feedback) * Q[j, :]
-                norms = cache_in_array_v(ratings_T, items_rated_by_u, norm_I)
+                norms = cache_norms(ratings_T, items_rated_by_u, norm_I)
                 norm_b = (beta/np.atleast_2d(norms))
                 tempY[items_rated_by_u, :] = tempY1 + \
                                       np.multiply(norm_b.T, Y[items_rated_by_u, :])
@@ -241,7 +164,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
             # Gradient W
             if norm_trust > 0:
                 tempW1 = (euj/norm_trust) * Q[j, :]  # W: Part 1
-                norms = cache_in_array_v(trust_T, trustees_u, norm_Tc)
+                norms = cache_norms(trust_T, trustees_u, norm_Tc)
                 norm_b = (beta/np.atleast_2d(norms))
                 tempW[trustees_u, :] = tempW1 + \
                                       np.multiply(norm_b.T, W[trustees_u, :])
@@ -253,8 +176,8 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
             tuv_pred = np.dot(W[v, :], P[u, :])
             euv = tuv_pred - trust[u, v]
 
-            # Gradient of P and W
-            norm_trust = cache_in_array(trust, u, norm_Tr)
+            # Gradients of P and W
+            norm_trust = cache_norms(trust, u, norm_Tr)
 
             tempP[u, :] += beta_trust * \
                            (euv * W[v, :] + P[u, :]/norm_trust)  # P: Part 2
@@ -265,9 +188,11 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
         Y -= alpha * tempY
         W -= alpha * tempW
 
+        # TODO: Loss function
+
     if verbose:
-        print('\tLoss: %.3f' % objective)
-        print('\tTime: %.3fs' % (time.time() - start))
+        print('\t- Loss: %.3f' % objective)
+        print('\t- Time: %.3fs' % (time.time() - start))
         print('')
 
     if feedback is None:
@@ -277,27 +202,51 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, trust_users,
 
 
 class TrustSVDLearner(Learner):
-    """ Biased Regularized Incremental Simultaneous Matrix Factorization
+    """Trust-based matrix factorization
 
-    This model uses stochastic gradient descent to find the values of two
-    low-rank matrices which represents the user and item factors. This object
-    can factorize either dense or sparse matrices.
+    This model uses stochastic gradient descent to find four low-rank
+    matrices: user-feature matrix, item-feature matrix, feedback-feature matrix
+    and trustee-feature matrix.
 
     Attributes:
         K: int, optional
             The number of latent factors.
 
         steps: int, optional
-            The number of epochs of stochastic gradient descent.
+            The number of passes over the training data (aka epochs).
 
         alpha: float, optional
-            The learning rate of stochastic gradient descent.
+            The learning rate.
 
         beta: float, optional
-            The regularization parameter.
+            The regularization for the ratings.
+
+        beta_trust: float, optional
+            The regularization for the trust.
+
+        min_rating: float, optional
+            Defines the lower bound for the predictions. If None (default),
+            ratings won't be bounded.
+
+        max_rating: float, optional
+            Defines the upper bound for the predictions. If None (default),
+            ratings won't be bounded.
+
+        feedback: Orange.data.Table
+            Implicit feedback information. If None (default), implicit
+            information will be inferred from the ratings (e.g.: item rated,
+            means items seen).
+
+        trust: Orange.data.Table
+            Social trust information.
 
         verbose: boolean, optional
             Prints information about the process.
+
+        random_state: int, optional
+            Set the seed for the numpy random generator, so it makes the random
+            numbers predictable. This a debbuging feature.
+
     """
 
     name = 'TrustSVD'
@@ -323,48 +272,51 @@ class TrustSVDLearner(Learner):
                          min_rating=min_rating, max_rating=max_rating)
 
     def fit_storage(self, data):
-        """This function calls the factorization method.
+        """Fit the model according to the given training data.
 
         Args:
             data: Orange.data.Table
 
         Returns:
-            Model object (TrustSVDModel).
+            self: object
+                Returns self.
 
         """
+
+        # Prepare data
         data = super().prepare_fit(data)
 
+        # Check convergence
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well.", stacklevel=2)
 
-        # Compute biases and global average
+        # Compute biases (not need it if learnt)
         self.bias = self.compute_bias(data, 'all')
 
-        # Transform rating matrix to sparse
-        data = format_data.build_sparse_matrix(data.X[:, self.order[0]],
-                                               data.X[:, self.order[1]],
-                                               data.Y,
-                                               self.shape).tolil()
+        # Transform rating matrix into CSR sparse matrix (...and then to LIL)
+        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
+                                col=data.X[:, self.order[1]],
+                                data=data.Y, shape=self.shape).tolil()
 
-        # Transform trust matrix to sparse
-        max_row = int(np.max(self.trust.X[:, 0]))
-        max_col = int(np.max(self.trust.X[:, 1]))
-        self.trust_users = int(max(max_row, max_col)) + 1
-        self.trust = sparse.csr_matrix((self.trust.Y,
-                                        (self.trust.X[:, 0],
-                                         self.trust.X[:, 1])),
-                                       shape=(max_row + 1,
-                                              max_col + 1)).tolil()
+        # Transform trust matrix into a CSR sparse matrix (...and then to LIL)
+        max_trow = int(np.max(self.trust.X[:, 0]))
+        max_tcol = int(np.max(self.trust.X[:, 1]))
+        t_shape = (max_trow + 1, max_tcol + 1)
+        self.trust_users = max(max_trow, max_tcol) + 1
+        self.trust = sparse_matrix_2d(row=self.trust.X[:, self.order[0]],
+                                      col=self.trust.X[:, self.order[1]],
+                                      data=self.trust.Y, shape=t_shape).tolil()
 
         # Factorize matrix
         self.P, self.Q, self.Y, self.W, new_feedback = \
             _matrix_factorization(ratings=data, feedback=self.feedback,
                                   trust=self.trust, bias=self.bias,
-                                  shape=self.shape, trust_users=self.trust_users,
-                                  order=self.order, K=self.K,
-                                  steps=self.steps, alpha=self.alpha,
-                                  beta=self.beta, beta_trust=self.beta_trust,
+                                  shape=self.shape,
+                                  trust_users=self.trust_users,
+                                  order=self.order, K=self.K, steps=self.steps,
+                                  alpha=self.alpha, beta=self.beta,
+                                  beta_trust=self.beta_trust,
                                   verbose=self.verbose,
                                   random_state=self.random_state)
 
@@ -372,7 +324,7 @@ class TrustSVDLearner(Learner):
         if self.feedback is not None:
             new_feedback = self.feedback
 
-        # Build model
+        # Construct model
         model = TrustSVDModel(P=self.P, Q=self.Q, Y=self.Y, W=self.W,
                               bias=self.bias, feedback=new_feedback,
                               trust=self.trust)
@@ -380,20 +332,8 @@ class TrustSVDLearner(Learner):
 
 
 class TrustSVDModel(Model):
+
     def __init__(self, P, Q, Y, W, bias, feedback, trust):
-        """This model receives a learner and provides and interface to make the
-        predictions for a given user.
-
-        Args:
-            P: Matrix (users x Latent_factors)
-
-            Q: Matrix (items x Latent_factors)
-
-            bias: dictionary
-                {globalAvg: 'Global average', dUsers: 'delta users',
-                dItems: 'Delta items'}
-
-       """
         self.P = P
         self.Q = Q
         self.Y = Y
@@ -403,18 +343,22 @@ class TrustSVDModel(Model):
         self.trust = trust
 
     def predict(self, X):
-        """This function receives an array of indexes [[idx_user, idx_item]] and
-        returns the prediction for these pairs.
+        """Perform predictions on samples in X.
 
-            Args:
-                X: Matrix (2xN)
-                    Matrix that contains pairs of the type user-item
+        This function receives an array of indices and returns the prediction
+        for each one.
 
-            Returns:
-                Array with the recommendations for a given user.
+        Args:
+            X: ndarray
+                Samples. Matrix that contains user-item pairs.
 
-            """
+        Returns:
+            C: array, shape = (n_samples,)
+                Returns predicted values.
 
+        """
+
+        # Prepare data
         super().prepare_predict(X)
 
         users = X[:, self.order[0]]
@@ -428,12 +372,12 @@ class TrustSVDModel(Model):
         for i in range(0, len(users)):
             u = users[i]
 
-            trustees_u = save_in_cache(self.trust, u, trusters_cached)
+            trustees_u = cache_rows(self.trust, u, trusters_cached)
 
             if isFeedbackADict:
                 feedback_u = self.feedback[u]
             else:
-                feedback_u = save_in_cache(self.feedback, u, feedback_cached)
+                feedback_u = cache_rows(self.feedback, u, feedback_cached)
 
             pred = _predict(u, items[i], self.bias['globalAvg'],
                             self.bias['dUsers'], self.bias['dItems'], self.P,
@@ -444,20 +388,20 @@ class TrustSVDModel(Model):
         return super().predict_on_range(np.asarray(predictions))
 
     def predict_items(self, users=None, top=None):
-        """This function returns all the predictions for a set of items.
-        If users is set to 'None', it will return all the predictions for all
-        the users (matrix of size [num_users x num_items]).
+        """Perform predictions on samples in 'users' for all items.
 
         Args:
             users: array, optional
                 Array with the indices of the users to which make the
-                predictions.
+                predictions. If None (default), predicts for all users.
 
             top: int, optional
-                Return just the first k recommendations.
+                Returns the k-first predictions. (Do not confuse with
+                'top-best').
 
         Returns:
-            Array with the recommendations for requested users.
+            C: ndarray, shape = (n_samples, n_items)
+                Returns predicted values.
 
         """
 
@@ -472,12 +416,12 @@ class TrustSVDModel(Model):
         for i in range(0, len(users)):
             u = users[i]
 
-            trustees_u = save_in_cache(self.trust, u, trusters_cached)
+            trustees_u = cache_rows(self.trust, u, trusters_cached)
 
             if isFeedbackADict:
                 feedback_u = self.feedback[u]
             else:
-                feedback_u = save_in_cache(self.feedback, u, feedback_cached)
+                feedback_u = cache_rows(self.feedback, u, feedback_cached)
 
             pred = _predict_all_items(u, self.bias['globalAvg'],
                                       self.bias['dUsers'], self.bias['dItems'],
@@ -495,21 +439,22 @@ class TrustSVDModel(Model):
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]
-        return format_data.latent_factors_table(variable, self.P)
+        return feature_matrix(variable, self.P)
 
     def getQTable(self):
         variable = self.original_domain.variables[self.order[1]]
-        return format_data.latent_factors_table(variable, self.Q)
+        return feature_matrix(variable, self.Q)
 
     def getYTable(self):
-        domain_name = 'Implicit feedback'
+        domain_name = 'Feedback-feature'
         variable = self.original_domain.variables[self.order[0]]
-        return format_data.latent_factors_table(variable, self.Y, domain_name)
+        return feature_matrix(variable, self.Y, domain_name)
 
     def getWTable(self):
+        # TODO Correct variable type
         domain_name = 'Trust-feature'
         variable = self.original_domain.variables[self.order[0]]
-        return format_data.latent_factors_table(variable, self.W, domain_name)
+        return feature_matrix(variable, self.W, domain_name)
 
 
 

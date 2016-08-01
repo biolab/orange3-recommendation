@@ -2,8 +2,11 @@ import numpy as np
 
 __all__ = ['ReciprocalRank', 'MeanReciprocalRank']
 
+
 def ReciprocalRank(results, query):
-    """ The Reciprocal Rank (RR) is the multiplicative inverse of the rank of
+    """Reciprocal Rank
+
+    The RR is the multiplicative inverse of the rank of
     the first correct answer.
 
     Args:
@@ -14,7 +17,7 @@ def ReciprocalRank(results, query):
             Array with the query. => [[12], [10, 4]]
 
     Returns:
-        List of floats
+        output: List of floats
 
     """
 
@@ -41,8 +44,10 @@ def ReciprocalRank(results, query):
 
 
 def MeanReciprocalRank(results, query):
-    """ The Mean Reciprocal Rank (MRR) is statistic measure to evaluate processes
-    which produce multiple responses to a query, sorted by probability of
+    """Mean Reciprocal Rank
+
+    The MRR is statistic measure to evaluate processes which produce multiple
+    responses to a query, sorted by probability of
     correctness.
 
     Args:
@@ -53,7 +58,7 @@ def MeanReciprocalRank(results, query):
             Array with the query. => [[12], [10, 4]]
 
     Returns:
-        float
+        output: float
 
     """
 

@@ -1,14 +1,16 @@
 from orangecontrib.recommendation.rating import Learner, Model
-from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.utils.format_data \
+    import sparse_matrix_2d, feature_matrix
+
+from collections import defaultdict
 
 import numpy as np
 import math
-from collections import defaultdict
-
 import time
 import warnings
 
 __all__ = ['SVDPlusPlusLearner']
+
 
 def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, feedback):
     bias = global_avg + dUsers[u] + dItems[j]
@@ -46,63 +48,41 @@ def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, feedback):
     return bias + base_pred
 
 
-def save_in_cache(matrix, key, cache, transpose=False):
+def save_in_cache(matrix, key, cache):
     res = cache.get(key)
     if res is None:
-        if transpose:
-            matrix = matrix.T
-        res = cache[key] = matrix.rows[key] if key < matrix.shape[0] else []
+        if key < matrix.shape[0]:
+            res = np.asarray(matrix.rows[key])
+        else:
+            res = []
+        cache[key] = res
     return res
 
 
 def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
                       alpha, beta,verbose=False, random_state=None):
 
-    """ Factorize either a dense matrix or a sparse matrix into two low-rank
-     matrices which represents user and item factors.
-
-    Args:
-        data: Orange.data.Table
-
-        K: int
-            The number of latent factors.
-
-        steps: int
-            The number of epochs of stochastic gradient descent.
-
-        alpha: float
-            The learning rate of stochastic gradient descent.
-
-        beta: float
-            The regularization parameter.
-
-        random_state:
-               Random state or None.
-
-        verbose: boolean, optional
-            If true, it outputs information about the process.
-
-    Returns:
-        P (matrix, UxK), Q (matrix, KxI)
-
-    """
-
+    # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
 
-    # Initialize factorized matrices randomly
+    # Get featured matrices dimensions
     num_users, num_items = shape
-    P = np.random.rand(num_users, K)  # User and features
-    Q = np.random.rand(num_items, K)  # Item and features
-    Y = np.random.randn(num_items, K)
 
+    # Initialize low-rank matrices
+    P = np.random.rand(num_users, K)  # User-feature matrix
+    Q = np.random.rand(num_items, K)  # Item-feature matrix
+    Y = np.random.randn(num_items, K) # Feedback-feature matrix
+
+    # Compute bias (not need it if learnt)
     globalAvg = bias['globalAvg']
     dItems = bias['dItems']
     dUsers = bias['dUsers']
 
-    user_col = order[0]
-    item_col = order[1]
+    # Get positional index of base columns
+    user_col, item_col = order
 
+    # Cache rows
     users_cached = defaultdict(list)
     feedback_cached = defaultdict(list)
 
@@ -112,9 +92,10 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
             start = time.time()
             print('- Step: %d' % (step + 1))
 
-        # Compute predictions
+        # Optimize rating prediction
         objective = 0
-        for u, j in zip(*ratings.nonzero()):
+        for tuple_r in zip(*ratings.nonzero()):
+            u, j = tuple_r[user_col], tuple_r[item_col]
 
             # if there is no feedback, infer it from the ratings
             if feedback is None:
@@ -122,18 +103,22 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
             else:
                 feedback_u = save_in_cache(feedback, u, feedback_cached)
 
+            # Prediction and error
             ruj_pred, y_term, norm_feedback = \
                 _predict(u, j, globalAvg, dUsers, dItems, P, Q, Y, feedback_u)
             eij = ruj_pred - ratings[u, j]
 
-            # Update gradients
+            # Gradients of P and Q
             tempP = alpha * -2 * (eij * Q[j, :] - beta * P[u, :])
             tempQ = alpha * -2 * (eij * (P[u, :] + y_term) - beta * Q[j, :])
 
+            # Gradient Y
             if norm_feedback > 0:
                 for i in feedback_u:
                     Y[i, :] += alpha * -2 * (eij/norm_feedback * Q[j, :]
                                             - beta * Y[i, :])
+
+            # Update the gradients at the same time
             P[u] += tempP
             Q[j] += tempQ
 
@@ -148,8 +133,8 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
                                      + np.linalg.norm(temp_y) ** 2)
 
         if verbose:
-            print('\tLoss: %.3f' % objective)
-            print('\tTime: %.3fs' % (time.time() - start))
+            print('\t- Loss: %.3f' % objective)
+            print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
     if feedback is None:
@@ -159,24 +144,45 @@ def _matrix_factorization(ratings, feedback, bias, shape, order, K, steps,
 
 
 class SVDPlusPlusLearner(Learner):
-    """ SVD++: Matrix factorization that also takes into account what users have
-    rated
+    """SVD++ matrix factorization
+
+    This model uses stochastic gradient descent to find three low-rank
+    matrices: user-feature matrix, item-feature matrix and feedback-feature
+    matrix.
 
     Attributes:
         K: int, optional
             The number of latent factors.
 
-        steps: int, optional (default = 100)
-            The number of epochs of stochastic gradient descent.
+        steps: int, optional
+            The number of passes over the training data (aka epochs).
 
-        alpha: float, optional (default = 0.005)
-            The learning rate of stochastic gradient descent.
+        alpha: float, optional
+            The learning rate.
 
-        beta: float, optional (default = 0.02)
-            The regularization parameter.
+        beta: float, optional
+            The regularization for the ratings.
 
-        verbose: boolean, optional (default = False)
+        min_rating: float, optional
+            Defines the lower bound for the predictions. If None (default),
+            ratings won't be bounded.
+
+        max_rating: float, optional
+            Defines the upper bound for the predictions. If None (default),
+            ratings won't be bounded.
+
+        feedback: Orange.data.Table
+            Implicit feedback information. If None (default), implicit
+            information will be inferred from the ratings (e.g.: item rated,
+            means items seen).
+
+        verbose: boolean, optional
             Prints information about the process.
+
+        random_state: int, optional
+            Set the seed for the numpy random generator, so it makes the random
+            numbers predictable. This a debbuging feature.
+
     """
 
     name = 'SVD++'
@@ -198,29 +204,33 @@ class SVDPlusPlusLearner(Learner):
                          min_rating=min_rating, max_rating=max_rating)
 
     def fit_storage(self, data):
-        """This function calls the factorization method.
+        """Fit the model according to the given training data.
 
         Args:
             data: Orange.data.Table
 
         Returns:
-            Model object (BRISMFModel).
+            self: object
+                Returns self.
 
         """
+
+        # Prepare data
         data = super().prepare_fit(data)
 
+        # Check convergence
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well.", stacklevel=2)
 
-        # Compute biases and global average
+        # Compute biases (not need it if learnt)
         self.bias = self.compute_bias(data, 'all')
 
-        # Transform rating matrix to sparse
-        data = format_data.build_sparse_matrix(data.X[:, self.order[0]],
-                                               data.X[:, self.order[1]],
-                                               data.Y,
-                                               self.shape).tolil()
+        # Transform rating matrix into CSR sparse matrix (...and then to LIL)
+        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
+                                col=data.X[:, self.order[1]],
+                                data=data.Y, shape=self.shape).tolil()
+
         # Factorize matrix
         self.P, self.Q, self.Y, new_feedback = \
             _matrix_factorization(ratings=data,feedback=self.feedback,
@@ -234,7 +244,7 @@ class SVDPlusPlusLearner(Learner):
         if self.feedback is not None:
             new_feedback = self.feedback
 
-        # Build model
+        # Construct model
         model = SVDPlusPlusModel(P=self.P, Q=self.Q, Y=self.Y, bias=self.bias,
                                  feedback=new_feedback)
         return super().prepare_model(model)
@@ -243,21 +253,6 @@ class SVDPlusPlusLearner(Learner):
 class SVDPlusPlusModel(Model):
 
     def __init__(self, P, Q, Y, bias, feedback):
-        """This model receives a learner and provides and interface to make the
-        predictions for a given user.
-
-        Args:
-            P: Matrix (users x Latent_factors)
-
-            Q: Matrix (items x Latent_factors)
-
-            bias: dictionary
-                {'delta items', 'delta users'}
-
-            feedback: dictionary
-                {user_id: [ratings]}
-
-       """
         self.P = P
         self.Q = Q
         self.Y = Y
@@ -265,18 +260,22 @@ class SVDPlusPlusModel(Model):
         self.feedback = feedback
 
     def predict(self, X):
-        """This function receives an array of indexes [[idx_user, idx_item]] and
-        returns the prediction for these pairs.
+        """Perform predictions on samples in X.
 
-            Args:
-                X: Matrix (2xN)
-                    Matrix that contains pairs of the type user-item
+        This function receives an array of indices and returns the prediction
+        for each one.
 
-            Returns:
-                Array with the recommendations for a given user.
+        Args:
+            X: ndarray
+                Samples. Matrix that contains user-item pairs.
 
-            """
+        Returns:
+            C: array, shape = (n_samples,)
+                Returns predicted values.
 
+        """
+
+        # Prepare data
         super().prepare_predict(X)
 
         users = X[:, self.order[0]]
@@ -304,19 +303,19 @@ class SVDPlusPlusModel(Model):
 
     def predict_items(self, users=None, top=None):
         """This function returns all the predictions for a set of items.
-        If users is set to 'None', it will return all the predictions for all
-        the users (matrix of size [num_users x num_items]).
 
         Args:
             users: array, optional
                 Array with the indices of the users to which make the
-                predictions.
+                predictions. If None (default), predicts for all users.
 
             top: int, optional
-                Return just the first k recommendations.
+                Returns the k-first predictions. (Do not confuse with
+                'top-best').
 
         Returns:
-            Array with the recommendations for requested users.
+            C: ndarray, shape = (n_samples, n_items)
+                Returns predicted values.
 
         """
 
@@ -350,15 +349,16 @@ class SVDPlusPlusModel(Model):
         return super().predict_on_range(predictions)
 
     def compute_objective(self, data, bias, P, Q, Y, beta):
+        # TODO: Cast rows, cols through preprocess
         objective = 0
 
-        # Transform rating matrix to sparse
-        ratings = format_data.build_sparse_matrix(data.X[:, self.order[0]],
-                                                  data.X[:, self.order[1]],
-                                                  data.Y, self.shape).tolil()
+        # Transform rating matrix into CSR sparse matrix
+        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
+                                col=data.X[:, self.order[1]],
+                                data=data.Y, shape=self.shape)
 
         # Compute predictions
-        for u, j in zip(*ratings.nonzero()):
+        for u, j in zip(*data.nonzero()):
             feedback_u = self.feedback[u]
 
             # Prediction
@@ -372,7 +372,7 @@ class SVDPlusPlusModel(Model):
 
             rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
 
-            objective += (rij_pred - ratings[u, j]) ** 2
+            objective += (rij_pred - data[u, j]) ** 2
 
             # Regularization
             objective += beta * (np.linalg.norm(P[u, :]) ** 2
@@ -381,21 +381,21 @@ class SVDPlusPlusModel(Model):
                                  + bias['dUsers'][u] ** 2)
 
         # Compute RMSE
-        rmse = math.sqrt(objective / float(ratings.nnz))
+        rmse = math.sqrt(objective / float(data.nnz))
         return rmse
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]
-        return format_data.latent_factors_table(variable, self.P)
+        return feature_matrix(variable, self.P)
 
     def getQTable(self):
         variable = self.original_domain.variables[self.order[1]]
-        return format_data.latent_factors_table(variable, self.Q)
+        return feature_matrix(variable, self.Q)
 
     def getYTable(self):
-        domain_name = 'Implicit feedback'
+        domain_name = 'Feedback-feature'
         variable = self.original_domain.variables[self.order[0]]
-        return format_data.latent_factors_table(variable, self.Y, domain_name)
+        return feature_matrix(variable, self.Y, domain_name)
 
 
 

@@ -10,8 +10,8 @@ class ModelRecommendation(Model):
 
     def __call__(self, *args, **kwargs):
         """
-        We need to override the __call__ of the base.model because it transforms
-        the output to 'argmax(probabilities=X)'
+        We need to override the __call__ of the base.model because Orange3
+        transforms the output of model.predict() to 'argmax(probabilities=X)'
         """
 
         data = args[0]

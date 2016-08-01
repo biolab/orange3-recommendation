@@ -1,24 +1,13 @@
 from Orange.base import Learner, Model
-
 from orangecontrib.recommendation.utils import format_data
 
+from abc import ABCMeta, abstractmethod
 import numpy as np
 
 __all__ = ["LearnerRecommendation", "ModelRecommendation"]
 
 
-class ModelRecommendation(Model):
-
-    def predict_storage(self, data):
-        """ Convert data.X variables to integer and calls predict(data.X)
-        Args:
-            data: Orange.data.Table
-        Returns:
-            Array with the recommendations for a given user.
-        """
-
-        # Convert indices to integer and call predict()
-        return self.predict(data.X.astype(int))
+class ModelRecommendation(Model, metaclass=ABCMeta):
 
     def prepare_predict(self, X):
 
@@ -30,6 +19,20 @@ class ModelRecommendation(Model):
             np.random.randint(low=0, high=self.shape[1])
 
         return X
+
+    @abstractmethod
+    def predict(self): pass
+
+    def predict_storage(self, data):
+        """ Convert data.X variables to integer and calls predict(data.X)
+        Args:
+            data: Orange.data.Table
+        Returns:
+            Array with the recommendations for a given user.
+        """
+
+        # Convert indices to integer and call predict()
+        return self.predict(data.X.astype(int))
 
     def __str__(self):
         return self.name
@@ -63,6 +66,9 @@ class LearnerRecommendation(Learner):
         model.order = self.order
         model.verbose = self.verbose
         return model
+
+    @abstractmethod
+    def fit_storage(self): pass
 
     def compute_bias(self, data, axis='all'):
         """ Compute global average and biases of users and items

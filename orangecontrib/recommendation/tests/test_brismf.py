@@ -170,13 +170,14 @@ class TestBRISMF(unittest.TestCase):
 
     def test_BRISMF_objective(self):
         # Load data
-        data = Orange.data.Table('ratings.tab')
+        data = Orange.data.Table('ratings3.tab')
 
         steps = [1, 10, 30]
         objectives = []
 
         for step in steps:
-            learner = BRISMFLearner(K=2, steps=step, random_state=42)
+            learner = BRISMFLearner(K=2, steps=step, alpha=0.007,
+                                    random_state=42, verbose=False)
             recommender = learner(data)
             objective = recommender.compute_objective(data=data,
                                                       beta=learner.beta)
@@ -194,7 +195,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_BRISMF_input_data_continuous"))
+    suite.addTest(TestBRISMF("test_BRISMF_objective"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

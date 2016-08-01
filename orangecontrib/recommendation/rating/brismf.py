@@ -1,9 +1,8 @@
 from orangecontrib.recommendation.rating import Learner, Model
-from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.utils.format_data \
+    import sparse_matrix_2d, feature_matrix
 
 import numpy as np
-import math
-
 import time
 import warnings
 
@@ -25,50 +24,26 @@ def _predict_all_items(users, global_avg, dUsers, dItems, P, Q):
     return bias + base_pred
 
 
-def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
+def _matrix_factorization(ratings, bias, shape, order, K, steps, alpha, beta,
                           verbose=False, random_state=None):
-    """ Factorize either a dense matrix or a sparse matrix into two low-rank
-        matrices which represents user and item factors.
 
-       Args:
-           data: Orange.data.Table
-
-           K: int
-               The number of latent factors.
-
-           steps: int
-               The number of epochs of stochastic gradient descent.
-
-           alpha: float
-               The learning rate of stochastic gradient descent.
-
-           beta: float
-               The regularization parameter.
-
-           random_state:
-               Random state or None.
-
-           verbose: boolean, optional
-               If true, it outputs information about the process.
-
-       Returns:
-           P (matrix, UxK), Q (matrix, KxI) and bias (dictionary, 'delta items'
-           , 'delta users')
-
-       """
-
+    # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
 
-    # Initialize factorized matrices randomly
+    # Get featured matrices dimensions
     num_users, num_items = shape
-    P = np.random.rand(num_users, K)  # User and features
-    Q = np.random.rand(num_items, K)  # Item and features
 
+    # Initialize low-rank matrices
+    P = np.random.rand(num_users, K)  # User-feature matrix
+    Q = np.random.rand(num_items, K)  # Item-feature matrix
+
+    # Compute bias (not need it if learnt)
     globalAvg = bias['globalAvg']
     dItems = bias['dItems']
     dUsers = bias['dUsers']
 
+    # Get positional index of base columns
     user_col, item_col = order
 
     # Factorize matrix using SGD
@@ -77,27 +52,25 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
             start = time.time()
             print('- Step: %d' % (step + 1))
 
-
-        # Compute predictions
+        # Optimize rating prediction
         objective = 0
-        for k in range(0, len(data.Y)):
-            i = data.X[k, user_col]  # Users
-            j = data.X[k, item_col]  # Items
+        for tuple_r in zip(*ratings.nonzero()):
+            u, j = tuple_r[user_col], tuple_r[item_col]
 
-            rij_pred = _predict(i, j, globalAvg, dUsers, dItems, P, Q)
-            eij = rij_pred - data.Y[k]
+            rij_pred = _predict(u, j, globalAvg, dUsers, dItems, P, Q)
+            eij = rij_pred - ratings[u, j]
 
-            tempP = alpha * -2 * (eij * Q[j] - beta * P[i])
-            tempQ = alpha * -2 * (eij * P[i] - beta * Q[j])
-            P[i] += tempP
-            Q[j] += tempQ
+            tempP = alpha * -2 * (eij * Q[j, :] - beta * P[u, :])
+            tempQ = alpha * -2 * (eij * P[u, :] - beta * Q[j, :])
+            P[u, :] += tempP
+            Q[j, :] += tempQ
 
             # Loss function
             if verbose:
                 objective += eij ** 2
-                objective += beta * (bias['dUsers'][i] ** 2 +
+                objective += beta * (bias['dUsers'][u] ** 2 +
                                      bias['dItems'][j] ** 2 +
-                                     np.linalg.norm(P[i, :]) ** 2
+                                     np.linalg.norm(P[u, :]) ** 2
                                      + np.linalg.norm(Q[j, :]) ** 2)
 
         if verbose:
@@ -109,27 +82,39 @@ def _matrix_factorization(data, bias, shape, order, K, steps, alpha, beta,
 
 
 class BRISMFLearner(Learner):
-    """ Biased Regularized Incremental Simultaneous Matrix Factorization
+    """BRISMF: Biased Regularized Incremental Simultaneous Matrix Factorization
 
-    This model uses stochastic gradient descent to find the values of two
-    low-rank matrices which represents the user and item factors. This object
-    can factorize either dense or sparse matrices.
+    This model uses stochastic gradient descent to find two low-rank
+    matrices: user-feature matrix and item-feature matrix.
 
     Attributes:
         K: int, optional
             The number of latent factors.
 
         steps: int, optional
-            The number of epochs of stochastic gradient descent.
+            The number of passes over the training data (aka epochs).
 
         alpha: float, optional
-            The learning rate of stochastic gradient descent.
+            The learning rate.
 
         beta: float, optional
-            The regularization parameter.
+            The regularization for the ratings.
+
+        min_rating: float, optional
+            Defines the lower bound for the predictions. If None (default),
+            ratings won't be bounded.
+
+        max_rating: float, optional
+            Defines the upper bound for the predictions. If None (default),
+            ratings won't be bounded.
 
         verbose: boolean, optional
             Prints information about the process.
+
+        random_state: int, optional
+            Set the seed for the numpy random generator, so it makes the random
+            numbers predictable. This a debbuging feature.
+
     """
 
     name = 'BRISMF'
@@ -149,31 +134,39 @@ class BRISMFLearner(Learner):
                          min_rating=min_rating, max_rating=max_rating)
 
     def fit_storage(self, data):
-        """This function calls the factorization method.
+        """Fit the model according to the given training data.
 
         Args:
             data: Orange.data.Table
 
         Returns:
-            Model object (BRISMFModel).
+            self: object
+                Returns self.
 
         """
+
+        # Prepare data
         data = super().prepare_fit(data)
 
+        # Check convergence
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well.", stacklevel=2)
 
-        # Compute biases and global average
+        # Compute biases (not need it if learnt)
         self.bias = self.compute_bias(data, 'all')
 
+        # Transform rating matrix into CSR sparse matrix (...and then to LIL)
+        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
+                                col=data.X[:, self.order[1]],
+                                data=data.Y, shape=self.shape).tolil()
+
         # Factorize matrix
-        self.P, self.Q = _matrix_factorization(data=data, bias=self.bias,
+        self.P, self.Q = _matrix_factorization(ratings=data, bias=self.bias,
                                                shape=self.shape,
                                                order=self.order, K=self.K,
                                                steps=self.steps,
-                                               alpha=self.alpha,
-                                               beta=self.beta,
+                                               alpha=self.alpha, beta=self.beta,
                                                verbose=self.verbose,
                                                random_state=self.random_state)
 
@@ -183,35 +176,25 @@ class BRISMFLearner(Learner):
 
 class BRISMFModel(Model):
     def __init__(self, P, Q, bias):
-        """This model receives a learner and provides and interface to make the
-        predictions for a given user.
-
-        Args:
-            P: Matrix (users x Latent_factors)
-
-            Q: Matrix (items x Latent_factors)
-
-            bias: dictionary
-                {globalAvg: 'Global average', dUsers: 'delta users',
-                dItems: 'Delta items'}
-
-       """
         self.P = P
         self.Q = Q
         self.bias = bias
 
     def predict(self, X):
-        """This function receives an array of indexes [[idx_user, idx_item]] and
-        returns the prediction for these pairs.
+        """Perform predictions on samples in X.
 
-            Args:
-                X: Matrix (2xN)
-                    Matrix that contains pairs of the type user-item
+        This function receives an array of indices and returns the prediction
+        for each one.
 
-            Returns:
-                Array with the recommendations for a given user.
+        Args:
+            X: ndarray
+                Samples. Matrix that contains user-item pairs.
 
-            """
+        Returns:
+            C: array, shape = (n_samples,)
+                Returns predicted values.
+
+        """
 
         super().prepare_predict(X)
 
@@ -226,19 +209,19 @@ class BRISMFModel(Model):
 
     def predict_items(self, users=None, top=None):
         """This function returns all the predictions for a set of items.
-        If users is set to 'None', it will return all the predictions for all
-        the users (matrix of size [num_users x num_items]).
 
         Args:
             users: array, optional
                 Array with the indices of the users to which make the
-                predictions.
+                predictions. If None (default), predicts for all users.
 
             top: int, optional
-                Return just the first k recommendations.
+                Returns the k-first predictions. (Do not confuse with
+                'top-best').
 
         Returns:
-            Array with the recommendations for requested users.
+            C: ndarray, shape = (n_samples, n_items)
+                Returns predicted values.
 
         """
 
@@ -256,6 +239,7 @@ class BRISMFModel(Model):
         return super().predict_on_range(predictions)
 
     def compute_objective(self, data, beta):
+        # TODO: Cast rows, cols through preprocess
         data.X = data.X.astype(int)  # Convert indices to integer
 
         users = data.X[:, self.order[0]]
@@ -282,8 +266,8 @@ class BRISMFModel(Model):
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]
-        return format_data.latent_factors_table(variable, self.P)
+        return feature_matrix(variable, self.P)
 
     def getQTable(self):
         variable = self.original_domain.variables[self.order[1]]
-        return format_data.latent_factors_table(variable, self.Q)
+        return feature_matrix(variable, self.Q)

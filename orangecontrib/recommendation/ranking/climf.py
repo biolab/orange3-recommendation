@@ -1,10 +1,10 @@
-from orangecontrib.recommendation.ranking import Learner, Model
-from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.rating import Learner, Model
+from orangecontrib.recommendation.utils.format_data import feature_matrix
 
-import numpy as np
 from scipy.special import expit as sigmoid
 from scipy.sparse import dok_matrix
 
+import numpy as np
 import time
 import warnings
 
@@ -22,52 +22,35 @@ def _dg(x):
     return y
 
 
-def _matrix_factorization(data, shape, order, K, steps, alpha, beta,
-                          verbose=False):
-    """ Factorize either a dense matrix or a sparse matrix into two low-rank
-     matrices which represents user and item factors.
+def _matrix_factorization(ratings, shape, order, K, steps, alpha, beta,
+                          verbose=False, random_state=None):
+    # Seed the generator
+    if random_state is not None:
+        np.random.seed(random_state)
 
-    Args:
-        data: Orange.data.Table
-
-        K: int
-            The number of latent factors.
-
-        steps: int
-            The number of epochs of stochastic gradient descent.
-
-        alpha: float
-            The learning rate of stochastic gradient descent.
-
-        beta: float
-            The regularization parameter.
-
-        verbose: boolean, optional
-            If true, it outputs information about the process.
-
-    Returns:
-        U (matrix, UxK), V (matrix, KxI)
-
-    """
-
-    # Initialize factorized matrices randomly
+    # Get featured matrices dimensions
     num_users, num_items = shape
-    U = 0.01 * np.random.rand(num_users, K)  # User and features
-    V = 0.01 * np.random.rand(num_items, K)  # Item and features
 
-    user_col = order[0]
-    item_col = order[1]
+    # Initialize low-rank matrices
+    U = 0.01 * np.random.rand(num_users, K)  # User-feature matrix
+    V = 0.01 * np.random.rand(num_items, K)  # Item-feature matrix
+
+    # Get positional index of base columns
+    user_col, item_col = order
+
     # Factorize matrix using SGD
     for step in range(steps):
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
 
+        # Optimize rating prediction
+        objective = 0
         for i in range(len(U)):
             dU = -beta * U[i]
 
             # Precompute f (f[j] = <U[i], V[j]>)
-            items = data.X[data.X[:, user_col] == i][:, item_col]
+            items = ratings.X[ratings.X[:, user_col] == i][:, item_col]
             f = np.einsum('j,ij->i', U[i], V[items])
 
             for j in range(len(items)):  # j=items
@@ -90,17 +73,24 @@ def _matrix_factorization(data, shape, order, K, steps, alpha, beta,
 
             U[i] += alpha * dU
 
+            # TODO: Loss function
+
         if verbose:
-            print('\tTime: %.3fs' % (time.time() - start))
+            print('\t- Loss: %.3f' % objective)
+            print('\t- Time: %.3fs' % (time.time() - start))
+            print('')
 
     return U, V
 
 
 class CLiMFLearner(Learner):
-    """ Collaborative Less-is-More Filtering Matrix Factorization
+    """CLiMF: Collaborative Less-is-More Filtering Matrix Factorization
 
-    Matrix factorization for scenarios with binary relevance data when only a
-    few (k) items are recommended to individual users. It improves top-k
+    This model uses stochastic gradient descent to find two low-rank
+    matrices: user-feature matrix and item-feature matrix.
+
+    CLiMF is a matrix factorization for scenarios with binary relevance data
+    when only a few (k) items are recommended to individual users. It improves top-k
     recommendations through ranking by directly maximizing the Mean Reciprocal
     Rank (MRR).
 
@@ -110,16 +100,20 @@ class CLiMFLearner(Learner):
             The number of latent factors.
 
         steps: int, optional
-            The number of epochs of stochastic gradient descent.
+            The number of passes over the training data (aka epochs).
 
         alpha: float, optional
-            The learning rate of stochastic gradient descent.
+            The learning rate.
 
         beta: float, optional
-            The regularization parameter.
+            The regularization for the ratings.
 
         verbose: boolean, optional
             Prints information about the process.
+
+        random_state: int, optional
+            Set the seed for the numpy random generator, so it makes the random
+            numbers predictable. This a debbuging feature.
     """
 
     name = 'CLiMF'
@@ -135,28 +129,33 @@ class CLiMFLearner(Learner):
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
     def fit_storage(self, data):
-        """This function calls the factorization method.
+        """Fit the model according to the given training data.
 
         Args:
             data: Orange.data.Table
 
         Returns:
-            Model object (BRISMFModel).
+            self: object
+                Returns self.
 
         """
+
+        # Prepare data
         data = super().prepare_fit(data)
 
+        # Check convergence
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well.", stacklevel=2)
 
         # Factorize matrix
-        self.U, self.V = _matrix_factorization(data=data, shape=self.shape,
+        self.U, self.V = _matrix_factorization(ratings=data, shape=self.shape,
                                                order=self.order, K=self.K,
                                                steps=self.steps,
                                                alpha=self.alpha,
                                                beta=self.beta, verbose=False)
 
+        # Construct model
         model = CLiMFModel(U=self.U, V=self.V)
         return super().prepare_model(model)
 
@@ -164,40 +163,30 @@ class CLiMFLearner(Learner):
 class CLiMFModel(Model):
 
     def __init__(self, U, V):
-        """This model receives a learner and provides and interface to make the
-        predictions for a given user.
-
-        Args:
-            U: Matrix (users x Latent_factors)
-
-            V: Matrix (items x Latent_factors)
-
-            order: (int, int)
-                Tuple with the index of the columns users and items in X. (idx_user, idx_item)
-
-       """
         self.U = U
         self.V = V
 
     def predict(self, X, top_k=None):
-        """This function returns all the predictions for a set of items.
-        If users is set to 'None', it will return all the predictions for all
-        the users (matrix of size [num_users x num_items]).
+        """Perform predictions on samples in X for all items.
 
         Args:
-            users: array, optional
+            X: array, optional
                 Array with the indices of the users to which make the
-                predictions.
+                predictions. If None (default), predicts for all users.
 
             top_k: int, optional
-                Return just the top k recommendations.
+                Returns the k-first predictions. (Do not confuse with
+                'top-best').
 
         Returns:
-            Array with the indices of the items recommended, sorted by ascending
-            ranking. (1st better than 2nd, than 3rd,...)
+            C: ndarray, shape = (n_samples, n_items)
+                Returns predicted values. A matrix (U, I) with the indices of
+                the items recommended, sorted by ascending ranking. (1st better
+                than 2nd, than 3rd,...)
 
         """
 
+        # Prepare data
         super().prepare_predict(X)
 
         # Compute scores
@@ -214,7 +203,7 @@ class CLiMFModel(Model):
         return predictions
 
     def compute_objective(self, X, Y, U, V, beta):
-
+        # TODO: Cast rows, cols through preprocess
         # X and Y are original data
         # Construct explicit sparse matrix to evaluate the objective function
         M, N = U.shape[0], V.shape[0]
@@ -238,11 +227,10 @@ class CLiMFModel(Model):
 
         return objective
 
-
     def getUTable(self):
         variable = self.original_domain.variables[self.order[0]]
-        return format_data.latent_factors_table(variable, self.U)
+        return feature_matrix(variable, self.U)
 
     def getVTable(self):
         variable = self.original_domain.variables[self.order[1]]
-        return format_data.latent_factors_table(variable, self.V)
+        return feature_matrix(variable, self.V)

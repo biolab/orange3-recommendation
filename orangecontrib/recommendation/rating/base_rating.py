@@ -1,7 +1,5 @@
 from orangecontrib.recommendation import Learner, Model
 
-import numpy as np
-
 __all__ = ["LearnerRecommendation", "ModelRecommendation"]
 
 

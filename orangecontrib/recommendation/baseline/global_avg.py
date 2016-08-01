@@ -6,13 +6,12 @@ __all__ = ['GlobalAvgLearner']
 
 
 class GlobalAvgLearner(Learner):
-    """ Global Average
+    """Global Average
 
-    Uses the average rating value of all ratings to make predictions.
+    This model takes the average rating value of all ratings to make predictions.
 
     Attributes:
-
-        verbose: boolean, optional (default = False)
+        verbose: boolean, optional
             Prints information about the process.
     """
 
@@ -22,17 +21,21 @@ class GlobalAvgLearner(Learner):
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
     def fit_storage(self, data):
-        """This function calls the fit method.
+        """Fit the model according to the given training data.
 
         Args:
             data: Orange.data.Table
 
         Returns:
-            Model object (GlobalAvgModel).
+            self: object
+                Returns self.
 
         """
+
+        # Prepare data
         data = super().prepare_fit(data)
 
+        # Construct model
         model = GlobalAvgModel(global_average=np.mean(data.Y))
         return super().prepare_model(model)
 
@@ -40,47 +43,44 @@ class GlobalAvgLearner(Learner):
 class GlobalAvgModel(Model):
 
     def __init__(self, global_average):
-        """This model receives a learner and provides and interface to make the
-        predictions for a given user.
-
-        Args:
-            global_average: float
-
-       """
         self.global_average = global_average
 
     def predict(self, X):
-        """This function receives an array of indexes [[idx_user, idx_item]] and
-        returns the prediction for these pairs.
+        """Perform predictions on samples in X.
 
-            Args:
-                X: Matrix (2xN)
-                    Matrix that contains pairs of the type user-item
+        This function receives an array of indices and returns the prediction
+        for each one.
 
-            Returns:
-                Array with the recommendations for a given user.
+        Args:
+            X: ndarray
+                Samples. Matrix that contains user-item pairs.
 
-            """
+        Returns:
+            C: array, shape = (n_samples,)
+                Returns predicted values.
 
+        """
+
+        # Prepare data
         super().prepare_predict(X)
 
         return np.full(len(X), self.global_average)
 
     def predict_items(self, users=None, top=None):
-        """This function returns all the predictions for a set of items.
-        If users is set to 'None', it will return all the predictions for all
-        the users (matrix of size [num_users x num_items]).
+        """Perform predictions on samples in 'users' for all items.
 
         Args:
             users: array, optional
                 Array with the indices of the users to which make the
-                predictions.
+                predictions. If None (default), predicts for all users.
 
             top: int, optional
-                Return just the first k recommendations.
+                Returns the k-first predictions. (Do not confuse with
+                'top-best').
 
         Returns:
-            Array with the recommendations for requested users.
+            C: ndarray, shape = (n_samples, n_items)
+                Returns predicted values.
 
         """
 
