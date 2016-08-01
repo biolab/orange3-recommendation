@@ -98,6 +98,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
                 feedback_u = save_in_cache(ratings, u, users_cached)
             else:
                 feedback_u = save_in_cache(feedback, u, feedback_cached)
+                feedback_u = feedback_u[feedback_u < num_items]  # For CV
 
             # Prediction and error
             ruj_pred, y_term, norm_feedback = \
@@ -291,6 +292,7 @@ class SVDPlusPlusModel(Model):
                 feedback_u = self.feedback[u]
             else:
                 feedback_u = save_in_cache(self.feedback, u, feedback_cached)
+                feedback_u = feedback_u[feedback_u < self.shape[1]]  # For CV
 
             predictions[i] = _predict(u, items[i], self.bias['globalAvg'],
                               self.bias['dUsers'], self.bias['dItems'], self.P,

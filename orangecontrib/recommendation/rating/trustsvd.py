@@ -127,12 +127,14 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
             # Store lists in cache
             items_rated_by_u = cache_rows(ratings, u, users_cached)
             trustees_u = cache_rows(trust, u, trusters_cached)
+            # No need to cast for CV because of "max(num_users, shape_t[0])"
 
             # if there is no feedback, infer it from the ratings
             if feedback is None:
                 feedback_u = items_rated_by_u
             else:
                 feedback_u = cache_rows(feedback, u, feedback_cached)
+                feedback_u = feedback_u[feedback_u < num_items]  # For CV
 
             # Prediction and error
             ruj_pred, y_term, w_term, norm_feedback, norm_trust\
@@ -369,11 +371,13 @@ class TrustSVDModel(Model):
             u = users[i]
 
             trustees_u = cache_rows(self.trust, u, trusters_cached)
+            # No need to cast for CV because of "max(num_users, shape_t[0])"
 
             if isFeedbackADict:
                 feedback_u = self.feedback[u]
             else:
                 feedback_u = cache_rows(self.feedback, u, feedback_cached)
+                feedback_u = feedback_u[feedback_u < self.shape[1]]  # For CV
 
             predictions[i] = _predict(u, items[i], self.bias['globalAvg'],
                               self.bias['dUsers'], self.bias['dItems'], self.P,
