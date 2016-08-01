@@ -15,7 +15,7 @@ Global Average
 Global Average uses the average rating value of all ratings to make predictions.
 
 .. math::
-	r_{ ui } = \mu
+	\hat { r }_{ ui } = \mu
 
 
 Example
@@ -54,7 +54,7 @@ User Average uses the average rating value of a user to make predictions.
 
 
 .. math::
-	r_{ ui } = \mu_{u}
+	\hat { r }_{ ui } = \mu_{u}
 
 Example
 -------
@@ -92,7 +92,7 @@ Item Average
 Item Average uses the average rating value of an item to make predictions.
 
 .. math::
-	r_{ ui } = \mu_{i}
+	\hat { r }_{ ui } = \mu_{i}
 
 Example
 -------
@@ -131,7 +131,7 @@ User-Item Baseline takes the bias of users and items plus the global average to
 make predictions.
 
 .. math::
-	r_{ ui } = \mu + b_{u} + b_{i}
+	\hat { r }_{ ui } = \mu + b_{u} + b_{i}
 
 Example
 -------
@@ -177,7 +177,7 @@ approach to minimize the loss function.
 User's predictions are defined as follows:
 
 .. math::
-	\hat { r } _{ ui }=\mu +b_{ u }+b_{ i }+{ q }_{ i }^{ T }{ p }_{ u }
+	\hat { r }_{ ui }=\mu +b_{ u }+b_{ i }+{ q }_{ i }^{ T }{ p }_{ u }
 
 
 We learn the values of involved parameters by minimizing the regularized squared error function associated with:
@@ -225,7 +225,7 @@ information.
 User's predictions are defined as follows:
 
 .. math::
-	r_{ui} = \mu + b_u + b_i + \left(p_u + \frac{1}{\sqrt{|N(u)|}}\sum_{j\in N(u)} y_j \right)^T q_i
+	\hat { r }_{ ui } = \mu + b_u + b_i + \left(p_u + \frac{1}{\sqrt{|N(u)|}}\sum_{j\in N(u)} y_j \right)^T q_i
 
 
 We learn the values of involved parameters by minimizing the regularized squared error function associated with:
@@ -273,7 +273,7 @@ information.
 User's predictions are defined as follows:
 
 .. math::
-	\hat { r } _{ ui }=\mu +b_{ u }+b_{ i }+{ q_{ i } }^{ \top  }\left( p_{ u }+{ \left| { I }_{ u } \right|  }^{ -\frac { 1 }{ 2 }  }\sum _{ i\in { I }_{ u } } y_{ i }+{ \left| { T }_{ u } \right|  }^{ -\frac { 1 }{ 2 }  }\sum _{ v\in { T }_{ u } } w_{ v } \right)
+	\hat { r }_{ ui }=\mu +b_{ u }+b_{ i }+{ q_{ i } }^{ \top  }\left( p_{ u }+{ \left| { I }_{ u } \right|  }^{ -\frac { 1 }{ 2 }  }\sum _{ i\in { I }_{ u } } y_{ i }+{ \left| { T }_{ u } \right|  }^{ -\frac { 1 }{ 2 }  }\sum _{ v\in { T }_{ u } } w_{ v } \right)
 
 We learn the values of involved parameters by minimizing the regularized squared error function associated with:
 
