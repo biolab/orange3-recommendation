@@ -45,14 +45,14 @@ def test_learners():
     print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
 
     start = time.time()
-    learner = BRISMFLearner(K=15, steps=15, alpha=0.07, beta=0.1, verbose=False)
+    learner = BRISMFLearner(K=15, steps=10, alpha=0.07, beta=0.1, verbose=False)
     recommender = learner(data)
     print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
     rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
     print('- RMSE (BRISMFLearner): %.3f' % rmse)
 
     start = time.time()
-    learner = SVDPlusPlusLearner(K=15, steps=15, alpha=0.07, beta=0.1, verbose=False)
+    learner = SVDPlusPlusLearner(K=15, steps=10, alpha=0.07, beta=0.1, verbose=False)
     recommender = learner(data)
     print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
     rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
