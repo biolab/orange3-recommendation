@@ -8,7 +8,6 @@ import math
 import time
 
 
-@unittest.skip("Class skipped: Too big to test")
 class TestBigDataset(unittest.TestCase):
 
     def test_learners(self):
@@ -48,14 +47,14 @@ class TestBigDataset(unittest.TestCase):
         print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
 
         start = time.time()
-        learner = BRISMFLearner(K=15, steps=15, alpha=0.07, beta=0.1, verbose=True)
+        learner = BRISMFLearner(K=15, steps=15, alpha=0.07, beta=0.1, verbose=False)
         recommender = learner(data)
         print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
         print('- RMSE (BRISMFLearner): %.3f' % rmse)
 
         start = time.time()
-        learner = SVDPlusPlusLearner(K=15, steps=15, alpha=0.07, beta=0.1, verbose=True)
+        learner = SVDPlusPlusLearner(K=15, steps=15, alpha=0.07, beta=0.1, verbose=False)
         recommender = learner(data)
         print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
         rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
@@ -98,6 +97,6 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBigDataset("test_CV"))
+    suite.addTest(TestBigDataset("test_learners"))
     runner = unittest.TextTestRunner()
     runner.run(suite)

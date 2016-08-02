@@ -131,7 +131,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
                                      + np.linalg.norm(temp_y) ** 2)
 
         if verbose:
-            print('\t- Loss: %.3f' % objective*0.5)
+            print('\t- Loss: %.3f' % (objective*0.5))
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 

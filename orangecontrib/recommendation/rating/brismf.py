@@ -76,7 +76,7 @@ def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
 
         # Loss function (Remember it must be divided by 2 to be correct)
         if verbose:
-            print('\tLoss: %.3f' % objective*0.5)
+            print('\tLoss: %.3f' % (objective*0.5))
             print('\tTime: %.3fs' % (time.time() - start))
             print('')
 
