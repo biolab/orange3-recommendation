@@ -65,7 +65,7 @@ class ItemAvgModel(Model):
         """
 
         # Prepare data (set valid indices for non-existing (CV))
-        idxs_missing = super().prepare_predict(X)
+        super().prepare_predict(X)
 
         # Preserve just the indices of the items
         items = X[:, self.order[1]]
@@ -73,7 +73,7 @@ class ItemAvgModel(Model):
         predictions = self.bias['globalAvg'] + self.bias['dItems'][items]
 
         # Set predictions for non-existing indices (CV)
-        predictions = self.fix_predictions(predictions, self.bias, idxs_missing)
+        predictions = self.fix_predictions(X, predictions, self.bias)
         return predictions
 
     def predict_items(self, users=None, top=None):

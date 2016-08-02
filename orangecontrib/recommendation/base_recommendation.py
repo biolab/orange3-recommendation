@@ -12,9 +12,11 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
     def __init__(self):
         self.shape = (None, None)
         self.order = (0, 1)
+        self.indices_missing = ([], [])
 
     def prepare_predict(self, X):
         # TODO: CORRECT INDICES!!! THIS IS NOT CORRECT!!!!
+
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average!!!
         idxs_users_missing = np.where(X[:, self.order[0]] >= self.shape[0])[0]
@@ -25,25 +27,30 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
         X[idxs_users_missing, self.order[0]] = dumb_index
         X[idxs_items_missing, self.order[1]] = dumb_index
 
-        return idxs_users_missing, idxs_items_missing
+        self.indices_missing = (idxs_users_missing, idxs_items_missing)
 
-    def fix_predictions(self, predictions, bias, indices_missing):
-        idxs_users_missing, idxs_items_missing = indices_missing
+    def fix_predictions(self, X, predictions, bias):
+        idxs_users_missing, idxs_items_missing = self.indices_missing
 
         # Set average when neither the user nor the item exist
         g_avg = bias['globalAvg']
         common_indices = np.intersect1d(idxs_users_missing, idxs_items_missing)
         predictions[common_indices] = g_avg
 
-        # Only items exist (return average + {dItem})
-        if 'dItems' in bias:
-            missing_items = np.setdiff1d(idxs_items_missing, common_indices)
-            predictions[missing_items] = g_avg + bias['dItems'][missing_items]
-
         # Only users exist (return average + {dUser})
         if 'dUsers' in bias:
             missing_users = np.setdiff1d(idxs_users_missing, common_indices)
-            predictions[missing_users] = g_avg + bias['dUsers'][missing_users]
+            if len(missing_users) > 0:
+                user_idxs = X[missing_users, self.order[0]]
+                predictions[missing_users] = g_avg + bias['dUsers'][user_idxs]
+
+        # Only items exist (return average + {dItem})
+        if 'dItems' in bias:
+            missing_items = np.setdiff1d(idxs_items_missing, common_indices)
+            if len(missing_items) > 0:
+                item_idxs = X[missing_items, self.order[1]]
+                predictions[missing_items] = g_avg + bias['dItems'][item_idxs]
+
         return predictions
 
     @abstractmethod
