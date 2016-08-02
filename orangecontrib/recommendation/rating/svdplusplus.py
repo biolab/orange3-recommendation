@@ -116,10 +116,11 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
                                         - beta * Y[i, :])
 
             # Update the gradients at the same time
+            # I use the loss function divided by 2, to simplify the gradients
             P[u] -= alpha * tempP
             Q[j] -= alpha * tempQ
 
-            # Loss function
+            # Loss function (Remember it must be divided by 2 to be correct)
             if verbose:
                 objective += eij ** 2
                 temp_y = np.sum(Y[feedback_u, :], axis=0)
