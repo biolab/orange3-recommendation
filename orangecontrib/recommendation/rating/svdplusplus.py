@@ -106,18 +106,18 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
             eij = ruj_pred - ratings[u, j]
 
             # Gradients of P and Q
-            tempP = alpha * -2 * (eij * Q[j, :] - beta * P[u, :])
-            tempQ = alpha * -2 * (eij * (P[u, :] + y_term) - beta * Q[j, :])
+            tempP = eij * Q[j, :] - beta * P[u, :]
+            tempQ = eij * (P[u, :] + y_term) - beta * Q[j, :]
 
             # Gradient Y
             if norm_feedback > 0:
                 for i in feedback_u:
-                    Y[i, :] += alpha * -2 * (eij/norm_feedback * Q[j, :]
-                                            - beta * Y[i, :])
+                    Y[i, :] -= alpha * (eij/norm_feedback * Q[j, :]
+                                        - beta * Y[i, :])
 
             # Update the gradients at the same time
-            P[u] += tempP
-            Q[j] += tempQ
+            P[u] -= alpha * tempP
+            Q[j] -= alpha * tempQ
 
             # Loss function
             if verbose:
@@ -130,7 +130,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
                                      + np.linalg.norm(temp_y) ** 2)
 
         if verbose:
-            print('\t- Loss: %.3f' % objective)
+            print('\t- Loss: %.3f' % objective*0.5)
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
