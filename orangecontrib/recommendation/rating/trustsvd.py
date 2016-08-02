@@ -79,7 +79,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
 
     # Get featured matrices dimensions
     num_users, num_items = shape
-    num_users = max(num_users, shape_t[0])
+    num_users = max(num_users, max(shape_t))
 
     # Initialize low-rank matrices
     P = np.random.rand(num_users, K)  # User-feature matrix
@@ -142,14 +142,16 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
                            feedback_u, trustees_u)
             euj = ruj_pred - ratings[u, j]
 
+
             # Gradient P
-            tempP[u, :] = euj * Q[j, :] + \
-                          (beta/norm_feedback) * P[u, :]  # P: Part 1
+            reg_p = (beta/norm_feedback) * P[u, :] if norm_feedback > 0 else 0
+            tempP[u, :] = euj * Q[j, :] + reg_p # P: Part 1
 
             # Gradient Q
             norm_Uj = cache_norms(ratings_T, j, norm_I)
-            tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + \
-                          (beta/norm_Uj) * Q[j, :]
+            reg_q = (beta/norm_Uj) * Q[j, :] if norm_Uj > 0 else 0
+            tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + reg_q
+
 
             # Gradient Y
             if norm_feedback > 0:
@@ -170,14 +172,16 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
         # Optimize trust prediction
         for u, v in zip(*trust.nonzero()):
 
+            # Prediction and error
             tuv_pred = np.dot(W[v, :], P[u, :])
             euv = tuv_pred - trust[u, v]
 
-            # Gradients of P and W
+            # Gradient P (Part 2)
             norm_trust = cache_norms(trust, u, norm_Tr)
+            reg_p = P[u, :]/norm_trust if norm_trust > 0 else 0
+            tempP[u, :] += beta_t * (euv * W[v, :] + reg_p)
 
-            tempP[u, :] += beta_t * \
-                           (euv * W[v, :] + P[u, :]/norm_trust)  # P: Part 2
+            # Gradient W (Part 2)
             tempW[v, :] += beta_t * euv * P[u, :]  # W: Part 2
 
         P -= alpha * tempP
