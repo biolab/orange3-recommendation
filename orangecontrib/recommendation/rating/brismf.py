@@ -53,13 +53,18 @@ def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
         objective = 0
         for u, j in zip(*ratings.nonzero()):
 
+            # Prediction and error
             rij_pred = _predict(u, j, globalAvg, dUsers, dItems, P, Q)
             eij = rij_pred - ratings[u, j]
 
-            tempP = alpha * -2 * (eij * Q[j, :] - beta * P[u, :])
-            tempQ = alpha * -2 * (eij * P[u, :] - beta * Q[j, :])
-            P[u, :] += tempP
-            Q[j, :] += tempQ
+            # Compute gradients P and Q
+            tempP = eij * Q[j, :] - beta * P[u, :]
+            tempQ = eij * P[u, :] - beta * Q[j, :]
+
+            # Update the gradients at the same time
+            # I use the loss function divided by 2, to simplify the gradients
+            P[u, :] -= alpha * tempP
+            Q[j, :] -= alpha * tempQ
 
             # Loss function
             if verbose:
@@ -69,8 +74,9 @@ def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
                                      np.linalg.norm(P[u, :]) ** 2
                                      + np.linalg.norm(Q[j, :]) ** 2)
 
+        # Loss function (Remember it must be divided by 2 to be correct)
         if verbose:
-            print('\tLoss: %.3f' % objective)
+            print('\tLoss: %.3f' % objective*0.5)
             print('\tTime: %.3fs' % (time.time() - start))
             print('')
 
