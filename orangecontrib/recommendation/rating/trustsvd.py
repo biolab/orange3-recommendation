@@ -14,8 +14,7 @@ __all__ = ['TrustSVDLearner']
 __sparse_format__ = lil_matrix
 
 
-def _predict(u, j, global_avg, bu, bi, P, Q, Y, W, feedback,
-             trustees):
+def _predict(u, j, global_avg, bu, bi, P, Q, Y, W, feedback, trustees):
     bias = global_avg + bu[u] + bi[j]
 
     # Implicit feedback
@@ -68,9 +67,6 @@ def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, W, feedback,
     return bias + base_pred
 
 
-# TODO: Change name trust_users
-
-
 def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t,
                           num_factors, num_iter, learning_rate,
                           bias_learning_rate, lmbda, bias_lmbda, social_lmbda,
@@ -91,7 +87,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t,
     W = np.random.randn(num_users, num_factors)  # Trust-feature matrix
 
     # Compute bias (not need it if learnt)
-    globalAvg = bias['globalAvg']
+    global_avg = bias['globalAvg']
     bu = bias['dUsers']
     bi = bias['dItems']
 
@@ -116,7 +112,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t,
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
-        
+
         # To update the gradients at the same time
         tempP = np.zeros(P.shape)
         tempQ = np.zeros(Q.shape)
@@ -124,7 +120,6 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t,
         tempW = np.zeros(W.shape)
 
         # Optimize rating prediction
-        objective = 0
         for u, j in zip(*ratings.nonzero()):
 
             # Store lists in cache
@@ -141,7 +136,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t,
 
             # Prediction and error
             ruj_pred, y_term, w_term, norm_feedback, norm_trust\
-                = _predict(u, j, globalAvg, bu, bi, P, Q, Y, W,
+                = _predict(u, j, global_avg, bu, bi, P, Q, Y, W,
                            feedback_u, trustees_u)
             euj = ruj_pred - ratings[u, j]
 
@@ -201,17 +196,140 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t,
         Y -= learning_rate * tempY
         W -= learning_rate * tempW
 
-        # TODO: Loss function
+        if verbose:
+            # Set parameters and compute loss
+            loss_feedback = feedback if feedback else users_cached
+            data_t = (ratings, loss_feedback, trust)
+            bias_t = (global_avg, bu, bi)
+            low_rank_matrices = (P, Q, Y, W)
+            params = (lmbda, bias_lmbda, social_lmbda)
+            objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
 
-    if verbose:
-        print('\t- Loss: %.3f' % objective)
-        print('\t- Time: %.3fs' % (time.time() - start))
-        print('')
+            print('\t- Loss: %.3f' % objective)
+            print('\t- Time: %.3fs' % (time.time() - start))
+            print('')
 
     if feedback is None:
         feedback = users_cached
 
     return P, Q, Y, W, bu, bi, feedback
+
+
+def compute_loss(data, bias, low_rank_matrices, params):
+
+    # Set parameters
+    ratings, feedback, trust = data
+    global_avg, bu, bi = bias
+    P, Q, Y, W = low_rank_matrices
+    lmbda, bias_lmbda, social_lmbda = params
+
+    # Check data type
+    if isinstance(ratings, __sparse_format__):
+        pass
+    elif isinstance(ratings, Table):
+        # Preprocess Orange.data.Table and transform it to sparse
+        ratings, order, shape = preprocess(ratings)
+        ratings = table2sparse(ratings, shape, order, type=__sparse_format__)
+    else:
+        raise TypeError('Invalid data type')
+
+    # Check data type
+    if isinstance(feedback, dict) or isinstance(feedback, __sparse_format__):
+        pass
+    elif isinstance(feedback, Table):
+        # Preprocess Orange.data.Table and transform it to sparse
+        feedback, order, shape = preprocess(feedback)
+        feedback = table2sparse(feedback, shape, order, type=__sparse_format__)
+    else:
+        raise TypeError('Invalid data type')
+
+    # Check data type
+    if isinstance(trust, dict) or isinstance(trust, __sparse_format__):
+        pass
+    elif isinstance(trust, Table):
+        # Preprocess Orange.data.Table and transform it to sparse
+        trust, order, shape = preprocess(trust)
+        trust = table2sparse(trust, shape, order, type=__sparse_format__)
+    else:
+        raise TypeError('Invalid data type')
+
+    # Get featured matrices dimensions
+    num_users, num_items = ratings.shape
+    num_users = max(num_users, max(trust.shape))
+
+    # Cache rows
+    # >>> From 2 days to 30s
+    trusters_cached = defaultdict(list)
+    feedback_cached = defaultdict(list)
+    isFeedbackADict = isinstance(feedback, dict)
+
+    # Cache norms (slower than list, but allows vectorization)
+    # >>>  Lists: 6s; Arrays: 12s -> vectorized: 2s
+    norm_I = np.zeros(num_users)
+    norm_U = np.zeros(num_items)
+    norm_Tr = np.zeros(num_users)
+    norm_Tc = np.zeros(num_users)
+
+    # Precompute transpose (most costly operation)
+    ratings_T = ratings.T
+    trust_T = trust.T
+
+    # Optimize rating prediction
+    objective = 0
+    for u, j in zip(*ratings.nonzero()):
+
+        # Store lists in cache
+        trustees_u = cache_rows(trust, u, trusters_cached)
+
+        # Get feedback from the cache
+        if isFeedbackADict:
+            feedback_u = feedback[u]
+        else:
+            feedback_u = cache_rows(feedback, u, feedback_cached)
+
+        # Prediction and error
+        ruj_pred, _, _, norm_Iu, norm_Tu = _predict(u, j, global_avg, bu, bi, P,
+                                                    Q, Y, W, feedback_u,
+                                                    trustees_u)
+
+        # Cache norms
+        norm_I[u] = norm_Iu
+        norm_Tr[u] = norm_Tu
+
+        # Compute loss
+        objective += 0.5 * (ruj_pred - ratings[u, j])**2
+
+    # Optimize trust prediction
+    for u, v in zip(*trust.nonzero()):
+        # Prediction
+        tuv_pred = np.dot(W[v, :], P[u, :])
+
+        # Compute loss
+        objective += social_lmbda * 0.5 * (tuv_pred - trust[u, v])**2
+
+    for u in range(P.shape[0]):   # users
+        # Cache norms
+        norm_Iu = cache_norms(ratings, u, norm_I)
+        norm_Tu = cache_norms(trust, u, norm_Tr)
+        norm_Tv = cache_norms(trust_T, u, norm_Tc)
+
+        # Compute loss
+        objective += 0.5 * bias_lmbda * norm_Iu * bu[u]**2
+        objective += (0.5 * lmbda * norm_Iu +
+                      0.5 * social_lmbda * norm_Tu) * \
+                     np.linalg.norm(P[u, :]) ** 2
+        objective += 0.5 * lmbda * norm_Tv * np.linalg.norm(W[u, :]) ** 2
+
+    for j in range(Q.shape[0]):   # items
+        # Cache norms
+        norm_Uj = cache_norms(ratings_T, j, norm_U)
+
+        # Compute loss
+        objective += 0.5 * bias_lmbda * norm_Uj * bi[j]**2
+        objective += 0.5 * lmbda * norm_Uj * np.linalg.norm(Q[j, :])**2
+        objective += 0.5 * lmbda * norm_Uj * np.linalg.norm(Y[j, :])**2
+
+    return objective
 
 
 class TrustSVDLearner(Learner):
@@ -361,7 +479,7 @@ class TrustSVDLearner(Learner):
         bias['dUsers'] = bu
         bias['dItems'] = bi
 
-        # Set as feedback the inferred feedback when no feedback has been given
+        # Return the original feedback if it wasn't None
         if self.feedback is not None:
             temp_feedback = self.feedback
 

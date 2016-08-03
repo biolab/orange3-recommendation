@@ -18,7 +18,6 @@ class TestChunks(unittest.TestCase):
 
         self.assertIsInstance(sparse_matrix, lil_matrix)
 
-
     def test_Chunks_ReciprocalRank(self):
         results = np.array([[0, 1, 2, 3, 4], [0, 1, 2, 3, 4]])
         query = np.array([[1], [5]])
@@ -29,10 +28,10 @@ class TestChunks(unittest.TestCase):
 
 if __name__ == "__main__":
     # Test all
-    #unittest.main()
+    unittest.main()
 
-    # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestChunks("test_Chunks_ReciprocalRank"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # # Test single test
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestChunks("test_Chunks_ReciprocalRank"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)

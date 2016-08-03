@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # Test all
     unittest.main()
 
-    # Test single test
+    # # Test single test
     # suite = unittest.TestSuite()
     # suite.addTest(TestCLiMF("test_CLiMF_objective"))
     # runner = unittest.TextTestRunner()

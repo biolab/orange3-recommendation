@@ -1,5 +1,6 @@
 from orangecontrib.recommendation.rating import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
+from orangecontrib.recommendation.utils.datacaching import cache_rows
 
 from collections import defaultdict
 
@@ -48,17 +49,6 @@ def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, feedback):
     return bias + base_pred
 
 
-def save_in_cache(matrix, key, cache):
-    res = cache.get(key)
-    if res is None:
-        if key < matrix.shape[0]:
-            res = np.asarray(matrix.rows[key])
-        else:
-            res = []
-        cache[key] = res
-    return res
-
-
 def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
                           learning_rate, bias_learning_rate, lmbda, bias_lmbda,
                           verbose=False, random_state=None):
@@ -73,7 +63,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
     # Initialize low-rank matrices
     P = np.random.rand(num_users, num_factors)  # User-feature matrix
     Q = np.random.rand(num_items, num_factors)  # Item-feature matrix
-    Y = np.random.randn(num_items, num_factors) # Feedback-feature matrix
+    Y = np.random.randn(num_items, num_factors)  # Feedback-feature matrix
 
     # Compute bias (not need it if learnt)
     global_avg = bias['globalAvg']
@@ -96,9 +86,9 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
 
             # if there is no feedback, infer it from the ratings
             if feedback is None:
-                feedback_u = save_in_cache(ratings, u, users_cached)
+                feedback_u = cache_rows(ratings, u, users_cached)
             else:
-                feedback_u = save_in_cache(feedback, u, feedback_cached)
+                feedback_u = cache_rows(feedback, u, feedback_cached)
                 feedback_u = feedback_u[feedback_u < num_items]  # For CV
 
             # Prediction and error
@@ -125,17 +115,16 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
             P[u, :] -= learning_rate * tempP
             Q[j, :] -= learning_rate * tempQ
 
-            # Loss function (Remember it must be divided by 2 to be correct)
-            if verbose:
-                objective += eij ** 2
-                temp_y = np.sum(Y[feedback_u, :], axis=0)
-                objective += lmbda * (np.linalg.norm(P[u, :]) ** 2 +
-                                      np.linalg.norm(Q[j, :]) ** 2 +
-                                      np.linalg.norm(temp_y) ** 2) + \
-                             bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
-
         if verbose:
-            print('\t- Loss: %.3f' % (objective*0.5))
+            # Set parameters and compute loss
+            loss_feedback = feedback if feedback else users_cached
+            data_t = (ratings, loss_feedback)
+            bias_t = (global_avg, bu, bi)
+            low_rank_matrices = (P, Q, Y)
+            params = (lmbda, bias_lmbda)
+            objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
+
+            print('\t- Loss: %.3f' % objective)
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
@@ -143,6 +132,62 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
         feedback = users_cached
 
     return P, Q, Y, bu, bi, feedback
+
+
+def compute_loss(data, bias, low_rank_matrices, params):
+
+    # Set parameters
+    ratings, feedback = data
+    global_avg, bu, bi = bias
+    P, Q, Y = low_rank_matrices
+    lmbda, bias_lmbda = params
+
+    # Check data type
+    if isinstance(ratings, __sparse_format__):
+        pass
+    elif isinstance(ratings, Table):
+        # Preprocess Orange.data.Table and transform it to sparse
+        ratings, order, shape = preprocess(ratings)
+        ratings = table2sparse(ratings, shape, order, type=__sparse_format__)
+    else:
+        raise TypeError('Invalid data type')
+
+    # Check data type
+    if isinstance(feedback, dict) or isinstance(feedback, __sparse_format__):
+        pass
+    elif isinstance(feedback, Table):
+        # Preprocess Orange.data.Table and transform it to sparse
+        feedback, order, shape = preprocess(feedback)
+        feedback = table2sparse(feedback, shape, order, type=__sparse_format__)
+    else:
+        raise TypeError('Invalid data type')
+
+    # Set caches
+    feedback_cached = defaultdict(list)
+    isFeedbackADict = isinstance(feedback, dict)
+
+    # Compute loss
+    objective = 0
+    for u, j in zip(*ratings.nonzero()):
+
+        # Get feedback from the cache
+        if isFeedbackADict:
+            feedback_u = feedback[u]
+        else:
+            feedback_u = cache_rows(feedback, u, feedback_cached)
+
+        # Prediction 
+        ruj_pred = _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback_u)[0]
+        objective += (ruj_pred - ratings[u, j]) ** 2  # error^2
+
+        # Regularization
+        temp_y = np.sum(Y[feedback_u, :], axis=0)
+        objective += lmbda * (np.linalg.norm(P[u, :]) ** 2 +
+                              np.linalg.norm(Q[j, :]) ** 2 +
+                              np.linalg.norm(temp_y) ** 2) + \
+                     bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
+
+    return objective
 
 
 class SVDPlusPlusLearner(Learner):
@@ -271,7 +316,7 @@ class SVDPlusPlusLearner(Learner):
         bias['dUsers'] = bu
         bias['dItems'] = bi
 
-        # Set as feedback the inferred feedback when no feedback has been given
+        # Return the original feedback if it wasn't None
         if self.feedback is not None:
             temp_feedback = self.feedback
 
@@ -323,7 +368,7 @@ class SVDPlusPlusModel(Model):
             if isFeedbackADict:
                 feedback_u = self.feedback[u]
             else:
-                feedback_u = save_in_cache(self.feedback, u, feedback_cached)
+                feedback_u = cache_rows(self.feedback, u, feedback_cached)
                 feedback_u = feedback_u[feedback_u < self.shape[1]]  # For CV
 
             predictions[i] = _predict(u, items[i], self.bias['globalAvg'],
@@ -362,10 +407,11 @@ class SVDPlusPlusModel(Model):
         for i in range(0, len(users)):
             u = users[i]
 
+            # Get feedback from the cache
             if isFeedbackADict:
                 feedback_u = self.feedback[u]
             else:
-                feedback_u = save_in_cache(self.feedback, u, feedback_cached)
+                feedback_u = cache_rows(self.feedback, u, feedback_cached)
 
             pred = _predict_all_items(u, self.bias['globalAvg'],
                                       self.bias['dUsers'], self.bias['dItems'],
@@ -381,38 +427,6 @@ class SVDPlusPlusModel(Model):
 
         return super().predict_on_range(predictions)
 
-    def compute_objective(self, data, lmbda, bias_lmbda):
-        # TODO: Cast rows, cols through preprocess
-        objective = 0
-
-        # Transform rating matrix into CSR sparse matrix
-        data = sparse_matrix_2d(row=data.X[:, self.order[0]],
-                                col=data.X[:, self.order[1]],
-                                data=data.Y, shape=self.shape)
-
-        global_avg = self.bias['globalAvg']
-        bi = self.bias['dItems']
-        bu = self.bias['dUsers']
-
-        # Compute predictions
-        for u, j in zip(*data.nonzero()):
-            # Prediction
-            ruj_pred, _, _ = \
-                _predict(u, j, global_avg, bu, bi, self.P, self.Q, self.Y,
-                         self.feedback[u])
-            objective += (ruj_pred - data[u, j]) ** 2
-
-            # Regularization
-            temp_y = np.sum(self.Y[self.feedback[u], :], axis=0)
-            objective += lmbda * (np.linalg.norm(self.P[u, :]) ** 2 +
-                                  np.linalg.norm(self.Q[j, :]) ** 2 +
-                                  np.linalg.norm(temp_y) ** 2) + \
-                         bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
-
-        # Compute RMSE
-        rmse = math.sqrt(objective*0.5 / float(data.nnz))
-        return rmse
-
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]
         return feature_matrix(variable, self.P)
@@ -425,7 +439,6 @@ class SVDPlusPlusModel(Model):
         domain_name = 'Feedback-feature'
         variable = self.original_domain.variables[self.order[0]]
         return feature_matrix(variable, self.Y, domain_name)
-
 
 
 if __name__ == "__main__":

@@ -50,7 +50,6 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
             print('- Step: %d' % (step + 1))
 
         # Optimize rating prediction
-        objective = 0
         for u, j in zip(*ratings.nonzero()):
 
             # Prediction and error
@@ -70,20 +69,49 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
             P[u, :] -= learning_rate * tempP
             Q[j, :] -= learning_rate * tempQ
 
-            # Loss function
-            if verbose:
-                objective += eij ** 2
-                objective += lmbda * (np.linalg.norm(P[u, :]) ** 2 +
-                                      np.linalg.norm(Q[j, :]) ** 2) + \
-                             bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
-
-        # Loss function (Remember it must be divided by 2 to be correct)
         if verbose:
-            print('\tLoss: %.3f' % (objective*0.5))
+            # Set parameters and compute loss
+            bias = (global_avg, bu, bi)
+            low_rank_matrices = (P, Q)
+            params = (lmbda, bias_lmbda)
+            objective = compute_loss(ratings, bias, low_rank_matrices, params)
+
+            print('\tLoss: %.3f' % objective)
             print('\tTime: %.3fs' % (time.time() - start))
             print('')
 
     return P, Q, bu, bi
+
+
+def compute_loss(data, bias, low_rank_matrices, params):
+
+    # Set parameters
+    ratings = data
+    global_avg, bu, bi = bias
+    P, Q = low_rank_matrices
+    lmbda, bias_lmbda = params
+
+    # Check data type
+    if isinstance(ratings, __sparse_format__):
+        pass
+    elif isinstance(ratings, Table):
+        # Preprocess Orange.data.Table and transform it to sparse
+        ratings, order, shape = preprocess(ratings)
+        ratings = table2sparse(ratings, shape, order, type=__sparse_format__)
+    else:
+        raise TypeError('Invalid data type')
+
+    # Compute loss
+    objective = 0
+    for u, j in zip(*ratings.nonzero()):
+        ruj_pred = _predict(u, j, global_avg, bu, bi, P, Q)
+        objective += (ruj_pred - ratings[u, j]) ** 2  # error^2
+
+        # Regularization
+        objective += lmbda * (np.linalg.norm(P[u, :]) ** 2 +
+                              np.linalg.norm(Q[j, :]) ** 2) + \
+                     bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
+    return objective
 
 
 class BRISMFLearner(Learner):
@@ -202,6 +230,7 @@ class BRISMFLearner(Learner):
 
 
 class BRISMFModel(Model):
+
     def __init__(self, P, Q, bias):
         self.P = P
         self.Q = Q
@@ -268,32 +297,6 @@ class BRISMFModel(Model):
             predictions = predictions[:, :top]
 
         return super().predict_on_range(predictions)
-
-    def compute_objective(self, data, lmbda, bias_lmbda):
-        # TODO: Cast rows, cols through preprocess
-        data.X = data.X.astype(int)  # Convert indices to integer
-
-        users = data.X[:, self.order[0]]
-        items = data.X[:, self.order[1]]
-
-        global_avg = self.bias['globalAvg']
-        bi = self.bias['dItems']
-        bu = self.bias['dUsers']
-
-        objective = 0
-        subscripts = 'i,i'
-
-        if len(users) > 1:
-            subscripts = 'ij,ij->i'
-        predictions = _predict(users, items, global_avg, bu, bi, self.P,
-                               self.Q, subscripts)
-        objective += (predictions - data.Y) ** 2
-
-        # Regularization
-        objective += lmbda * (np.linalg.norm(self.P[users, :]) ** 2 +
-                              np.linalg.norm(self.Q[items, :]) ** 2) + \
-                     bias_lmbda * (bu[users] ** 2 + bi[items] ** 2)
-        return objective.sum()*0.5
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]

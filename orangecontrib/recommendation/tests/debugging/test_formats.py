@@ -5,9 +5,10 @@ from scipy.sparse import csr_matrix
 import numpy as np
 from collections import defaultdict
 
+
 def tab_format():
     # Load data
-    filename = '/Users/salvacarrion/Desktop/trainingSet.csv'
+    filename = 'trainingSet.csv'
     data = Orange.data.Table(filename)
 
     A = csr_matrix(data.X)
@@ -89,6 +90,7 @@ def create_trust_data():
     Orange.data.Table.save(data_t, 'trust_small.tab')
 
     asdasd = 23
+
 
 if __name__ == "__main__":
     #print_dense_matrix()

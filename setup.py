@@ -59,7 +59,7 @@ INSTALL_REQUIRES = sorted(set(
 
 if 'test' in sys.argv:
     extra_setuptools_args = dict(
-        test_suite='orangecontrib.recommendation.tests',
+        test_suite='orangecontrib.recommendation.tests.coverage',
     )
 else:
     extra_setuptools_args = dict()
