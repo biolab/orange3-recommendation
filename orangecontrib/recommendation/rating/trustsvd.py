@@ -14,9 +14,9 @@ __all__ = ['TrustSVDLearner']
 __sparse_format__ = lil_matrix
 
 
-def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
+def _predict(u, j, global_avg, bu, bi, P, Q, Y, W, feedback,
              trustees):
-    bias = global_avg + dUsers[u] + dItems[j]
+    bias = global_avg + bu[u] + bi[j]
 
     # Implicit feedback
     norm_feedback = math.sqrt(len(feedback))
@@ -41,9 +41,9 @@ def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
     return bias + base_pred, y_term, w_term, norm_feedback, norm_trust
 
 
-def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
+def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, W, feedback,
                        trustees):
-    bias = global_avg + dUsers[u] + dItems
+    bias = global_avg + bu[u] + bi
 
     # Implicit feedback
     norm_feedback = math.sqrt(len(feedback))
@@ -69,9 +69,12 @@ def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, W, feedback,
 
 
 # TODO: Change name trust_users
-def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
-                          steps, alpha, beta, beta_t, verbose=False,
-                          random_state=None):
+
+
+def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t,
+                          num_factors, num_iter, learning_rate,
+                          bias_learning_rate, lmbda, bias_lmbda, social_lmbda,
+                          verbose=False, random_state=None):
 
     # Seed the generator
     if random_state is not None:
@@ -82,15 +85,15 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
     num_users = max(num_users, max(shape_t))
 
     # Initialize low-rank matrices
-    P = np.random.rand(num_users, K)  # User-feature matrix
-    Q = np.random.rand(num_items, K)  # Item-feature matrix
-    Y = np.random.randn(num_items, K)  # Feedback-feature matrix
-    W = np.random.randn(num_users, K)  # Trust-feature matrix
+    P = np.random.rand(num_users, num_factors)  # User-feature matrix
+    Q = np.random.rand(num_items, num_factors)  # Item-feature matrix
+    Y = np.random.randn(num_items, num_factors)  # Feedback-feature matrix
+    W = np.random.randn(num_users, num_factors)  # Trust-feature matrix
 
     # Compute bias (not need it if learnt)
     globalAvg = bias['globalAvg']
-    dItems = bias['dItems']
-    dUsers = bias['dUsers']
+    bu = bias['dUsers']
+    bi = bias['dItems']
 
     # Cache rows
     # >>> From 2 days to 30s
@@ -109,7 +112,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
     trust_T = trust.T
 
     # Factorize matrix using SGD
-    for step in range(steps):
+    for step in range(num_iter):
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
@@ -138,34 +141,43 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
 
             # Prediction and error
             ruj_pred, y_term, w_term, norm_feedback, norm_trust\
-                = _predict(u, j, globalAvg, dUsers, dItems, P, Q, Y, W,
+                = _predict(u, j, globalAvg, bu, bi, P, Q, Y, W,
                            feedback_u, trustees_u)
             euj = ruj_pred - ratings[u, j]
 
 
+            # Compute norms
+            norm_Uj = cache_norms(ratings_T, j, norm_I)
+
+            # Gradient Bu
+            reg_bu = (bias_lmbda / norm_feedback) * bu[u] if norm_feedback > 0 else 0
+            bu[u] -= bias_learning_rate * (euj + reg_bu)
+
+            # Gradient Bi
+            reg_bi = (bias_lmbda/norm_Uj) * bi[j] if norm_Uj > 0 else 0
+            bi[j] -= bias_learning_rate * (euj + reg_bi)
+
             # Gradient P
-            reg_p = (beta/norm_feedback) * P[u, :] if norm_feedback > 0 else 0
-            tempP[u, :] = euj * Q[j, :] + reg_p # P: Part 1
+            reg_p = (lmbda/norm_feedback) * P[u, :] if norm_feedback > 0 else 0
+            tempP[u, :] = euj * Q[j, :] + reg_p  # P: Part 1
 
             # Gradient Q
-            norm_Uj = cache_norms(ratings_T, j, norm_I)
-            reg_q = (beta/norm_Uj) * Q[j, :] if norm_Uj > 0 else 0
+            reg_q = (lmbda/norm_Uj) * Q[j, :] if norm_Uj > 0 else 0
             tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + reg_q
-
 
             # Gradient Y
             if norm_feedback > 0:
                 tempY1 = (euj/norm_feedback) * Q[j, :]
                 norms = cache_norms(ratings_T, items_rated_by_u, norm_I)
-                norm_b = (beta/np.atleast_2d(norms))
+                norm_b = (lmbda/np.atleast_2d(norms))
                 tempY[items_rated_by_u, :] = tempY1 + \
-                                      np.multiply(norm_b.T, Y[items_rated_by_u, :])
+                                np.multiply(norm_b.T, Y[items_rated_by_u, :])
 
             # Gradient W
             if norm_trust > 0:
                 tempW1 = (euj/norm_trust) * Q[j, :]  # W: Part 1
                 norms = cache_norms(trust_T, trustees_u, norm_Tc)
-                norm_b = (beta/np.atleast_2d(norms))
+                norm_b = (lmbda/np.atleast_2d(norms))
                 tempW[trustees_u, :] = tempW1 + \
                                       np.multiply(norm_b.T, W[trustees_u, :])
 
@@ -179,15 +191,15 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
             # Gradient P (Part 2)
             norm_trust = cache_norms(trust, u, norm_Tr)
             reg_p = P[u, :]/norm_trust if norm_trust > 0 else 0
-            tempP[u, :] += beta_t * (euv * W[v, :] + reg_p)
+            tempP[u, :] += social_lmbda * (euv * W[v, :] + reg_p)
 
             # Gradient W (Part 2)
-            tempW[v, :] += beta_t * euv * P[u, :]  # W: Part 2
+            tempW[v, :] += social_lmbda * euv * P[u, :]  # W: Part 2
 
-        P -= alpha * tempP
-        Q -= alpha * tempQ
-        Y -= alpha * tempY
-        W -= alpha * tempW
+        P -= learning_rate * tempP
+        Q -= learning_rate * tempQ
+        Y -= learning_rate * tempY
+        W -= learning_rate * tempW
 
         # TODO: Loss function
 
@@ -199,7 +211,7 @@ def _matrix_factorization(ratings, feedback, trust, bias, shape, shape_t, K,
     if feedback is None:
         feedback = users_cached
 
-    return P, Q, Y, W, feedback
+    return P, Q, Y, W, bu, bi, feedback
 
 
 class TrustSVDLearner(Learner):
@@ -210,20 +222,29 @@ class TrustSVDLearner(Learner):
     and trustee-feature matrix.
 
     Attributes:
-        K: int, optional
+        num_factors: int, optional
             The number of latent factors.
 
-        steps: int, optional
+        num_iter: int, optional
             The number of passes over the training data (aka epochs).
 
-        alpha: float, optional
-            The learning rate.
+        learning_rate: float, optional
+            The learning rate controlling the size of update steps (general).
 
-        beta: float, optional
-            The regularization for the ratings.
+        bias_learning_rate: float, optional
+            The learning rate controlling the size of the bias update steps.
+            If None (default), bias_learning_rate = learning_rate
 
-        beta_t: float, optional
-            The regularization for the trust.
+        lmbda: float, optional
+            Controls the importance of the regularization term (general).
+            Avoids overfitting by penalizing the magnitudes of the parameters.
+
+        bias_lmbda: float, optional
+            Controls the importance of the bias regularization term.
+            If None (default), bias_lmbda = lmbda
+
+        social_lmbda: float, optional
+            Controls the importance of the trust regularization term.
 
         min_rating: float, optional
             Defines the lower bound for the predictions. If None (default),
@@ -252,15 +273,25 @@ class TrustSVDLearner(Learner):
 
     name = 'TrustSVD'
 
-    def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, beta_t=0.05,
-                 min_rating=None, max_rating=None, feedback=None, trust=None,
-                 preprocessors=None, verbose=False, random_state=None):
-        self.K = K
-        self.steps = steps
-        self.alpha = alpha
-        self.beta = beta
-        self.beta_t = beta_t
+    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
+                 bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
+                 social_lmbda=0.05, min_rating=None, max_rating=None,
+                 feedback=None, trust=None, preprocessors=None, verbose=False,
+                 random_state=None):
+        self.num_factors = num_factors
+        self.num_iter = num_iter
+        self.learning_rate = learning_rate
+        self.bias_learning_rate = bias_learning_rate
+        self.lmbda = lmbda
+        self.bias_lmbda = bias_lmbda
+        self.social_lmbda = social_lmbda
         self.random_state = random_state
+
+        # Correct assignments
+        if self.bias_learning_rate is None:
+            self.bias_learning_rate = self.learning_rate
+        if self.bias_lmbda is None:
+            self.bias_lmbda = self.lmbda
 
         self.feedback = feedback
         if feedback is not None:
@@ -300,9 +331,9 @@ class TrustSVDLearner(Learner):
         data = super().prepare_fit(data)
 
         # Check convergence
-        if self.alpha == 0:
-            warnings.warn("With alpha=0, this algorithm does not converge "
-                          "well.", stacklevel=2)
+        if self.learning_rate == 0:
+            warnings.warn("With learning_rate=0, this algorithm does not "
+                          "converge well.", stacklevel=2)
 
         # Compute biases (not need it if learnt)
         bias = self.compute_bias(data, 'all')
@@ -312,22 +343,31 @@ class TrustSVDLearner(Learner):
                             type=__sparse_format__)
 
         # Factorize matrix
-        P, Q, Y, W, new_feedback = \
+        P, Q, Y, W, bu, bi, temp_feedback = \
             _matrix_factorization(ratings=data, feedback=self.feedback,
-                                  trust=self.trust, bias=bias,
-                                  shape=self.shape, shape_t=self.shape_t,
-                                  K=self.K, steps=self.steps, alpha=self.alpha,
-                                  beta=self.beta, beta_t=self.beta_t,
+                                  trust=self.trust, bias=bias, shape=self.shape,
+                                  shape_t=self.shape_t,
+                                  num_factors=self.num_factors,
+                                  num_iter=self.num_iter,
+                                  learning_rate=self.learning_rate,
+                                  bias_learning_rate=self.bias_learning_rate,
+                                  lmbda=self.lmbda,
+                                  bias_lmbda=self.bias_lmbda,
+                                  social_lmbda=self.social_lmbda,
                                   verbose=self.verbose,
                                   random_state=self.random_state)
 
+        # Update biases
+        bias['dUsers'] = bu
+        bias['dItems'] = bi
+
         # Set as feedback the inferred feedback when no feedback has been given
         if self.feedback is not None:
-            new_feedback = self.feedback
+            temp_feedback = self.feedback
 
         # Construct model
         model = TrustSVDModel(P=P, Q=Q, Y=Y, W=W, bias=bias,
-                              feedback=new_feedback, trust=self.trust)
+                              feedback=temp_feedback, trust=self.trust)
         return super().prepare_model(model)
 
 
@@ -471,7 +511,8 @@ if __name__ == "__main__":
     trust = Orange.data.Table('filmtrust/trust.tab')
 
     start = time.time()
-    learner = TrustSVDLearner(K=15, steps=1, alpha=0.07, beta=0.1, beta_t=0.05,
+    learner = TrustSVDLearner(num_factors=15, num_iter=1, learning_rate=0.07,
+                              lmbda=0.1, social_lmbda=0.05,
                               trust=trust, verbose=True)
     recommender = learner(ratings)
     print('- Time (TrustSVD): %.3fs' % (time.time() - start))

@@ -16,7 +16,8 @@ class TestCLiMF(unittest.TestCase):
         data = Orange.data.Table('binary_data.tab')
 
         # Train recommender
-        learner = CLiMFLearner(K=2, steps=1, alpha=0.0001, beta=0.001, verbose=True)
+        learner = CLiMFLearner(num_factors=2, num_iter=1, learning_rate=0.0001,
+                               lmbda=0.001, verbose=True)
         recommender = learner(data)
         print(str(recommender) + ' trained')
 
@@ -61,8 +62,8 @@ class TestCLiMF(unittest.TestCase):
         data = Orange.data.Table('binary_data2.tab')
 
         # Train recommender
-        learner = CLiMFLearner(K=2, steps=1, alpha=0.0001, beta=0.001,
-                               verbose=True)
+        learner = CLiMFLearner(num_factors=2, num_iter=1, learning_rate=0.0001,
+                               lmbda=0.001, verbose=True)
         recommender = learner(data)
 
         # Check tables U and V
@@ -79,7 +80,8 @@ class TestCLiMF(unittest.TestCase):
         # filename = '../datasets/binary_data.tab'
         # data = Orange.data.Table(filename)
         #
-        # brismf = CLiMFLearner(K=2, steps=1, alpha=0.0001, beta=0.001, verbose=False)
+        # brismf = CLiMFLearner(num_factors=2, num_iter=1, learning_rate=0.0001,
+        #  lmbda=0.001, verbose=False)
         # learners = [brismf]
         #
         # res = CrossValidation(data, learners, k=3)
@@ -99,7 +101,7 @@ class TestCLiMF(unittest.TestCase):
         data = Orange.data.Table('binary_data.tab')
 
         # Train recommender
-        learner = CLiMFLearner(K=2, steps=1, alpha=0.0, verbose=False)
+        learner = CLiMFLearner(num_factors=2, num_iter=1, learning_rate=0.0)
         recommender = learner(data)
 
         self.assertWarns(UserWarning, learner, data)
@@ -117,12 +119,12 @@ class TestCLiMF(unittest.TestCase):
         objectives = []
 
         for step in steps:
-            learner = CLiMFLearner(K=2, steps=step, verbose=False)
+            learner = CLiMFLearner(num_factors=2, num_iter=step)
             recommender = learner(data)
             objectives.append(recommender.compute_objective(X=data.X, Y=data.Y,
                                                             U=recommender.U,
                                                             V=recommender.V,
-                                                            beta=learner.beta))
+                                                        lmbda=learner.lmbda))
 
         # Assert objective values *increase*
         test = list(

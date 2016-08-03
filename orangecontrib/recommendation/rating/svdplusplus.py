@@ -12,8 +12,8 @@ __all__ = ['SVDPlusPlusLearner']
 __sparse_format__ = lil_matrix
 
 
-def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, feedback):
-    bias = global_avg + dUsers[u] + dItems[j]
+def _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback):
+    bias = global_avg + bu[u] + bi[j]
 
     # Implicit feedback
     norm_feedback = math.sqrt(len(feedback))
@@ -30,8 +30,8 @@ def _predict(u, j, global_avg, dUsers, dItems, P, Q, Y, feedback):
     return bias + base_pred, y_term, norm_feedback
 
 
-def _predict_all_items(u, global_avg, dUsers, dItems, P, Q, Y, feedback):
-    bias = global_avg + dUsers[u] + dItems
+def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, feedback):
+    bias = global_avg + bu[u] + bi
 
     # Implicit feedback
     norm_feedback = math.sqrt(len(feedback))
@@ -59,8 +59,9 @@ def save_in_cache(matrix, key, cache):
     return res
 
 
-def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
-                      alpha, beta,verbose=False, random_state=None):
+def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
+                          learning_rate, bias_learning_rate, lmbda, bias_lmbda,
+                          verbose=False, random_state=None):
 
     # Seed the generator
     if random_state is not None:
@@ -70,21 +71,21 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
     num_users, num_items = shape
 
     # Initialize low-rank matrices
-    P = np.random.rand(num_users, K)  # User-feature matrix
-    Q = np.random.rand(num_items, K)  # Item-feature matrix
-    Y = np.random.randn(num_items, K) # Feedback-feature matrix
+    P = np.random.rand(num_users, num_factors)  # User-feature matrix
+    Q = np.random.rand(num_items, num_factors)  # Item-feature matrix
+    Y = np.random.randn(num_items, num_factors) # Feedback-feature matrix
 
     # Compute bias (not need it if learnt)
-    globalAvg = bias['globalAvg']
-    dItems = bias['dItems']
-    dUsers = bias['dUsers']
+    global_avg = bias['globalAvg']
+    bu = bias['dUsers']
+    bi = bias['dItems']
 
     # Cache rows
     users_cached = defaultdict(list)
     feedback_cached = defaultdict(list)
 
     # Factorize matrix using SGD
-    for step in range(steps):
+    for step in range(num_iter):
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
@@ -102,33 +103,36 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
 
             # Prediction and error
             ruj_pred, y_term, norm_feedback = \
-                _predict(u, j, globalAvg, dUsers, dItems, P, Q, Y, feedback_u)
+                _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback_u)
             eij = ruj_pred - ratings[u, j]
 
-            # Gradients of P and Q
-            tempP = eij * Q[j, :] - beta * P[u, :]
-            tempQ = eij * (P[u, :] + y_term) - beta * Q[j, :]
+            # Compute gradients
+            tempBu = eij + bias_lmbda * bu[u]
+            tempBi = eij + bias_lmbda * bi[j]
+            tempP = eij * Q[j, :] - lmbda * P[u, :]
+            tempQ = eij * (P[u, :] + y_term) - lmbda * Q[j, :]
 
             # Gradient Y
             if norm_feedback > 0:
                 for i in feedback_u:
-                    Y[i, :] -= alpha * (eij/norm_feedback * Q[j, :]
-                                        - beta * Y[i, :])
+                    Y[i, :] -= bias_learning_rate * (eij/norm_feedback * Q[j, :]
+                                                     - lmbda * Y[i, :])
 
             # Update the gradients at the same time
             # I use the loss function divided by 2, to simplify the gradients
-            P[u] -= alpha * tempP
-            Q[j] -= alpha * tempQ
+            bu[u] -= bias_learning_rate * tempBu
+            bi[j] -= bias_learning_rate * tempBi
+            P[u, :] -= learning_rate * tempP
+            Q[j, :] -= learning_rate * tempQ
 
             # Loss function (Remember it must be divided by 2 to be correct)
             if verbose:
                 objective += eij ** 2
                 temp_y = np.sum(Y[feedback_u, :], axis=0)
-                objective += beta * (bias['dUsers'][u] ** 2 +
-                                     bias['dItems'][j] ** 2 +
-                                     np.linalg.norm(P[u, :]) ** 2
-                                     + np.linalg.norm(Q[j, :]) ** 2
-                                     + np.linalg.norm(temp_y) ** 2)
+                objective += lmbda * (np.linalg.norm(P[u, :]) ** 2 +
+                                      np.linalg.norm(Q[j, :]) ** 2 +
+                                      np.linalg.norm(temp_y) ** 2) + \
+                             bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
 
         if verbose:
             print('\t- Loss: %.3f' % (objective*0.5))
@@ -138,7 +142,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, K, steps,
     if feedback is None:
         feedback = users_cached
 
-    return P, Q, Y, feedback
+    return P, Q, Y, bu, bi, feedback
 
 
 class SVDPlusPlusLearner(Learner):
@@ -149,17 +153,26 @@ class SVDPlusPlusLearner(Learner):
     matrix.
 
     Attributes:
-        K: int, optional
+        num_factors: int, optional
             The number of latent factors.
 
-        steps: int, optional
+        num_iter: int, optional
             The number of passes over the training data (aka epochs).
 
-        alpha: float, optional
-            The learning rate.
+        learning_rate: float, optional
+            The learning rate controlling the size of update steps (general).
 
-        beta: float, optional
-            The regularization for the ratings.
+        bias_learning_rate: float, optional
+            The learning rate controlling the size of the bias update steps.
+            If None (default), bias_learning_rate = learning_rate
+
+        lmbda: float, optional
+            Controls the importance of the regularization term (general).
+            Avoids overfitting by penalizing the magnitudes of the parameters.
+
+        bias_lmbda: float, optional
+            Controls the importance of the bias regularization term.
+            If None (default), bias_lmbda = lmbda
 
         min_rating: float, optional
             Defines the lower bound for the predictions. If None (default),
@@ -185,14 +198,23 @@ class SVDPlusPlusLearner(Learner):
 
     name = 'SVD++'
 
-    def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, min_rating=None,
-                 max_rating=None, feedback=None, preprocessors=None,
-                 verbose=False, random_state=None):
-        self.K = K
-        self.steps = steps
-        self.alpha = alpha
-        self.beta = beta
+    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
+                 bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
+                 min_rating=None, max_rating=None, feedback=None,
+                 preprocessors=None, verbose=False, random_state=None):
+        self.num_factors = num_factors
+        self.num_iter = num_iter
+        self.learning_rate = learning_rate
+        self.bias_learning_rate = bias_learning_rate
+        self.lmbda = lmbda
+        self.bias_lmbda = bias_lmbda
         self.random_state = random_state
+
+        # Correct assignments
+        if self.bias_learning_rate is None:
+            self.bias_learning_rate = self.learning_rate
+        if self.bias_lmbda is None:
+            self.bias_lmbda = self.lmbda
 
         self.feedback = feedback
         if feedback is not None:
@@ -221,9 +243,9 @@ class SVDPlusPlusLearner(Learner):
         data = super().prepare_fit(data)
 
         # Check convergence
-        if self.alpha == 0:
-            warnings.warn("With alpha=0, this algorithm does not converge "
-                          "well.", stacklevel=2)
+        if self.learning_rate == 0:
+            warnings.warn("With learning_rate=0, this algorithm does not "
+                          "converge well.", stacklevel=2)
 
         # Compute biases (not need it if learnt)
         bias = self.compute_bias(data, 'all')
@@ -233,20 +255,29 @@ class SVDPlusPlusLearner(Learner):
                             type=__sparse_format__)
 
         # Factorize matrix
-        P, Q, Y, new_feedback = \
-            _matrix_factorization(ratings=data,feedback=self.feedback,
-                                  bias=bias, shape=self.shape, K=self.K,
-                                  steps=self.steps, alpha=self.alpha,
-                                  beta=self.beta, verbose=self.verbose,
+        P, Q, Y, bu, bi, temp_feedback = \
+            _matrix_factorization(ratings=data, feedback=self.feedback,
+                                  bias=bias, shape=self.shape,
+                                  num_factors=self.num_factors,
+                                  num_iter=self.num_iter,
+                                  learning_rate=self.learning_rate,
+                                  bias_learning_rate=self.bias_learning_rate,
+                                  lmbda=self.lmbda,
+                                  bias_lmbda=self.bias_lmbda,
+                                  verbose=self.verbose,
                                   random_state=self.random_state)
+
+        # Update biases
+        bias['dUsers'] = bu
+        bias['dItems'] = bi
 
         # Set as feedback the inferred feedback when no feedback has been given
         if self.feedback is not None:
-            new_feedback = self.feedback
+            temp_feedback = self.feedback
 
         # Construct model
         model = SVDPlusPlusModel(P=P, Q=Q, Y=Y, bias=bias,
-                                 feedback=new_feedback)
+                                 feedback=temp_feedback)
         return super().prepare_model(model)
 
 
@@ -350,7 +381,7 @@ class SVDPlusPlusModel(Model):
 
         return super().predict_on_range(predictions)
 
-    def compute_objective(self, data, bias, P, Q, Y, beta):
+    def compute_objective(self, data, lmbda, bias_lmbda):
         # TODO: Cast rows, cols through preprocess
         objective = 0
 
@@ -359,31 +390,27 @@ class SVDPlusPlusModel(Model):
                                 col=data.X[:, self.order[1]],
                                 data=data.Y, shape=self.shape)
 
+        global_avg = self.bias['globalAvg']
+        bi = self.bias['dItems']
+        bu = self.bias['dUsers']
+
         # Compute predictions
         for u, j in zip(*data.nonzero()):
-            feedback_u = self.feedback[u]
-
             # Prediction
-            b_ui = self.bias['globalAvg'] + \
-                   bias['dItems'][j] + \
-                   bias['dUsers'][u]
-
-            norm_denominator = math.sqrt(len(feedback_u))
-            tempN = np.sum(Y[feedback_u], axis=0)
-            p_plus_y_sum_vector = tempN / norm_denominator + P[u, :]
-
-            rij_pred = b_ui + np.dot(p_plus_y_sum_vector, Q[j, :])
-
-            objective += (rij_pred - data[u, j]) ** 2
+            ruj_pred, _, _ = \
+                _predict(u, j, global_avg, bu, bi, self.P, self.Q, self.Y,
+                         self.feedback[u])
+            objective += (ruj_pred - data[u, j]) ** 2
 
             # Regularization
-            objective += beta * (np.linalg.norm(P[u, :]) ** 2
-                                 + np.linalg.norm(Q[j, :]) ** 2
-                                 + bias['dItems'][j] ** 2
-                                 + bias['dUsers'][u] ** 2)
+            temp_y = np.sum(self.Y[self.feedback[u], :], axis=0)
+            objective += lmbda * (np.linalg.norm(self.P[u, :]) ** 2 +
+                                  np.linalg.norm(self.Q[j, :]) ** 2 +
+                                  np.linalg.norm(temp_y) ** 2) + \
+                         bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
 
         # Compute RMSE
-        rmse = math.sqrt(objective / float(data.nnz))
+        rmse = math.sqrt(objective*0.5 / float(data.nnz))
         return rmse
 
     def getPTable(self):
@@ -408,7 +435,7 @@ if __name__ == "__main__":
     ratings = Orange.data.Table('filmtrust/ratings.tab')
 
     start = time.time()
-    learner = SVDPlusPlusLearner(K=15, steps=1, alpha=0.007, beta=0.1,
-                                 verbose=True)
+    learner = SVDPlusPlusLearner(num_factors=15, num_iter=1,
+                                 learning_rate=0.007, lmbda=0.1, verbose=True)
     recommender = learner(ratings)
     print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))

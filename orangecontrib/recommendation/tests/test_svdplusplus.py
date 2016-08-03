@@ -16,7 +16,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
-        learner = SVDPlusPlusLearner(K=2, steps=1, verbose=True)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=True)
         recommender = learner(data)
 
         # Compute predictions 1
@@ -43,7 +43,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         data = Orange.data.Table('ratings.tab')
 
         # Train recommender
-        learner = SVDPlusPlusLearner(K=2, steps=1, verbose=False)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=False)
         recommender = learner(data)
         print(str(recommender) + ' trained')
 
@@ -67,7 +67,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
-        learner = SVDPlusPlusLearner(K=2, steps=1, verbose=True)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=True)
         recommender = learner(data)
 
         print(str(recommender) + ' trained')
@@ -94,7 +94,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
-        learner = SVDPlusPlusLearner(K=2, steps=1, verbose=False)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=False)
         recommender = learner(data)
 
         # Create indices to test
@@ -118,7 +118,7 @@ class TestSVDPlusPlus(unittest.TestCase):
         # Load data
         data = Orange.data.Table('ratings3.tab')
 
-        svdpp = SVDPlusPlusLearner(K=2, steps=1, verbose=False)
+        svdpp = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=False)
         learners = [svdpp]
 
         res = CrossValidation(data, learners, k=3)
@@ -138,7 +138,8 @@ class TestSVDPlusPlus(unittest.TestCase):
         data = Orange.data.Table('ratings3.tab')
 
         # Train recommender
-        learner = SVDPlusPlusLearner(K=2, steps=1, alpha=0.0, verbose=False)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1,
+                                     learning_rate=0.0, verbose=False)
 
         self.assertWarns(UserWarning, learner, data)
 
@@ -150,29 +151,51 @@ class TestSVDPlusPlus(unittest.TestCase):
         objectives = []
 
         for step in steps:
-            learner = SVDPlusPlusLearner(K=2, steps=step, alpha=0.007,
+            learner = SVDPlusPlusLearner(num_factors=2, num_iter=step,
+                                         learning_rate=0.007,
                                          random_state=42, verbose=False)
             recommender = learner(data)
-            objectives.append(
-                recommender.compute_objective(data=data, P=recommender.P,
-                                              Q=recommender.Q,
-                                              Y=recommender.Y,
-                                              bias=recommender.bias,
-                                              beta=learner.beta))
+            objective = recommender.compute_objective(data=data,
+                                              lmbda=learner.lmbda,
+                                              bias_lmbda=learner.bias_lmbda)
+            objectives.append(objective)
 
         # Assert objective values decrease
         test = list(
             map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
 
+    # def test_SVDPlusPlus_alpha_bias(self):
+    #     # Load data
+    #     data = Orange.data.Table('ratings.tab')
+    #
+    #     for random_state in range(5):
+    #         alpha_bias = [0, 0.007]
+    #         objectives = []
+    #         for alpha in alpha_bias:
+    #             learner = SVDPlusPlusLearner(num_factors=2, num_iter=50,
+    #                                          bias_learning_rate=alpha,
+    #                                          random_state=random_state)
+    #             recommender = learner(data)
+    #             objectives.append(
+    #                 recommender.compute_objective(data=data,
+    #                                               lmbda=learner.lmbda,
+    #                                               bias_lmbda=learner.bias_lmbda)
+    #             )
+    #
+    #         # Assert objective values decrease for the given random state
+    #         test = list(
+    #             map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
+    #         self.assertTrue(all(test))
+
 
 if __name__ == "__main__":
     # Test all
-    # unittest.main()
+    unittest.main()
 
-    # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestSVDPlusPlus("test_SVDPlusPlus_input_data_continuous"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # # Test single test
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestSVDPlusPlus("test_SVDPlusPlus_alpha_bias"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
 

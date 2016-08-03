@@ -9,24 +9,24 @@ __all__ = ['BRISMFLearner']
 __sparse_format__ = lil_matrix
 
 
-def _predict(users, items, global_avg, dUsers, dItems, P, Q, subscripts='i,i'):
-    bias = global_avg + dUsers[users] + dItems[items]
+def _predict(users, items, global_avg, bu, bi, P, Q, subscripts='i,i'):
+    bias = global_avg + bu[users] + bi[items]
     base_pred = np.einsum(subscripts, P[users, :], Q[items, :])
     return bias + base_pred
 
 
-def _predict_all_items(users, global_avg, dUsers, dItems, P, Q):
-    bias = global_avg + dUsers[users]
-    tempB = np.tile(np.array(dItems), (len(users), 1))
+def _predict_all_items(users, global_avg, bu, bi, P, Q):
+    bias = global_avg + bu[users]
+    tempB = np.tile(np.array(bi), (len(users), 1))
     bias = bias[:, np.newaxis] + tempB
 
     base_pred = np.dot(P[users], Q.T)
     return bias + base_pred
 
 
-def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
+def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
+                          learning_rate, bias_learning_rate, lmbda, bias_lmbda,
                           verbose=False, random_state=None):
-
     # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
@@ -35,16 +35,16 @@ def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
     num_users, num_items = shape
 
     # Initialize low-rank matrices
-    P = np.random.rand(num_users, K)  # User-feature matrix
-    Q = np.random.rand(num_items, K)  # Item-feature matrix
+    P = np.random.rand(num_users, num_factors)  # User-feature matrix
+    Q = np.random.rand(num_items, num_factors)  # Item-feature matrix
 
     # Compute bias (not need it if learnt)
-    globalAvg = bias['globalAvg']
-    dItems = bias['dItems']
-    dUsers = bias['dUsers']
+    global_avg = bias['globalAvg']
+    bu = bias['dUsers']
+    bi = bias['dItems']
 
     # Factorize matrix using SGD
-    for step in range(steps):
+    for step in range(num_iter):
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
@@ -54,25 +54,28 @@ def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
         for u, j in zip(*ratings.nonzero()):
 
             # Prediction and error
-            rij_pred = _predict(u, j, globalAvg, dUsers, dItems, P, Q)
+            rij_pred = _predict(u, j, global_avg, bu, bi, P, Q)
             eij = rij_pred - ratings[u, j]
 
-            # Compute gradients P and Q
-            tempP = eij * Q[j, :] - beta * P[u, :]
-            tempQ = eij * P[u, :] - beta * Q[j, :]
+            # Compute gradients
+            tempBu = eij + bias_lmbda * bu[u]
+            tempBi = eij + bias_lmbda * bi[j]
+            tempP = eij * Q[j, :] - lmbda * P[u, :]
+            tempQ = eij * P[u, :] - lmbda * Q[j, :]
 
             # Update the gradients at the same time
             # I use the loss function divided by 2, to simplify the gradients
-            P[u, :] -= alpha * tempP
-            Q[j, :] -= alpha * tempQ
+            bu[u] -= bias_learning_rate * tempBu
+            bi[j] -= bias_learning_rate * tempBi
+            P[u, :] -= learning_rate * tempP
+            Q[j, :] -= learning_rate * tempQ
 
             # Loss function
             if verbose:
                 objective += eij ** 2
-                objective += beta * (bias['dUsers'][u] ** 2 +
-                                     bias['dItems'][j] ** 2 +
-                                     np.linalg.norm(P[u, :]) ** 2
-                                     + np.linalg.norm(Q[j, :]) ** 2)
+                objective += lmbda * (np.linalg.norm(P[u, :]) ** 2 +
+                                      np.linalg.norm(Q[j, :]) ** 2) + \
+                             bias_lmbda * (bu[u] ** 2 + bi[j] ** 2)
 
         # Loss function (Remember it must be divided by 2 to be correct)
         if verbose:
@@ -80,7 +83,7 @@ def _matrix_factorization(ratings, bias, shape, K, steps, alpha, beta,
             print('\tTime: %.3fs' % (time.time() - start))
             print('')
 
-    return P, Q
+    return P, Q, bu, bi
 
 
 class BRISMFLearner(Learner):
@@ -90,17 +93,26 @@ class BRISMFLearner(Learner):
     matrices: user-feature matrix and item-feature matrix.
 
     Attributes:
-        K: int, optional
+        num_factors: int, optional
             The number of latent factors.
 
-        steps: int, optional
+        num_iter: int, optional
             The number of passes over the training data (aka epochs).
 
-        alpha: float, optional
-            The learning rate.
+        learning_rate: float, optional
+            The learning rate controlling the size of update steps (general).
 
-        beta: float, optional
-            The regularization for the ratings.
+        bias_learning_rate: float, optional
+            The learning rate controlling the size of the bias update steps.
+            If None (default), bias_learning_rate = learning_rate
+
+        lmbda: float, optional
+            Controls the importance of the regularization term (general).
+            Avoids overfitting by penalizing the magnitudes of the parameters.
+
+        bias_lmbda: float, optional
+            Controls the importance of the bias regularization term.
+            If None (default), bias_lmbda = lmbda
 
         min_rating: float, optional
             Defines the lower bound for the predictions. If None (default),
@@ -121,14 +133,24 @@ class BRISMFLearner(Learner):
 
     name = 'BRISMF'
 
-    def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, min_rating=None,
-                 max_rating=None, preprocessors=None, verbose=False,
-                 random_state=None):
-        self.K = K
-        self.steps = steps
-        self.alpha = alpha
-        self.beta = beta
+    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
+                 bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
+                 min_rating=None, max_rating=None, preprocessors=None,
+                 verbose=False, random_state=None):
+        self.num_factors = num_factors
+        self.num_iter = num_iter
+        self.learning_rate = learning_rate
+        self.bias_learning_rate = bias_learning_rate
+        self.lmbda = lmbda
+        self.bias_lmbda = bias_lmbda
         self.random_state = random_state
+
+        # Correct assignments
+        if self.bias_learning_rate is None:
+            self.bias_learning_rate = self.learning_rate
+        if self.bias_lmbda is None:
+            self.bias_lmbda = self.lmbda
+
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
 
@@ -148,9 +170,9 @@ class BRISMFLearner(Learner):
         data = super().prepare_fit(data)
 
         # Check convergence
-        if self.alpha == 0:
-            warnings.warn("With alpha=0, this algorithm does not converge "
-                          "well.", stacklevel=2)
+        if self.learning_rate == 0:
+            warnings.warn("With learning_rate=0, this algorithm does not "
+                          "converge well.", stacklevel=2)
 
         # Compute biases (not need it if learnt)
         bias = self.compute_bias(data, 'all')
@@ -160,11 +182,20 @@ class BRISMFLearner(Learner):
                             type=__sparse_format__)
 
         # Factorize matrix
-        P, Q = _matrix_factorization(ratings=data, bias=bias, shape=self.shape,
-                                     K=self.K, steps=self.steps,
-                                     alpha=self.alpha, beta=self.beta,
+        P, Q, bu, bi = _matrix_factorization(ratings=data, bias=bias,
+                                     shape=self.shape,
+                                     num_factors=self.num_factors,
+                                     num_iter=self.num_iter,
+                                     learning_rate=self.learning_rate,
+                                     bias_learning_rate=self.bias_learning_rate,
+                                     lmbda=self.lmbda,
+                                     bias_lmbda=self.bias_lmbda,
                                      verbose=self.verbose,
                                      random_state=self.random_state)
+
+        # Update biases
+        bias['dUsers'] = bu
+        bias['dItems'] = bi
 
         model = BRISMFModel(P=P, Q=Q, bias=bias)
         return super().prepare_model(model)
@@ -238,31 +269,31 @@ class BRISMFModel(Model):
 
         return super().predict_on_range(predictions)
 
-    def compute_objective(self, data, beta):
+    def compute_objective(self, data, lmbda, bias_lmbda):
         # TODO: Cast rows, cols through preprocess
         data.X = data.X.astype(int)  # Convert indices to integer
 
         users = data.X[:, self.order[0]]
         items = data.X[:, self.order[1]]
 
-        globalAvg = self.bias['globalAvg']
-        dItems = self.bias['dItems']
-        dUsers = self.bias['dUsers']
+        global_avg = self.bias['globalAvg']
+        bi = self.bias['dItems']
+        bu = self.bias['dUsers']
 
         objective = 0
         subscripts = 'i,i'
 
         if len(users) > 1:
             subscripts = 'ij,ij->i'
-        predictions = _predict(users, items, globalAvg, dUsers, dItems, self.P,
+        predictions = _predict(users, items, global_avg, bu, bi, self.P,
                                self.Q, subscripts)
         objective += (predictions - data.Y) ** 2
 
         # Regularization
-        objective += beta * (np.linalg.norm(self.P[users, :], axis=1) ** 2
-                             + np.linalg.norm(self.Q[items, :], axis=1) ** 2
-                             + dItems[items] ** 2 + dUsers[users] ** 2)
-        return objective.sum()
+        objective += lmbda * (np.linalg.norm(self.P[users, :]) ** 2 +
+                              np.linalg.norm(self.Q[items, :]) ** 2) + \
+                     bias_lmbda * (bu[users] ** 2 + bi[items] ** 2)
+        return objective.sum()*0.5
 
     def getPTable(self):
         variable = self.original_domain.variables[self.order[0]]

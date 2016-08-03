@@ -26,8 +26,8 @@ def _dg(x):
     return y
 
 
-def _matrix_factorization(ratings, shape, K, steps, alpha, beta,
-                          verbose=False, random_state=None):
+def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
+                          lmbda, verbose=False, random_state=None):
     # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
@@ -36,8 +36,8 @@ def _matrix_factorization(ratings, shape, K, steps, alpha, beta,
     num_users, num_items = shape
 
     # Initialize low-rank matrices
-    U = 0.01 * np.random.rand(num_users, K)  # User-feature matrix
-    V = 0.01 * np.random.rand(num_items, K)  # Item-feature matrix
+    U = 0.01 * np.random.rand(num_users, num_factors)  # User-feature matrix
+    V = 0.01 * np.random.rand(num_items, num_factors)  # Item-feature matrix
 
     # Cache rows
     users_cached = defaultdict(list)
@@ -46,7 +46,7 @@ def _matrix_factorization(ratings, shape, K, steps, alpha, beta,
     user_col, item_col = (0, 1)
 
     # Factorize matrix using SGD
-    for step in range(steps):
+    for step in range(num_iter):
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
@@ -54,7 +54,7 @@ def _matrix_factorization(ratings, shape, K, steps, alpha, beta,
         # Optimize rating prediction
         objective = 0
         for i in range(len(U)):
-            dU = -beta * U[i]
+            dU = -lmbda * U[i]
 
             # Precompute f (f[j] = <U[i], V[j]>)
             items = cache_rows(ratings, i, users_cached)
@@ -63,14 +63,14 @@ def _matrix_factorization(ratings, shape, K, steps, alpha, beta,
             for j in range(len(items)):  # j=items
                 w = items[j]
 
-                dV = _g(-f[j]) - beta * V[w]
+                dV = _g(-f[j]) - lmbda * V[w]
 
                 # For I
                 vec1 = _dg(f[j] - f) * \
                        (1 / (1 - _g(f - f[j])) - 1 / (1 - _g(f[j] - f)))
                 dV += np.einsum('i,j->ij', vec1, U[i]).sum(axis=0)
 
-                V[w] += alpha * dV
+                V[w] += learning_rate * dV
                 dU += _g(-f[j]) * V[w]
 
                 # For II
@@ -78,7 +78,7 @@ def _matrix_factorization(ratings, shape, K, steps, alpha, beta,
                 vec3 = _dg(f - f[j]) / (1 - _g(f - f[j]))
                 dU += np.einsum('ij,i->ij', vec2, vec3).sum(axis=0)
 
-            U[i] += alpha * dU
+            U[i] += learning_rate * dU
 
             # TODO: Loss function
 
@@ -103,17 +103,18 @@ class CLiMFLearner(Learner):
 
 
     Attributes:
-        K: int, optional
+        num_factors: int, optional
             The number of latent factors.
 
-        steps: int, optional
+        num_iter: int, optional
             The number of passes over the training data (aka epochs).
 
-        alpha: float, optional
-            The learning rate.
+        learning_rate: float, optional
+            The learning rate controlling the size of update steps (general).
 
-        beta: float, optional
-            The regularization for the ratings.
+        lmbda: float, optional
+            Controls the importance of the regularization term (general).
+            Avoids overfitting by penalizing the magnitudes of the parameters.
 
         verbose: boolean, optional
             Prints information about the process.
@@ -125,12 +126,12 @@ class CLiMFLearner(Learner):
 
     name = 'CLiMF'
 
-    def __init__(self, K=5, steps=25, alpha=0.07, beta=0.1, preprocessors=None,
-                 verbose=False):
-        self.K = K
-        self.steps = steps
-        self.alpha = alpha
-        self.beta = beta
+    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
+                 lmbda=0.1, preprocessors=None, verbose=False):
+        self.num_factors = num_factors
+        self.num_iter = num_iter
+        self.learning_rate = learning_rate
+        self.lmbda = lmbda
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
     def fit_storage(self, data):
@@ -149,18 +150,20 @@ class CLiMFLearner(Learner):
         data = super().prepare_fit(data)
 
         # Check convergence
-        if self.alpha == 0:
-            warnings.warn("With alpha=0, this algorithm does not converge "
-                          "well.", stacklevel=2)
+        if self.learning_rate == 0:
+            warnings.warn("With learning_rate=0, this algorithm does not "
+                          "converge well.", stacklevel=2)
 
         # Transform ratings matrix into a sparse matrix
         data = table2sparse(data, self.shape, self.order,
                             type=__sparse_format__)
 
         # Factorize matrix
-        U, V = _matrix_factorization(ratings=data, shape=self.shape, K=self.K,
-                                     steps=self.steps, alpha=self.alpha,
-                                     beta=self.beta, verbose=False)
+        U, V = _matrix_factorization(ratings=data, shape=self.shape,
+                                     num_factors=self.num_factors,
+                                     num_iter=self.num_iter,
+                                     learning_rate=self.learning_rate,
+                                     lmbda=self.lmbda, verbose=False)
 
         # Construct model
         model = CLiMFModel(U=U, V=V)
@@ -207,7 +210,7 @@ class CLiMFModel(Model):
 
         return predictions
 
-    def compute_objective(self, X, Y, U, V, beta):
+    def compute_objective(self, X, Y, U, V, lmbda):
         # TODO: Cast rows, cols through preprocess
         # X and Y are original data
         # Construct explicit sparse matrix to evaluate the objective function
@@ -227,7 +230,7 @@ class CLiMFModel(Model):
                                 for k in range(N)))
 
         objective = Ys.multiply(W1 - W2).sum()
-        objective -= beta / 2.0 * (np.linalg.norm(U, ord="fro") ** 2
+        objective -= lmbda / 2.0 * (np.linalg.norm(U, ord="fro") ** 2
                                         + np.linalg.norm(V, ord="fro") ** 2)
 
         return objective

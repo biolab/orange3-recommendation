@@ -16,8 +16,9 @@ class TestTrustSVD(unittest.TestCase):
         trust = Orange.data.Table('filmtrust/trust_small.tab')
 
         # Train recommender
-        learner = TrustSVDLearner(K=2, steps=1, alpha=0.07, beta=0.1,
-                                  beta_t=0.05, trust=trust, verbose=False)
+        learner = TrustSVDLearner(num_factors=2, num_iter=1, learning_rate=0.07,
+                                  lmbda=0.1, social_lmbda=0.05, trust=trust,
+                                  verbose=False)
         recommender = learner(ratings)
 
         # Compute predictions 1
@@ -45,8 +46,8 @@ class TestTrustSVD(unittest.TestCase):
         trust = Orange.data.Table('filmtrust/trust_small.tab')
 
         # Train recommender
-        learner = TrustSVDLearner(K=2, steps=1, alpha=0.07, beta=0.1,
-                                  beta_t=0.05, trust=trust, verbose=False)
+        learner = TrustSVDLearner(num_factors=2, num_iter=1, learning_rate=0.07,
+                                  lmbda=0.1, social_lmbda=0.05, trust=trust)
         recommender = learner(ratings)
 
         print(str(recommender) + ' trained')
@@ -78,8 +79,9 @@ class TestTrustSVD(unittest.TestCase):
         ratings = Orange.data.Table('filmtrust/ratings_small.tab')
         trust = Orange.data.Table('filmtrust/trust_small.tab')
 
-        trustsvd = TrustSVDLearner(K=2, steps=1, alpha=0.07, beta=0.1,
-                                   beta_t=0.05, trust=trust, verbose=False)
+        trustsvd = TrustSVDLearner(num_factors=2, num_iter=1,
+                                   learning_rate=0.07, lmbda=0.1,
+                                   social_lmbda=0.05, trust=trust)
         learners = [trustsvd]
 
         res = CrossValidation(ratings, learners, k=3)
@@ -99,42 +101,42 @@ class TestTrustSVD(unittest.TestCase):
         trust = Orange.data.Table('filmtrust/trust_small.tab')
 
         # Train recommender
-        learner = TrustSVDLearner(K=15, steps=1, alpha=0.0, beta=0.1,
-                                  beta_t=0.05, trust=trust, verbose=False)
+        learner = TrustSVDLearner(num_factors=15, num_iter=1, learning_rate=0.0,
+                                  lmbda=0.1, social_lmbda=0.05, trust=trust)
 
         self.assertWarns(UserWarning, learner, data)
 
-    def test_TrustSVD_objective(self):
-        pass
-        # Load data
-        # ratings = Orange.data.Table('filmtrust/ratings.tab')
-        # trust = Orange.data.Table('filmtrust/trust.tab')
-        #
-        # steps = [1, 10, 30]
-        # objectives = []
-        #
-        # for step in steps:
-        #     learner = TrustSVDLearner(K=15, steps=step, alpha=0.07, beta=0.1,
-        #                               beta_t=0.05, trust=trust,
-        #                               verbose=False)
-        #     recommender = learner(ratings)
-        #     objectives.append(
-        #         recommender.compute_objective(data=ratings, beta=learner.beta,
-        #                                       beta_t=learner.beta_t))
-        #
-        # # Assert objective values decrease
-        # test = list(
-        #     map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
-        # self.assertTrue(all(test))
+    # def test_TrustSVD_objective(self):
+    #     pass
+    #     # Load data
+    #     # ratings = Orange.data.Table('filmtrust/ratings.tab')
+    #     # trust = Orange.data.Table('filmtrust/trust.tab')
+    #     #
+    #     # steps = [1, 10, 30]
+    #     # objectives = []
+    #     #
+    #     # for step in steps:
+    #     #     learner = TrustSVDLearner(num_factors=15, num_iter=step, learning_rate=0.07, lmbda=0.1,
+    #     #                               social_lmbda=0.05, trust=trust,
+    #     #                               verbose=False)
+    #     #     recommender = learner(ratings)
+    #     #     objectives.append(
+    #     #         recommender.compute_objective(data=ratings, lmbda=learner.beta,
+    #     #                                       social_lmbda=learner.beta_t))
+    #     #
+    #     # # Assert objective values decrease
+    #     # test = list(
+    #     #     map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
+    #     # self.assertTrue(all(test))
 
 
 if __name__ == "__main__":
     # Test all
-    # unittest.main()
+    unittest.main()
 
-    # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestTrustSVD("test_TrustSVD_input_data_continuous"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # # Test single test
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestTrustSVD("test_TrustSVD_input_data_continuous"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
 
