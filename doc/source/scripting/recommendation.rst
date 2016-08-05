@@ -197,7 +197,7 @@ Example
 
    # Load data and train the model
    data = Orange.data.Table('movielens100k.tab')
-   learner = BRISMFLearner(K=15, steps=25, alpha=0.07, beta=0.1)
+   learner = BRISMFLearner(num_factors=15, num_iter=25, learning_rate=0.07, lmbda=0.1)
    recommender = learner(data)
 
    # Make predictions
@@ -247,7 +247,7 @@ Example
 
    # Load data and train the model
    data = Orange.data.Table('movielens100k.tab')
-   learner = SVDPlusPlusLearner(K=15, steps=25, alpha=0.07, beta=0.1)
+   learner = SVDPlusPlusLearner(num_factors=15, num_iter=25, learning_rate=0.07, lmbda=0.1)
    recommender = learner(data)
 
    # Make predictions
@@ -298,8 +298,8 @@ Example
     # Load data and train the model
     ratings = Orange.data.Table('filmtrust/ratings.tab')
     trust = Orange.data.Table('filmtrust/trust.tab')
-    learner = TrustSVDLearner(K=15, steps=1, alpha=0.07, beta=0.1,
-                              beta_trust=0.05, trust=trust)
+    learner = TrustSVDLearner(num_factors=15, num_iter=25, learning_rate=0.07,
+                              lmbda=0.1, social_lmbda=0.05, trust=trust)
     recommender = learner(data)
 
     # Make predictions
@@ -340,7 +340,7 @@ Example
 
     # Load data and train the model
     data = Orange.data.Table('epinions_train.tab')
-    learner = CLiMFLearner(K=10, steps=10, alpha=0.0001, beta=0.001)
+    learner = CLiMFLearner(num_factors=10, num_iter=10, learning_rate=0.0001, lmbda=0.001)
     recommender = learner(data)
 
     # Load testing set

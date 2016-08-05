@@ -85,7 +85,7 @@ Let's presume that we want to load a dataset, train it and predict its first thr
 
     # Load data and train the model
     data = Orange.data.Table('movielens100k.tab')
-    learner = BRISMFLearner(K=15, steps=25, alpha=0.07, beta=0.1)
+    learner = BRISMFLearner(num_factors=15, num_iter=25, learning_rate=0.07, lmbda=0.1)
     recommender = learner(data)
 
     # Make predictions
@@ -151,7 +151,7 @@ The first thing we need to do is to make a list of all the learners that we want
     items_avg = ItemAvgLearner()
     users_avg = UserAvgLearner()
     useritem_baseline = UserItemBaselineLearner()
-    brismf = BRISMFLearner(K=15, steps=25, alpha=0.07, beta=0.1)
+    brismf = BRISMFLearner(num_factors=15, num_iter=25, learning_rate=0.07, lmbda=0.1)
     learners = [global_avg, items_avg, users_avg, useritem_baseline, brismf]
 
 
