@@ -38,10 +38,11 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
 
     def test_warnings(self):
         trust = Orange.data.Table(__trust_dataset__)
-        learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
+        learner = TrustSVDLearner(num_factors=2, num_iter=1,
+                                  learning_rate=0.0, trust=trust)
         super().test_warnings(learner, filename=__dataset__)
 
-    @unittest.skip("Skipping test")
+    #@unittest.skip("Skipping test")
     def test_objective(self):
         from orangecontrib.recommendation.rating.trustsvd import compute_loss
 
@@ -82,7 +83,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestTrustSVD("test_input_data_continuous"))
+    suite.addTest(TestTrustSVD("test_objective"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

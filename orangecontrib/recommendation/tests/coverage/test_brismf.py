@@ -43,7 +43,7 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
         steps = [1, 10, 30]
         objectives = []
         learner = BRISMFLearner(num_factors=2, learning_rate=0.0007,
-                                random_state=42, verbose=True)
+                                random_state=42, verbose=False)
 
         for step in steps:
             learner.num_iter = step

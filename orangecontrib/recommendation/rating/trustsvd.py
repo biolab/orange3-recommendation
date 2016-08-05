@@ -288,9 +288,8 @@ def compute_loss(data, bias, low_rank_matrices, params):
             feedback_u = cache_rows(feedback, u, feedback_cached)
 
         # Prediction and error
-        ruj_pred, _, _, norm_Iu, norm_Tu = _predict(u, j, global_avg, bu, bi, P,
-                                                    Q, Y, W, feedback_u,
-                                                    trustees_u)
+        ruj_pred, _, _, norm_Iu, norm_Tu = \
+            _predict(u, j, global_avg, bu, bi, P, Q, Y, W, feedback_u, trustees_u)
 
         # Cache norms
         norm_I[u] = norm_Iu
