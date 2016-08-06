@@ -9,7 +9,7 @@ __dataset__ = 'ratings.tab'
 class TestUserItemBaseline(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
-        learner = UserItemBaselineLearner()
+        learner = UserItemBaselineLearner(verbose=True)
         super().test_input_data_continuous(learner, filename=__dataset__)
 
     def test_input_data_discrete(self):

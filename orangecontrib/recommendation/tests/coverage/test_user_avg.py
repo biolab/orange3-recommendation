@@ -9,7 +9,7 @@ __dataset__ = 'ratings.tab'
 class TestUserAvg(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
-        learner = UserAvgLearner()
+        learner = UserAvgLearner(verbose=True)
         super().test_input_data_continuous(learner, filename=__dataset__)
 
     def test_input_data_discrete(self):

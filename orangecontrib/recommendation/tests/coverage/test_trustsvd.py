@@ -12,7 +12,8 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
         trust = Orange.data.Table(__trust_dataset__)
-        learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
+        learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust,
+                                  verbose=True)
         super().test_input_data_continuous(learner, filename=__dataset__)
 
     @unittest.skip("Skipping test")
@@ -53,7 +54,7 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
         steps = [1, 10, 30]
         objectives = []
         learner = TrustSVDLearner(num_factors=2, learning_rate=0.0007,
-                                  random_state=42, trust=trust, verbose=True)
+                                  random_state=42, trust=trust, verbose=False)
 
         for step in steps:
             learner.num_iter = step
@@ -68,7 +69,6 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
             params = (learner.lmbda, learner.bias_lmbda, learner.social_lmbda)
 
             objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
-            print(">>>>>>" + str(objective))
             objectives.append(objective)
 
         # Assert objective values decrease
@@ -76,6 +76,24 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
             map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
 
+    def test_outputs(self):
+        # Load data
+        data = Orange.data.Table(__dataset__)
+        trust = Orange.data.Table(__trust_dataset__)
+        learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
+
+        # Train recommender
+        recommender = learner(data)
+
+        # Check tables P, Q, Y and W
+        P = recommender.getPTable()
+        Q = recommender.getQTable()
+        Y = recommender.getYTable()
+        W = recommender.getWTable()
+
+        diff = len(set([P.X.shape[1], Q.X.shape[1], Y.X.shape[1],
+                        W.X.shape[1]]))
+        self.assertEqual(diff, 1)
 
 if __name__ == "__main__":
     # # Test all

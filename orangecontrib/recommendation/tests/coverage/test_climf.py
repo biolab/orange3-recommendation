@@ -63,7 +63,7 @@ class TestCLiMF(unittest.TestCase):
 
         # Train recommender
         learner = CLiMFLearner(num_factors=2, num_iter=1, learning_rate=0.0001,
-                               lmbda=0.001, verbose=True)
+                               lmbda=0.001, verbose=False)
         recommender = learner(data)
 
         # Check tables U and V
@@ -130,6 +130,22 @@ class TestCLiMF(unittest.TestCase):
         test = list(
             map(lambda t: t[0] <= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
+
+    def test_outputs(self):
+        # Load data
+        data = Orange.data.Table('binary_data.tab')
+
+        # Train recommender
+        learner = CLiMFLearner(num_factors=2, num_iter=1)
+        # Train recommender
+        recommender = learner(data)
+
+        # Check tables P, Q, Y and W
+        U = recommender.getUTable()
+        V = recommender.getVTable()
+
+        diff = len(set([U.X.shape[1], V.X.shape[1]]))
+        self.assertEqual(diff, 1)
 
 
 if __name__ == "__main__":

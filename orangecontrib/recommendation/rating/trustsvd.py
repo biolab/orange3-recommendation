@@ -292,7 +292,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
 
         term_s = 0
         if norm_Tu > 0:
-            term_s = social_lmbda / (2 * norm_Tu)
+            term_s = social_lmbda/(2 * norm_Tu)
 
         term_ls = term_l + term_s
         if term_ls > 0:

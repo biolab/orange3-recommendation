@@ -18,32 +18,6 @@ class TestRatingModels:
     #         raise unittest.SkipTest("Skip BaseTest tests, it's a base class")
     #     super(TestRatingModels, cls).setUpClass()
 
-    def test_predict_items(self, learner, filename):
-        # Load data
-        data = Orange.data.Table(filename)
-
-        # Train recommender
-        recommender = learner(data)
-
-        # Compute predictions 1
-        prediction = recommender.predict_items(users=None, top=None)
-
-        # Compute predictions 2 (Execute the other branch)
-        num_users = min(recommender.shape[0], 5)
-        num_items = min(recommender.shape[1], 5)
-        setUsers = random.sample(range(recommender.shape[0]), num_users)
-        prediction2 = recommender.predict_items(users=setUsers, top=num_items)
-
-        # Check correctness 1
-        len_u, len_i = prediction.shape
-        self.assertEqual(len_u, recommender.shape[0])
-        self.assertEqual(len_i, recommender.shape[1])
-
-        # Check correctness 2
-        len_u, len_i = prediction2.shape
-        self.assertEqual(len_u, num_users)
-        self.assertEqual(len_i, num_items)
-
     def test_input_data_discrete(self, learner, filename):
         # Load data
         data = Orange.data.Table(filename)
@@ -101,6 +75,32 @@ class TestRatingModels:
 
         # Check correctness
         self.assertEqual(len(y_pred), sample_size)
+
+    def test_predict_items(self, learner, filename):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        # Train recommender
+        recommender = learner(data)
+
+        # Compute predictions 1
+        prediction = recommender.predict_items(users=None, top=None)
+
+        # Compute predictions 2 (Execute the other branch)
+        num_users = min(recommender.shape[0], 5)
+        num_items = min(recommender.shape[1], 5)
+        setUsers = random.sample(range(recommender.shape[0]), num_users)
+        prediction2 = recommender.predict_items(users=setUsers, top=num_items)
+
+        # Check correctness 1
+        len_u, len_i = prediction.shape
+        self.assertEqual(len_u, recommender.shape[0])
+        self.assertEqual(len_i, recommender.shape[1])
+
+        # Check correctness 2
+        len_u, len_i = prediction2.shape
+        self.assertEqual(len_u, num_users)
+        self.assertEqual(len_i, num_items)
 
     def test_CV(self, learner, filename):
         from Orange.evaluation.testing import CrossValidation

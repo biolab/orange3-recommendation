@@ -49,7 +49,7 @@ def preprocess(data):
         idx_items = data.domain.variables.index(col_attribute)
         idx_users = data.domain.variables.index(row_attribute)
 
-    except Exception as e:
+    except AttributeError as e:
         idx_items = 1
         idx_users = 0
         warnings.warn('Row/Column metadata not found. Applying heuristics '
@@ -60,6 +60,7 @@ def preprocess(data):
         users = int(np.max(data.X[:, idx_users]) + 1)
     except ValueError as e:
         users = 0
+
     try:
         items = int(np.max(data.X[:, idx_items]) + 1)
     except ValueError as e:

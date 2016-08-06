@@ -64,6 +64,22 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
             map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
 
+    def test_outputs(self):
+        # Load data
+        data = Orange.data.Table(__dataset__)
+
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
+        # Train recommender
+        recommender = learner(data)
+
+        # Check tables P, Q and Y
+        P = recommender.getPTable()
+        Q = recommender.getQTable()
+        Y = recommender.getYTable()
+
+        diff = len(set([P.X.shape[1], Q.X.shape[1], Y.X.shape[1]]))
+        self.assertEqual(diff, 1)
+
 
 if __name__ == "__main__":
     # # Test all
