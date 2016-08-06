@@ -32,3 +32,14 @@ orange3venv-recsys/
 # Coverage
 .coverage
 coverage.xml
+orangecontrib/__pycache__/
+orangecontrib/recommendation/__pycache__/
+orangecontrib/recommendation/baseline/__pycache__/
+orangecontrib/recommendation/evaluation/__pycache__/
+orangecontrib/recommendation/ranking/__pycache__/
+orangecontrib/recommendation/rating/__pycache__/
+orangecontrib/recommendation/tests/__pycache__/
+orangecontrib/recommendation/tests/coverage/__pycache__/
+orangecontrib/recommendation/tutorials/__pycache__/
+orangecontrib/recommendation/utils/__pycache__/
+orangecontrib/recommendation/widgets/__pycache__/
