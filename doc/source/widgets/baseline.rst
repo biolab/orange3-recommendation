@@ -1,12 +1,12 @@
-==============
-Global average
-==============
+==================
+Baseline
+==================
 
-.. figure:: icons/average.svg
+.. figure:: icons/user-item-baseline.svg
     :width: 64pt
 
-Uses the average rating value of all ratings to make predictions.
-
+This widget includes four basic baseline models: Global average, User average,
+Item average and User-Item baseline.
 
 Signals
 -------
@@ -25,7 +25,7 @@ Preprocessed data.
 
 -  **Learner**
 
-The learning algorithm with the supplied parameters
+The selected learner in the widget.
 
 -  **Predictor**
 
@@ -36,7 +36,17 @@ input *Data* is present.
 Description
 -----------
 
-**Global average** widget uses computes the average of all ratings to make
+-  **Global average:**
+Computes the average of all ratings and use it to make predictions.
+
+-  **User average:**
+Takes the average rating value of a user to make predictions.
+
+-  **Item average:**
+Takes the average rating value of an item to make predictions.
+
+-  **User-Item baseline:**
+Takes the bias of users and items plus the global average to make
 predictions.
 
 
@@ -50,4 +60,3 @@ widget and view the results in `Data Table <http://docs.orange.biolab.si/3/visua
 For *Learner* we can compare different learners in `Test&Score <http://docs.orange.biolab.si/3/visual-programming/widgets/evaluation/testlearners.html>`_ widget.
 
 .. figure:: images/example.png
-
