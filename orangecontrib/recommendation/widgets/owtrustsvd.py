@@ -8,6 +8,7 @@ from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import TrustSVDLearner
 
+
 class OWTrustSVD(OWBaseLearner):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
@@ -21,64 +22,69 @@ class OWTrustSVD(OWBaseLearner):
 
     MISSING_DATA_WARNING = 0
 
-    inputs = [("Trust information ", Table, "set_trust"),
-              ("Feedback information", Table, "set_feedback")]
+    inputs = [("Trust information ", Table, "set_trust")]
 
     outputs = [("P", Table),
                ("Q", Table),
                ("Y", Table),
                ("W", Table)]
 
-    K = settings.Setting(5)
-    steps = settings.Setting(25)
-    alpha = settings.Setting(0.07)
-    beta = settings.Setting(0.1)
-    beta_t = settings.Setting(0.05)
+    num_factors = settings.Setting(5)
+    num_iter = settings.Setting(25)
+    learning_rate = settings.Setting(0.005)
+    lmbda = settings.Setting(0.02)
+    bias_lmbda = settings.Setting(0.02)
+    social_lmbda = settings.Setting(0.02)
     trust = None
-    feedback = None
 
     def add_main_layout(self):
         box = gui.widgetBox(self.controlArea, "Parameters")
 
-        gui.spin(box, self, "K", 1, 10000,
-                 label="Latent factors:",
+        gui.spin(box, self, "num_factors", 1, 10000,
+                 label="Number of latent factors:",
                  alignment=Qt.AlignRight, callback=self.settings_changed)
 
-        gui.spin(box, self, "steps", 1, 10000,
+        gui.spin(box, self, "num_iter", 1, 10000,
                  label="Number of iterations:",
                  alignment=Qt.AlignRight, callback=self.settings_changed)
 
-        gui.doubleSpin(box, self, "alpha", minv=1e-4, maxv=1e+5, step=1e-5,
-                   label="Learning rate:", decimals=5, alignment=Qt.AlignRight,
-                   controlWidth=90, callback=self.settings_changed)
+        gui.doubleSpin(box, self, "learning_rate", minv=1e-4, maxv=1e+5,
+                       step=1e-5, label="Learning rate:", decimals=5,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
 
-        gui.doubleSpin(box, self, "beta",  minv=1e-4, maxv=1e+4, step=1e-4,
-                       label="Regularization factor:", decimals=4,
-                       alignment=Qt.AlignRight,
-                       controlWidth=90, callback=self.settings_changed)
+        gui.doubleSpin(box, self, "lmbda", minv=1e-4, maxv=1e+4, step=1e-4,
+                       label="Regularization:", decimals=4,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
 
-        gui.doubleSpin(box, self, "beta_t", minv=1e-4, maxv=1e+4, step=1e-4,
-                       label="Regularization factor (Trust):", decimals=4,
-                       alignment=Qt.AlignRight,
-                       controlWidth=90, callback=self.settings_changed)
+        gui.doubleSpin(box, self, "bias_lmbda", minv=1e-4, maxv=1e+4, step=1e-4,
+                       label="Bias regularization:", decimals=4,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
+
+        gui.doubleSpin(box, self, "social_lmbda", minv=1e-4, maxv=1e+4,
+                       step=1e-4, label="Social regularization:", decimals=4,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
 
     def create_learner(self):
         return self.LEARNER(
-            K=self.K,
-            steps=self.steps,
-            alpha=self.alpha,
-            beta=self.beta,
-            beta_t=self.beta_t,
-            trust=self.trust,
-            feedback=self.feedback
+            num_factors=self.num_factors,
+            num_iter=self.num_iter,
+            learning_rate=self.learning_rate,
+            lmbda=self.lmbda,
+            bias_lmbda=self.bias_lmbda,
+            trust=self.trust
         )
 
     def get_learner_parameters(self):
-        return (("Latent factors", self.K),
-                ("Number of iterations", self.steps),
-                ("Learning rate", self.alpha),
-                ("Regularization factor", self.beta),
-                ("Regularization factor (Trust)", self.beta_t))
+        return (("Number of latent factors", self.num_factors),
+                ("Number of iterations", self.num_iter),
+                ("Learning rate", self.learning_rate),
+                ("Regularization", self.lmbda),
+                ("Bias regularization", self.bias_lmbda),
+                ("Social regularization", self.social_lmbda))
 
     def update_learner(self):
         if self.trust is None:
@@ -109,10 +115,6 @@ class OWTrustSVD(OWBaseLearner):
 
     def set_trust(self, trust):
         self.trust = trust
-        self.update_learner()
-
-    def set_feedback(self, feedback):
-        self.feedback = feedback
         self.update_learner()
 
 

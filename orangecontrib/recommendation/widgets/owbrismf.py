@@ -8,6 +8,7 @@ from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import BRISMFLearner
 
+
 class OWBRISMF(OWBaseLearner):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
@@ -22,57 +23,54 @@ class OWBRISMF(OWBaseLearner):
     outputs = [("P", Table),
                ("Q", Table)]
 
-    K = settings.Setting(5)
-    steps = settings.Setting(25)
-    alpha = settings.Setting(0.005)
-    beta = settings.Setting(0.02)
+    num_factors = settings.Setting(5)
+    num_iter = settings.Setting(25)
+    learning_rate = settings.Setting(0.005)
+    lmbda = settings.Setting(0.02)
+    bias_lmbda = settings.Setting(0.02)
 
     def add_main_layout(self):
         box = gui.widgetBox(self.controlArea, "Parameters")
         self.base_estimator = BRISMFLearner()
 
-        gui.spin(box, self, "K", 1, 10000,
-                 label="Latent factors:",
+        gui.spin(box, self, "num_factors", 1, 10000,
+                 label="Number of latent factors:",
                  alignment=Qt.AlignRight, callback=self.settings_changed)
 
-        gui.spin(box, self, "steps", 1, 10000,
+        gui.spin(box, self, "num_iter", 1, 10000,
                  label="Number of iterations:",
                  alignment=Qt.AlignRight, callback=self.settings_changed)
 
-        gui.doubleSpin(box, self, "alpha", minv=1e-4, maxv=1e+5, step=1e-5,
-                   label="Learning rate:", decimals=5, alignment=Qt.AlignRight,
-                   controlWidth=90, callback=self.settings_changed)
+        gui.doubleSpin(box, self, "learning_rate", minv=1e-4, maxv=1e+5,
+                       step=1e-5, label="Learning rate:", decimals=5,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
 
-        gui.doubleSpin(box, self, "beta",  minv=1e-4, maxv=1e+4, step=1e-4,
-                       label="Regularization factor:", decimals=4,
-                       alignment=Qt.AlignRight,
-                       controlWidth=90, callback=self.settings_changed)
+        gui.doubleSpin(box, self, "lmbda",  minv=1e-4, maxv=1e+4, step=1e-4,
+                       label="Regularization:", decimals=4,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
+
+        gui.doubleSpin(box, self, "bias_lmbda", minv=1e-4, maxv=1e+4, step=1e-4,
+                       label="Bias regularization:", decimals=4,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
 
     def create_learner(self):
         return self.LEARNER(
-            K=self.K,
-            steps=self.steps,
-            alpha=self.alpha,
-            beta=self.beta
+            num_factors=self.num_factors,
+            num_iter=self.num_iter,
+            learning_rate=self.learning_rate,
+            lmbda=self.lmbda,
+            bias_lmbda=self.bias_lmbda
         )
 
     def get_learner_parameters(self):
-        return (("Latent factors", self.K),
-                ("Number of iterations", self.steps),
-                ("Learning rate", self.alpha),
-                ("Regularization factor", self.beta))
-
-    def update_model(self):
-        super().update_model()
-
-        P = None
-        Q = None
-        if self.valid_data:
-            P = self.model.getPTable()
-            Q = self.model.getQTable()
-
-        self.send("P", P)
-        self.send("Q", Q)
+        return (("Number of latent factors", self.num_factors),
+                ("Number of iterations", self.num_iter),
+                ("Learning rate", self.learning_rate),
+                ("Regularization", self.lmbda),
+                ("Bias regularization", self.bias_lmbda))
 
 
 if __name__ == '__main__':

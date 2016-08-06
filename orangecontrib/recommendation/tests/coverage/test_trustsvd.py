@@ -60,7 +60,7 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
             recommender = learner(data)
 
             # Set parameters
-            data_t = (data, recommender.feedback, learner.trust)
+            data_t = (data, learner.trust)
             bias = recommender.bias
             bias_t = (bias['globalAvg'], bias['dUsers'], bias['dItems'])
             low_rank_matrices = (recommender.P, recommender.Q, recommender.Y,
