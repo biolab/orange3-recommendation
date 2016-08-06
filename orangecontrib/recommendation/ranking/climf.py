@@ -127,11 +127,14 @@ class CLiMFLearner(Learner):
     name = 'CLiMF'
 
     def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
-                 lmbda=0.1, preprocessors=None, verbose=False):
+                 lmbda=0.1, preprocessors=None, verbose=False,
+                 random_state=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
         self.learning_rate = learning_rate
         self.lmbda = lmbda
+        self.random_state = random_state
+
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
     def fit_storage(self, data):
@@ -163,7 +166,8 @@ class CLiMFLearner(Learner):
                                      num_factors=self.num_factors,
                                      num_iter=self.num_iter,
                                      learning_rate=self.learning_rate,
-                                     lmbda=self.lmbda, verbose=False)
+                                     lmbda=self.lmbda, verbose=self.verbose,
+                                     random_state=self.random_state)
 
         # Construct model
         model = CLiMFModel(U=U, V=V)

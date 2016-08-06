@@ -13,16 +13,23 @@ __all__ = ['SVDPlusPlusLearner']
 __sparse_format__ = lil_matrix
 
 
-def _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback):
-    bias = global_avg + bu[u] + bi[j]
-
-    # Implicit feedback
-    norm_feedback = math.sqrt(len(feedback))
+def _compute_extra_term(Y, feedback_u):
+    # Implicit information
+    norm_feedback = math.sqrt(len(feedback_u))
     if norm_feedback > 0:
-        y_sum = np.sum(Y[feedback, :], axis=0)
+        y_sum = np.sum(Y[feedback_u, :], axis=0)
         y_term = y_sum / norm_feedback
     else:
         y_term = 0
+
+    return y_term, norm_feedback
+
+
+def _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback_u):
+    bias = global_avg + bu[u] + bi[j]
+
+    # Compute extra term
+    y_term, norm_feedback = _compute_extra_term(Y, feedback_u)
 
     # Compute base
     p_enhanced = P[u, :] + y_term
@@ -31,16 +38,11 @@ def _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback):
     return bias + base_pred, y_term, norm_feedback
 
 
-def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, feedback):
+def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, feedback_u):
     bias = global_avg + bu[u] + bi
 
-    # Implicit feedback
-    norm_feedback = math.sqrt(len(feedback))
-    if norm_feedback > 0:
-        y_sum = np.sum(Y[feedback, :], axis=0)
-        y_term = y_sum / norm_feedback
-    else:
-        y_term = 0
+    # Compute extra term
+    y_term, norm_feedback = _compute_extra_term(Y, feedback_u)
 
     # Compute base
     p_enhanced = P[u, :] + y_term

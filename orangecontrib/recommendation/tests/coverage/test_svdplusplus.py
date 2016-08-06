@@ -13,6 +13,10 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=True)
         super().test_input_data_continuous(learner, filename=__dataset__)
 
+        fb_ds = Orange.data.Table(__dataset__)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, feedback=fb_ds)
+        super().test_input_data_continuous(learner, filename=__dataset__)
+
     def test_input_data_discrete(self):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
         super().test_input_data_discrete(learner, filename='ratings_dis.tab')

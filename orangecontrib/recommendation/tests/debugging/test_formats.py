@@ -1,5 +1,5 @@
 import Orange
-from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.utils.format_data import *
 
 from scipy.sparse import csr_matrix
 import numpy as np
@@ -23,12 +23,12 @@ def print_dense_matrix():
     filename = '../datasets/ratings2.tab'
     data = Orange.data.Table(filename)
 
-    data, order, shape = format_data.preprocess(data)
+    data, order, shape = preprocess(data)
 
     # Build matrix and print it as a dense
     row = data.X[:, order[0]]
     col = data.X[:, order[1]]
-    mtx = format_data.build_sparse_matrix(row, col, data.Y, shape)
+    mtx = sparse_matrix_2d(row, col, data.Y, shape)
 
     print(mtx.todense())
 
@@ -37,7 +37,7 @@ def create_implicit_data():
     filename = '../datasets/ratings3.tab'
     data = Orange.data.Table(filename)
 
-    data, order, shape = format_data.preprocess(data)
+    data, order, shape = preprocess(data)
     users = np.unique(data.X[:, order[0]])
 
     d = defaultdict(list)
@@ -88,8 +88,6 @@ def create_trust_data():
     print(new_t)
     data_t.X = new_t.astype(int)
     Orange.data.Table.save(data_t, 'trust_small.tab')
-
-    asdasd = 23
 
 
 if __name__ == "__main__":

@@ -31,5 +31,5 @@ def run_tests():
     unittest.TextTestRunner().run(suite)
 
 if __name__ == "__main__":
-    pass
+    #pass
     run_tests()

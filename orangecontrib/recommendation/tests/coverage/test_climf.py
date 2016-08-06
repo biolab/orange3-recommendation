@@ -119,7 +119,7 @@ class TestCLiMF(unittest.TestCase):
         objectives = []
 
         for step in steps:
-            learner = CLiMFLearner(num_factors=2, num_iter=step)
+            learner = CLiMFLearner(num_factors=2, num_iter=step, random_state=42)
             recommender = learner(data)
             objectives.append(recommender.compute_objective(X=data.X, Y=data.Y,
                                                             U=recommender.U,

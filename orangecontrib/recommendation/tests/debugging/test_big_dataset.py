@@ -96,5 +96,5 @@ def test_CV():
             "{:8s} {:.2f} {:5.2f}".format(learners[i].name, rmse[i], r2[i]))
 
 if __name__ == "__main__":
-    pass
+    #pass
     test_learners()

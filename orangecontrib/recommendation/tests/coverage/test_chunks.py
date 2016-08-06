@@ -44,8 +44,11 @@ class TestChunks(unittest.TestCase):
         data = np.array([1, 2, 3, 4, 5, 6])
         shape = (3, 3)
         m = sparse_matrix_2d(row, col, data, shape, csr_matrix)
+        m2 = sparse_matrix_2d(row, col, data, shape, lil_matrix)
 
+        self.assertEqual(0, len(cache_rows(m, 10, {1: [2]})))
         self.assertRaises(TypeError, lambda: cache_rows(m, 0, {1: [2]}))
+        self.assertRaises(AttributeError, lambda: cache_rows(m2, 0, 0))
         self.assertRaises(Exception, lambda: cache_rows(m, 0, 0))
 
         indices = np.asarray([0, 1, 2])

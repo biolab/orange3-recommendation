@@ -81,4 +81,5 @@ def cache_norms(matrix, indices, cache):
                 "'matrix' object must be a scipy.sparse.lil_matrix.")
 
     except Exception as e:
+        print(e)
         raise TypeError("'indices' object must be either an 'int' or array.")

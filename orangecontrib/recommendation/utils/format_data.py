@@ -49,7 +49,7 @@ def preprocess(data):
         idx_items = data.domain.variables.index(col_attribute)
         idx_users = data.domain.variables.index(row_attribute)
 
-    except AttributeError as e:
+    except AttributeError:
         idx_items = 1
         idx_users = 0
         warnings.warn('Row/Column metadata not found. Applying heuristics '
@@ -58,12 +58,12 @@ def preprocess(data):
     # Find the highest value on each column
     try:
         users = int(np.max(data.X[:, idx_users]) + 1)
-    except ValueError as e:
+    except ValueError:
         users = 0
 
     try:
         items = int(np.max(data.X[:, idx_items]) + 1)
-    except ValueError as e:
+    except ValueError:
         items = 0
 
     # Construct tuples
@@ -100,10 +100,10 @@ def table2sparse(data, shape, order, type=lil_matrix):
         """
 
     return sparse_matrix_2d(row=data.X[:, order[0]], col=data.X[:, order[1]],
-                            data=data.Y, shape=shape, type=type)
+                            data=data.Y, shape=shape, m_type=type)
 
 
-def sparse_matrix_2d(row, col, data, shape, type=lil_matrix):
+def sparse_matrix_2d(row, col, data, shape, m_type=lil_matrix):
     """Constructs a 2D sparse matrix.
 
     Given the indices of the rows, columns and value
@@ -122,7 +122,7 @@ def sparse_matrix_2d(row, col, data, shape, type=lil_matrix):
         shape: (int, int)
            Tuple of integers with the shape of the matrix
 
-        type: scipy.sparse.*
+        m_type: scipy.sparse.*
            Type of matrix to return (csr_matrix, lil_matrix,...)
 
     Returns:
@@ -134,19 +134,19 @@ def sparse_matrix_2d(row, col, data, shape, type=lil_matrix):
     matrix = coo_matrix((data, (row, col)), shape=shape)
 
     # Set sparse matrix type
-    if type == csc.csc_matrix:
+    if m_type == csc.csc_matrix:
         matrix = matrix.tocsc()
-    elif type == csr.csr_matrix:
+    elif m_type == csr.csr_matrix:
         matrix = matrix.tocsr()
-    elif type == bsr.bsr_matrix:
+    elif m_type == bsr.bsr_matrix:
         matrix = matrix.tobsr()
-    elif type == lil.lil_matrix:
+    elif m_type == lil.lil_matrix:
         matrix = matrix.tolil()
-    elif type == dok.dok_matrix:
+    elif m_type == dok.dok_matrix:
         matrix = matrix.todok()
-    elif type == coo.coo_matrix:
+    elif m_type == coo.coo_matrix:
         pass
-    elif type == dia.dia_matrix:
+    elif m_type == dia.dia_matrix:
         matrix = matrix.todia()
     else:
         raise TypeError('Unknown sparse matrix format')
