@@ -442,15 +442,15 @@ class SVDPlusPlusModel(Model):
         variable = self.original_domain.variables[self.order[0]]
         return feature_matrix(variable, self.Y, domain_name)
 
-
-if __name__ == "__main__":
-    import Orange
-
-    print('Loading data...')
-    ratings = Orange.data.Table('filmtrust/ratings.tab')
-
-    start = time.time()
-    learner = SVDPlusPlusLearner(num_factors=15, num_iter=1,
-                                 learning_rate=0.007, lmbda=0.1, verbose=True)
-    recommender = learner(ratings)
-    print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
+#
+# if __name__ == "__main__":
+#     import Orange
+#
+#     print('Loading data...')
+#     ratings = Orange.data.Table('filmtrust/ratings.tab')
+#
+#     start = time.time()
+#     learner = SVDPlusPlusLearner(num_factors=15, num_iter=1,
+#                                  learning_rate=0.007, lmbda=0.1, verbose=True)
+#     recommender = learner(ratings)
+#     print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
