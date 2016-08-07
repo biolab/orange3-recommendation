@@ -97,7 +97,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
     elif isinstance(ratings, Table):
         # Preprocess Orange.data.Table and transform it to sparse
         ratings, order, shape = preprocess(ratings)
-        ratings = table2sparse(ratings, shape, order, type=__sparse_format__)
+        ratings = table2sparse(ratings, shape, order, m_type=__sparse_format__)
     else:
         raise TypeError('Invalid data type')
 
@@ -207,7 +207,7 @@ class BRISMFLearner(Learner):
 
         # Transform ratings matrix into a sparse matrix
         data = table2sparse(data, self.shape, self.order,
-                            type=__sparse_format__)
+                            m_type=__sparse_format__)
 
         # Factorize matrix
         P, Q, bu, bi = _matrix_factorization(ratings=data, bias=bias,

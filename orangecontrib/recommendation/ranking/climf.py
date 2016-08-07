@@ -156,7 +156,7 @@ class CLiMFLearner(Learner):
 
         # Transform ratings matrix into a sparse matrix
         data = table2sparse(data, self.shape, self.order,
-                            type=__sparse_format__)
+                            m_type=__sparse_format__)
 
         # Factorize matrix
         U, V = _matrix_factorization(ratings=data, shape=self.shape,

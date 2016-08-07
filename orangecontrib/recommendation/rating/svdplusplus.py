@@ -150,7 +150,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
     elif isinstance(ratings, Table):
         # Preprocess Orange.data.Table and transform it to sparse
         ratings, order, shape = preprocess(ratings)
-        ratings = table2sparse(ratings, shape, order, type=__sparse_format__)
+        ratings = table2sparse(ratings, shape, order, m_type=__sparse_format__)
     else:
         raise TypeError('Invalid data type')
 
@@ -160,7 +160,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
     elif isinstance(feedback, Table):
         # Preprocess Orange.data.Table and transform it to sparse
         feedback, order, shape = preprocess(feedback)
-        feedback = table2sparse(feedback, shape, order, type=__sparse_format__)
+        feedback = table2sparse(feedback, shape, order, m_type=__sparse_format__)
     else:
         raise TypeError('Invalid data type')
 
@@ -269,7 +269,7 @@ class SVDPlusPlusLearner(Learner):
 
             # Transform feedback matrix into a sparse matrix
             self.feedback = table2sparse(self.feedback, self.shape_f,
-                                         order_f, type=__sparse_format__)
+                                         order_f, m_type=__sparse_format__)
 
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
@@ -299,7 +299,7 @@ class SVDPlusPlusLearner(Learner):
 
         # Transform ratings matrix into a sparse matrix
         data = table2sparse(data, self.shape, self.order,
-                            type=__sparse_format__)
+                            m_type=__sparse_format__)
 
         # Factorize matrix
         P, Q, Y, bu, bi, temp_feedback = \

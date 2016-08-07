@@ -216,7 +216,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
     elif isinstance(ratings, Table):
         # Preprocess Orange.data.Table and transform it to sparse
         ratings, order, shape = preprocess(ratings)
-        ratings = table2sparse(ratings, shape, order, type=__sparse_format__)
+        ratings = table2sparse(ratings, shape, order, m_type=__sparse_format__)
     else:
         raise TypeError('Invalid data type')
 
@@ -226,7 +226,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
     elif isinstance(trust, Table):
         # Preprocess Orange.data.Table and transform it to sparse
         trust, order, shape = preprocess(trust)
-        trust = table2sparse(trust, shape, order, type=__sparse_format__)
+        trust = table2sparse(trust, shape, order, m_type=__sparse_format__)
     else:
         raise TypeError('Invalid data type')
 
@@ -401,7 +401,7 @@ class TrustSVDLearner(Learner):
 
             # Transform trust matrix into a sparse matrix
             self.trust = table2sparse(self.trust, self.shape_t, order_t,
-                                      type=__sparse_format__)
+                                      m_type=__sparse_format__)
 
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
@@ -430,7 +430,7 @@ class TrustSVDLearner(Learner):
         bias = self.compute_bias(data, 'all')
         # Transform ratings matrix into a sparse matrix
         data = table2sparse(data, self.shape, self.order,
-                            type=__sparse_format__)
+                            m_type=__sparse_format__)
         # Factorize matrix
         P, Q, Y, W, bu, bi, temp_feedback = \
             _matrix_factorization(ratings=data, trust=self.trust, bias=bias,
