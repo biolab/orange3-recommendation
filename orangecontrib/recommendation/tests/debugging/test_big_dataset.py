@@ -61,8 +61,8 @@ def test_learners():
 
     # BRISMF
     start = time.time()
-    learner = BRISMFLearner(num_factors=10, num_iter=100, learning_rate=0.07,
-                            lmbda=0.1, verbose=True)
+    learner = BRISMFLearner(num_factors=15, num_iter=10, learning_rate=0.007,
+                            lmbda=0.1, verbose=False)
     recommender = learner(data)
     print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
     rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
@@ -73,8 +73,8 @@ def test_learners():
 
     # SVD++
     start = time.time()
-    learner = SVDPlusPlusLearner(num_factors=10, num_iter=100,
-                                 learning_rate=0.01, lmbda=0.1, verbose=True)
+    learner = SVDPlusPlusLearner(num_factors=15, num_iter=10,
+                                 learning_rate=0.001, lmbda=0.1, verbose=False)
     recommender = learner(data)
     print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
     rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))

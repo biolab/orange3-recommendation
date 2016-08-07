@@ -9,10 +9,15 @@ Orange3 Recommendation
 Orange3 Recommendation is a Python module that extends [Orange3](http://orange.biolab.si) to include support for recommender systems.
 All features can be combined with powerful data mining techniques from the Orange data mining framework.
 
-**The library is still in development**, further modifications have to be done in *BRISMF*, *SVD++* and *trustSVD* 
-related with efficiency, correcting bugs, adding options (learning the bias instead of using the stardard deviation 
-by default) and adding more algorithms
+For more information, see our [documentation](http://orange3-recommendation.readthedocs.io)
 
+**DISCLAIMER: THIS LIBRARY IS STILL IN A VERY EARLY DEVELOPMENT STAGE (ALPHA)**
+_Currently the algorithms are too slow to use them in big datasets, so right now this 
+library is oriented towards educational purposes.
+Further modifications have to be done in the main architecture of the library. Moreover, 
+extra parameters must be added for latent factor models, along with a function to check the
+convergece rate of SGD/ALS._
+ 
 Dependencies
 ============
 
@@ -65,7 +70,7 @@ Let's presume that we want to load a dataset, train it and predict its first thr
     >>> import Orange
     >>> from orangecontrib.recommendation import BRISMFLearner
     >>> data = Orange.data.Table('movielens100k.tab')
-    >>> learner = BRISMFLearner(K=15, steps=25, alpha=0.07, beta=0.1)
+    >>> learner = BRISMFLearner(num_factors=15, num_iter=25, learning_rate=0.07, lmbda=0.1)
     >>> recommender = learner(data)
     >>> prediction = recommender(data[:3])
     >>> print(prediction)
@@ -96,8 +101,7 @@ Performance
 | Item Average       | 1.000 |  -  |    0.001s    |              -             |
 | User Average       | 1.031 |  -  |    0.001s    |              -             |
 | User-Item Baseline | 0.938 |  -  |    0.001s    |              -             |
-| BRISMF             | 0.823 |  -  |  1.453s/iter | k=15; alpha=0.07; beta=0.1 |
-| SVD++              | 0.836 |  -  |  7.991s/iter | k=15; alpha=0.07; beta=0.1 |
+| BRISMF             | - |  -  |  2.067s/iter | num_factors=15; learning_rate=0.07; lmbda=0.1 |
 
 **MovieLens1M:** (Loading time: 4.535s)
 
@@ -107,8 +111,6 @@ Performance
 | Item Average       | 0.975 |  -  |    0.018s     |              -             |
 | User Average       | 1.028 |  -  |    0.021s     |              -             |
 | User-Item Baseline | 0.924 |  -  |    0.027s     |              -             |
-| BRISMF             | 0.872 |  -  | 14.347s/iter  | k=15; alpha=0.07; beta=0.1 |
-| SVD++              | 0.896 |  -  | 114.665s/iter | k=15; alpha=0.07; beta=0.1 |
 
 
 **MovieLens10M:** (Loading time: 49.804s)
@@ -119,7 +121,6 @@ Performance
 | Item Average       | 0.942 |  -  |     0.256s    |              -             |
 | User Average       | 0.970 |  -  |     0.256s    |              -             |
 | User-Item Baseline | 0.877 |  -  |     0.361s    |              -             |
-| BRISMF             | 0.841 |  -  | 138.309s/iter | k=15; alpha=0.07; beta=0.1 |
 
 
         
