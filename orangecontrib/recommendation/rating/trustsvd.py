@@ -97,7 +97,7 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
 
     # Cache norms (slower than list, but allows vectorization)
     # >>>  Lists: 6s; Arrays: 12s -> vectorized: 2s
-    norm_I = np.zeros(num_items)  # norms of Iu
+    norm_I = np.zeros(num_users)  # norms of Iu
     norm_Tr = np.zeros(num_users)  # norms of Tu
     norm_Tc = np.zeros(num_users)  # norms of Tv
 
@@ -429,11 +429,9 @@ class TrustSVDLearner(Learner):
 
         # Compute biases (not need it if learnt)
         bias = self.compute_bias(data, 'all')
-
         # Transform ratings matrix into a sparse matrix
         data = table2sparse(data, self.shape, self.order,
                             type=__sparse_format__)
-
         # Factorize matrix
         P, Q, Y, W, bu, bi, temp_feedback = \
             _matrix_factorization(ratings=data, trust=self.trust, bias=bias,
