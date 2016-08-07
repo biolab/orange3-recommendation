@@ -24,11 +24,11 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Readthedocs ----------------------------------------------------------
 
 #  Mock out the imports of libraries that depend on C modules
-import mock
-
-MOCK_MODULES = ['numpy']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+# import mock
+#
+# MOCK_MODULES = ['numpy']
+# for mod_name in MOCK_MODULES:
+#     sys.modules[mod_name] = mock.Mock()
 
 
 # -- General configuration ------------------------------------------------
