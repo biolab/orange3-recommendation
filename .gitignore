@@ -5,8 +5,6 @@ llvmlite
 llvmlite/*
 
 # Documentation
-doc/build
-doc/build/*
 doc/source/_static
 doc/source/_static/*
 doc/source/_templates

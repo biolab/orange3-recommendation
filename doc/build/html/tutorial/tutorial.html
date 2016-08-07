@@ -1,0 +1,384 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Tutorial &mdash; Orange3-Recommendation 1.0.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Orange3-Recommendation 1.0.0 documentation" href="../index.html"/>
+        <link rel="next" title="Scripting (recommendation)" href="../scripting/recommendation.html"/>
+        <link rel="prev" title="Welcome to Orange3-Recommendation’s documentation!" href="../index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Orange3-Recommendation
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#input-data">Input data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-format">Data format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#loading-data">Loading data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting started</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rating-pairs-user-item">Rating pairs (user, item)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#recommend-items-for-set-of-users">Recommend items for set of users</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#evaluation">Evaluation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../scripting/recommendation.html">Scripting (<code class="docutils literal"><span class="pre">recommendation</span></code>)</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/widgets.html">Widgets (<code class="docutils literal"><span class="pre">recommendation</span></code>)</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">Orange3-Recommendation</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Tutorial</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/tutorial/tutorial.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tutorial">
+<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="input-data">
+<h2>Input data<a class="headerlink" href="#input-data" title="Permalink to this headline">¶</a></h2>
+<p>This section describes how to load the data in Orange3-Recommendation.</p>
+<div class="section" id="data-format">
+<h3>Data format<a class="headerlink" href="#data-format" title="Permalink to this headline">¶</a></h3>
+<p id="index-0">Orange can read files in native tab-delimited format, or can load data from any
+of the major standard spreadsheet file type, like CSV and Excel. Native format
+starts with a header row with feature (column) names. Second header row gives
+the attribute type, which can be continuous, discrete, string or time. The third
+header line contains meta information to identify dependent features (class),
+irrelevant features (ignore) or meta features (meta). Here are the first few
+lines from a data set <a class="reference download internal" href="../_downloads/ratings.tab" download=""><code class="xref download docutils literal"><span class="pre">ratings.tab</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>tid      user        movie       score
+string   discrete    discrete    continuous
+meta     row=1       col=1       class
+1        Breza       HarrySally  2
+2        Dana        Cvetje      5
+3        Cene        Prometheus  5
+4        Ksenija     HarrySally  4
+5        Albert      Matrix      4
+...
+</pre></div>
+</div>
+<p><strong>The third row is mandatory in this kind of datasets</strong>, in order to know which
+attributes correspond to the users (row=1) and which ones to the items (col=1).
+For the case of big datasets, users and items must be specified as a continuous
+attributes due to efficiency issues. Here are the first few lines from a data
+set <a class="reference download internal" href="../_downloads/movielens100k.tab" download=""><code class="xref download docutils literal"><span class="pre">MovieLens100K.tab</span></code></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">user</span>            <span class="n">movie</span>         <span class="n">score</span>         <span class="n">tid</span>
+<span class="n">continuous</span>      <span class="n">continuous</span>    <span class="n">continuous</span>    <span class="n">time</span>
+<span class="n">row</span><span class="o">=</span><span class="mi">1</span>           <span class="n">col</span><span class="o">=</span><span class="mi">1</span>         <span class="k">class</span>         <span class="nc">meta</span>
+<span class="mi">196</span>             <span class="mi">242</span>           <span class="mi">3</span>             <span class="mi">881250949</span>
+<span class="mi">186</span>             <span class="mi">302</span>           <span class="mi">3</span>             <span class="mi">891717742</span>
+<span class="mi">22</span>              <span class="mi">377</span>           <span class="mi">1</span>             <span class="mi">878887116</span>
+<span class="mi">244</span>             <span class="mi">51</span>            <span class="mi">2</span>             <span class="mi">880606923</span>
+<span class="mi">166</span>             <span class="mi">346</span>           <span class="mi">1</span>             <span class="mi">886397596</span>
+<span class="mi">298</span>             <span class="mi">474</span>           <span class="mi">4</span>             <span class="mi">884182806</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="loading-data">
+<h3>Loading data<a class="headerlink" href="#loading-data" title="Permalink to this headline">¶</a></h3>
+<p>Datasets can be loaded as follow:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Orange</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">Orange</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Table</span><span class="p">(</span><span class="s2">&quot;ratings.tab&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the add-on, several toy datasets are included: <em>ratings.tab,
+movielens100k.tab, binary_data.tab, epinions_train.tab, epinions_test.tab,...</em>
+and a few more.</p>
+</div>
+</div>
+<div class="section" id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="rating-pairs-user-item">
+<h3>Rating pairs (user, item)<a class="headerlink" href="#rating-pairs-user-item" title="Permalink to this headline">¶</a></h3>
+<p>Let&#8217;s presume that we want to load a dataset, train it and predict its first three pairs of (id_user, id_item)</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="kn">import</span> <span class="nn">Orange</span>
+ <span class="kn">from</span> <span class="nn">orangecontrib.recommendation</span> <span class="kn">import</span> <span class="n">BRISMFLearner</span>
+
+ <span class="c1"># Load data and train the model</span>
+ <span class="n">data</span> <span class="o">=</span> <span class="n">Orange</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Table</span><span class="p">(</span><span class="s1">&#39;movielens100k.tab&#39;</span><span class="p">)</span>
+ <span class="n">learner</span> <span class="o">=</span> <span class="n">BRISMFLearner</span><span class="p">(</span><span class="n">num_factors</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">num_iter</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.07</span><span class="p">,</span> <span class="n">lmbda</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+ <span class="n">recommender</span> <span class="o">=</span> <span class="n">learner</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+ <span class="c1"># Make predictions</span>
+ <span class="n">prediction</span> <span class="o">=</span> <span class="n">recommender</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
+ <span class="k">print</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+ <span class="o">&gt;&gt;&gt;</span>
+ <span class="p">[</span> <span class="mf">3.79505151</span>  <span class="mf">3.75096513</span>  <span class="mf">1.293013</span> <span class="p">]</span>
+</pre></div>
+</td></tr></table></div>
+<p>The first three lines of code, import the Orange module, the BRISMF factorization model
+and loads the MovieLens100K dataset. In the next lines we instantiate the model
+(<em>learner = BRISMFLearner(...)</em>) and we fit the model with the loaded data.</p>
+<p>Finally, we predict the ratings for the first three pairs (user, item) in the loaded dataset.</p>
+</div>
+<div class="section" id="recommend-items-for-set-of-users">
+<h3>Recommend items for set of users<a class="headerlink" href="#recommend-items-for-set-of-users" title="Permalink to this headline">¶</a></h3>
+<p>Now we want to get all the predictions (all items) for a set of users:</p>
+<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">indices_users</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">36</span><span class="p">])</span>
+<span class="n">prediction</span> <span class="o">=</span> <span class="n">recommender</span><span class="o">.</span><span class="n">predict_items</span><span class="p">(</span><span class="n">indices_users</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="p">[[</span> <span class="mf">1.34743879</span>  <span class="mf">4.61513578</span>  <span class="mf">3.90757263</span> <span class="o">...</span><span class="p">,</span>  <span class="mf">3.03535099</span>  <span class="mf">4.08221699</span> <span class="mf">4.26139511</span><span class="p">]</span>
+ <span class="p">[</span> <span class="mf">1.16652757</span>  <span class="mf">4.5516808</span>   <span class="mf">3.9867497</span>  <span class="o">...</span><span class="p">,</span>  <span class="mf">2.94690548</span>  <span class="mf">3.67274108</span> <span class="mf">4.1868596</span> <span class="p">]</span>
+ <span class="p">[</span> <span class="mf">2.74395768</span>  <span class="mf">4.04859096</span>  <span class="mf">4.04553826</span> <span class="o">...</span><span class="p">,</span>  <span class="mf">3.22923456</span>  <span class="mf">3.69682699</span> <span class="mf">4.95043435</span><span class="p">]]</span>
+</pre></div>
+</td></tr></table></div>
+<p>This time, we&#8217;ve fill an array with the indices of the users to which make the predictions
+for all the items.</p>
+<p>If we want as an output just the first <em>k</em> elements (do not confuse with <em>top best</em> items),
+we have to add the parameter <em>top=INTEGER</em> to the function</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">prediction</span> <span class="o">=</span> <span class="n">recommender</span><span class="o">.</span><span class="n">predict_items</span><span class="p">(</span><span class="n">indices_users</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="p">[[</span> <span class="mf">1.34743879</span>  <span class="mf">4.61513578</span><span class="p">]</span>
+ <span class="p">[</span> <span class="mf">1.16652757</span>  <span class="mf">4.5516808</span><span class="p">]</span>
+ <span class="p">[</span> <span class="mf">2.74395768</span>  <span class="mf">4.04859096</span><span class="p">]]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="evaluation">
+<h3>Evaluation<a class="headerlink" href="#evaluation" title="Permalink to this headline">¶</a></h3>
+<p>Finally, we want to known which of a list of recommender performs better on our dataset. Therefore,
+we perform cross-validation over a list of learners.</p>
+<p>The first thing we need to do is to make a list of all the learners that we want to cross-validate.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">orangecontrib.recommendation</span> <span class="kn">import</span> <span class="n">GlobalAvgLearner</span><span class="p">,</span>
+                                             <span class="n">ItemAvgLearner</span><span class="p">,</span>
+                                             <span class="n">UserAvgLearner</span><span class="p">,</span>
+                                             <span class="n">UserItemBaselineLearner</span>
+<span class="n">global_avg</span> <span class="o">=</span> <span class="n">GlobalAvgLearner</span><span class="p">()</span>
+<span class="n">items_avg</span> <span class="o">=</span> <span class="n">ItemAvgLearner</span><span class="p">()</span>
+<span class="n">users_avg</span> <span class="o">=</span> <span class="n">UserAvgLearner</span><span class="p">()</span>
+<span class="n">useritem_baseline</span> <span class="o">=</span> <span class="n">UserItemBaselineLearner</span><span class="p">()</span>
+<span class="n">brismf</span> <span class="o">=</span> <span class="n">BRISMFLearner</span><span class="p">(</span><span class="n">num_factors</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">num_iter</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.07</span><span class="p">,</span> <span class="n">lmbda</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">learners</span> <span class="o">=</span> <span class="p">[</span><span class="n">global_avg</span><span class="p">,</span> <span class="n">items_avg</span><span class="p">,</span> <span class="n">users_avg</span><span class="p">,</span> <span class="n">useritem_baseline</span><span class="p">,</span> <span class="n">brismf</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Once, we have the list of learners and the data loaded, we score the methods.
+For the case, we have scored the recommendation two measures for goodnes of fit,
+which they&#8217;re later printed. To measure the error of the scoring, you can use
+all the functions defined in <code class="docutils literal"><span class="pre">Orange.evaluation</span></code>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="n">Orange</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">CrossValidation</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">learners</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">rmse</span> <span class="o">=</span> <span class="n">Orange</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">RMSE</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+<span class="n">r2</span> <span class="o">=</span> <span class="n">Orange</span><span class="o">.</span><span class="n">evaluation</span><span class="o">.</span><span class="n">R2</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;Learner  RMSE  R2&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">learners</span><span class="p">)):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:8s} {:.2f} {:5.2f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">learners</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">rmse</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">r2</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+<span class="o">&gt;&gt;&gt;</span>
+<span class="n">Learner</span>                   <span class="n">RMSE</span>  <span class="n">R2</span>
+  <span class="o">-</span> <span class="n">Global</span> <span class="n">average</span>        <span class="mf">1.13</span> <span class="o">-</span><span class="mf">0.00</span>
+  <span class="o">-</span> <span class="n">Item</span> <span class="n">average</span>          <span class="mf">1.03</span>  <span class="mf">0.16</span>
+  <span class="o">-</span> <span class="n">User</span> <span class="n">average</span>          <span class="mf">1.04</span>  <span class="mf">0.14</span>
+  <span class="o">-</span> <span class="n">User</span><span class="o">-</span><span class="n">Item</span> <span class="n">Baseline</span>    <span class="mf">0.98</span>  <span class="mf">0.25</span>
+  <span class="o">-</span> <span class="n">BRISMF</span>                <span class="mf">0.96</span>  <span class="mf">0.28</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../scripting/recommendation.html" class="btn btn-neutral float-right" title="Scripting (recommendation)" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral" title="Welcome to Orange3-Recommendation’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Salva Carrión.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
