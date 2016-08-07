@@ -7,14 +7,14 @@ Tutorial
 Input data
 ==========
 
-.. index: data
+.. index:: data
 
 This section describes how to load the data in Orange3-Recommendation.
 
 Data format
 -----------
 
-..  index::
+..  index:: data
     single: data; input
 
 Orange can read files in native tab-delimited format, or can load data from any

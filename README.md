@@ -30,7 +30,7 @@ Install
 =======
 
 This package uses distutils, which is the default way of installing
-python modules. To install in your home directory, use::
+python modules. To install in your home directory, use:
 
     python setup.py install --user
 
@@ -39,7 +39,7 @@ To install for all users on Unix/Linux::
     python setup.py build
     sudo python setup.py install
 
-For development mode use::
+For development mode use:
 
     python setup.py develop
     
