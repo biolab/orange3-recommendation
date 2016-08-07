@@ -1,6 +1,6 @@
-==================
-Baseline
-==================
+=========
+Baselines
+=========
 
 .. figure:: icons/user-item-baseline.svg
     :width: 64pt

@@ -8,10 +8,10 @@ from orangecontrib.recommendation import GlobalAvgLearner, ItemAvgLearner, \
     UserAvgLearner, UserItemBaselineLearner
 
 
-class OWBaseline(OWBaseLearner):
+class OWBaselines(OWBaseLearner):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
-    base_name = "Baseline"
+    base_name = "Baselines"
     name = base_name
     description = 'This widget contains the following baseline models: ' \
                   'Global average, User average, Item average and ' \
@@ -55,6 +55,6 @@ class OWBaseline(OWBaseLearner):
 
 if __name__ == '__main__':
     app = QApplication([])
-    widget = OWBaseline()
+    widget = OWBaselines()
     widget.show()
     app.exec()
