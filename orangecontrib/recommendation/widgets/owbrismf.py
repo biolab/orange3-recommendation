@@ -26,6 +26,7 @@ class OWBRISMF(OWBaseLearner):
     num_factors = settings.Setting(5)
     num_iter = settings.Setting(25)
     learning_rate = settings.Setting(0.005)
+    bias_learning_rate = settings.Setting(0.005)
     lmbda = settings.Setting(0.02)
     bias_lmbda = settings.Setting(0.02)
 
@@ -46,6 +47,11 @@ class OWBRISMF(OWBaseLearner):
                        alignment=Qt.AlignRight, controlWidth=90,
                        callback=self.settings_changed)
 
+        gui.doubleSpin(box, self, "bias_learning_rate", minv=1e-4, maxv=1e+5,
+                       step=1e-5, label="Learning rate:", decimals=5,
+                       alignment=Qt.AlignRight, controlWidth=90,
+                       callback=self.settings_changed)
+
         gui.doubleSpin(box, self, "lmbda",  minv=1e-4, maxv=1e+4, step=1e-4,
                        label="Regularization:", decimals=4,
                        alignment=Qt.AlignRight, controlWidth=90,
@@ -61,6 +67,7 @@ class OWBRISMF(OWBaseLearner):
             num_factors=self.num_factors,
             num_iter=self.num_iter,
             learning_rate=self.learning_rate,
+            bias_learning_rate=self.bias_learning_rate,
             lmbda=self.lmbda,
             bias_lmbda=self.bias_lmbda
         )
@@ -69,6 +76,7 @@ class OWBRISMF(OWBaseLearner):
         return (("Number of latent factors", self.num_factors),
                 ("Number of iterations", self.num_iter),
                 ("Learning rate", self.learning_rate),
+                ("Bias learning rate", self.bias_learning_rate),
                 ("Regularization", self.lmbda),
                 ("Bias regularization", self.bias_lmbda))
 
