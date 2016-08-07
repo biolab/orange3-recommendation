@@ -37,7 +37,7 @@ def create_implicit_data():
     filename = '../datasets/ratings3.tab'
     data = Orange.data.Table(filename)
 
-    data, order, shape = preprocess(data)
+    data, order, _ = preprocess(data)
     users = np.unique(data.X[:, order[0]])
 
     d = defaultdict(list)

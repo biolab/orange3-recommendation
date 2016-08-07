@@ -42,7 +42,7 @@ def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, feedback_u):
     bias = global_avg + bu[u] + bi
 
     # Compute extra term
-    y_term, norm_feedback = _compute_extra_term(Y, feedback_u)
+    y_term, _ = _compute_extra_term(Y, feedback_u)
 
     # Compute base
     p_enhanced = P[u, :] + y_term
@@ -442,7 +442,7 @@ class SVDPlusPlusModel(Model):
         variable = self.original_domain.variables[self.order[0]]
         return feature_matrix(variable, self.Y, domain_name)
 
-#
+
 # if __name__ == "__main__":
 #     import Orange
 #

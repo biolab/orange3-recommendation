@@ -76,7 +76,7 @@ def preprocess(data):
     return data, order, shape
 
 
-def table2sparse(data, shape, order, type=lil_matrix):
+def table2sparse(data, shape, order, m_type=lil_matrix):
     """Constructs a 2D sparse matrix from an Orange.data.Table
 
         Note:
@@ -91,7 +91,7 @@ def table2sparse(data, shape, order, type=lil_matrix):
             order: (int, int)
                Tuple of integers with the index of the base columns
 
-            type: scipy.sparse.*
+            m_type: scipy.sparse.*
                Type of matrix to return (csr_matrix, lil_matrix,...)
 
         Returns:
@@ -100,7 +100,7 @@ def table2sparse(data, shape, order, type=lil_matrix):
         """
 
     return sparse_matrix_2d(row=data.X[:, order[0]], col=data.X[:, order[1]],
-                            data=data.Y, shape=shape, m_type=type)
+                            data=data.Y, shape=shape, m_type=m_type)
 
 
 def sparse_matrix_2d(row, col, data, shape, m_type=lil_matrix):

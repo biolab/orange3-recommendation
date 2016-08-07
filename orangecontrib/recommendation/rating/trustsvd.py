@@ -55,8 +55,7 @@ def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, W, items_u, trustees_u):
     bias = global_avg + bu[u] + bi
 
     # Compute extra terms
-    y_term, w_term, norm_Iu, norm_Tu = \
-        _compute_extra_terms(Y, W, items_u, trustees_u)
+    y_term, w_term, _, _ = _compute_extra_terms(Y, W, items_u, trustees_u)
 
     # Compute base
     p_enhanced = P[u, :] + (y_term + w_term)
@@ -587,21 +586,21 @@ class TrustSVDModel(Model):
 
 
 
-if __name__ == "__main__":
-    import Orange
-    from sklearn.metrics import mean_squared_error
-
-    print('Loading data...')
-    ratings = Orange.data.Table('filmtrust/ratings.tab')
-    trust = Orange.data.Table('filmtrust/trust.tab')
-
-    start = time.time()
-    learner = TrustSVDLearner(num_factors=15, num_iter=1, learning_rate=0.07,
-                              lmbda=0.1, social_lmbda=0.05,
-                              trust=trust, verbose=True)
-    recommender = learner(ratings)
-    print('- Time (TrustSVD): %.3fs' % (time.time() - start))
-
-    # prediction = recommender.predict(ratings, trust)
-    # rmse = math.sqrt(mean_squared_error(ratings.Y, ))
-    # print('- RMSE (SVDPlusPlusLearner): %.3f' % rmse)
+# if __name__ == "__main__":
+#     import Orange
+#     from sklearn.metrics import mean_squared_error
+#
+#     print('Loading data...')
+#     ratings = Orange.data.Table('filmtrust/ratings.tab')
+#     trust = Orange.data.Table('filmtrust/trust.tab')
+#
+#     start = time.time()
+#     learner = TrustSVDLearner(num_factors=15, num_iter=1, learning_rate=0.07,
+#                               lmbda=0.1, social_lmbda=0.05,
+#                               trust=trust, verbose=True)
+#     recommender = learner(ratings)
+#     print('- Time (TrustSVD): %.3fs' % (time.time() - start))
+#
+#     # prediction = recommender.predict(ratings, trust)
+#     # rmse = math.sqrt(mean_squared_error(ratings.Y, ))
+#     # print('- RMSE (SVDPlusPlusLearner): %.3f' % rmse)

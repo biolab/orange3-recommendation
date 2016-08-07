@@ -42,9 +42,6 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
     # Cache rows
     users_cached = defaultdict(list)
 
-    # Get positional index of base columns
-    user_col, item_col = (0, 1)
-
     # Factorize matrix using SGD
     for step in range(num_iter):
         if verbose:

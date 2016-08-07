@@ -11,20 +11,20 @@ def test_loss():
     print('*************** BRISMF ***************')
     brismf = BRISMFLearner(num_factors=15, num_iter=10, learning_rate=0.07,
                            lmbda=0.1, verbose=True)
-    recommender = brismf(data)
+    brismf(data)
     print('')
 
     print('*************** SVD++ ***************')
     svdpp = SVDPlusPlusLearner(num_factors=2, num_iter=10, learning_rate=0.007,
                                lmbda=0.01, verbose=True)
-    recommender = svdpp(data)
+    svdpp(data)
     print('')
 
     print('*************** TrustSVD ***************')
     trustsvd = TrustSVDLearner(num_factors=15, num_iter=10, learning_rate=0.007,
                                lmbda=0.01, social_lmbda=0.05, trust=trust,
                                verbose=True)
-    recommender = trustsvd(data)
+    trustsvd(data)
 
 if __name__ == "__main__":
     test_loss()
