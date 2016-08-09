@@ -92,35 +92,41 @@ Now we want to get all the predictions (all items) for a set of users:
 Performance
 -----------
 
+All the errors refer to the training errors.
 
-**MovieLens100K:** (Loading time: 0.428s)
+**MovieLens100K:** (Loading time: 0.748s)
 
 |      Algorithm     |  RMSE | MAE |  Train time  |          Settings          |
 |:------------------:|:-----:|:---:|:------------:|:--------------------------:|
-| Global Average     | 1.126 |  -  |    0.001s    |              -             |
-| Item Average       | 1.000 |  -  |    0.001s    |              -             |
-| User Average       | 1.031 |  -  |    0.001s    |              -             |
-| User-Item Baseline | 0.938 |  -  |    0.001s    |              -             |
-| BRISMF             | - |  -  |  2.067s/iter | num_factors=15; learning_rate=0.07; lmbda=0.1 |
+| Global Average     | 1.126 |  0.945  |    0.001s    |              -             |
+| Item Average       | 1.000 |  0.799  |    0.001s    |              -             |
+| User Average       | 1.031 |  0.826  |    0.001s    |              -             |
+| User-Item Baseline | 0.938 |  0.738  |    0.001s    |              -             |
+| BRISMF             | 0.810 |  0.642  |  2.027s/iter | num_factors=15; num_iter=15, learning_rate=0.07; lmbda=0.1 |
+| SVD++              | 0.823 |  0.648  |  7.252s/iter | num_factors=15; num_iter=15; learning_rate=0.02;  bias_learning_rate=0.01; lmbda=0.1; bias_lmbda=0.007 |
 
-**MovieLens1M:** (Loading time: 4.535s)
+**MovieLens1M:** (Loading time: 5.144s)
 
 |      Algorithm     |  RMSE | MAE |  Train time   |          Settings          |
 |:------------------:|:-----:|:---:|:-------------:|:--------------------------:|
-| Global Average     | 1.117 |  -  |    0.010s     |              -             |
-| Item Average       | 0.975 |  -  |    0.018s     |              -             |
-| User Average       | 1.028 |  -  |    0.021s     |              -             |
-| User-Item Baseline | 0.924 |  -  |    0.027s     |              -             |
+| Global Average     | 1.117 |  0.934  |    0.010s     |              -             |
+| Item Average       | 0.975 |  0.779  |    0.018s     |              -             |
+| User Average       | 1.028 |  0.823  |    0.021s     |              -             |
+| User-Item Baseline | 0.924 |  0.727  |    0.027s     |              -             |
+| BRISMF             | 0.886 |  0.704  |  19.757s/iter | num_factors=15; num_iter=15, learning_rate=0.07; lmbda=0.1 |
+| SVD++              | 0.858 |  0.677  |  98.249s/iter | num_factors=15; num_iter=15; learning_rate=0.02;  bias_learning_rate=0.01; lmbda=0.1; bias_lmbda=0.007 |
 
 
-**MovieLens10M:** (Loading time: 49.804s)
+
+**MovieLens10M:** (Loading time: 55.312s)
 
 |      Algorithm     |  RMSE | MAE |   Train time  |          Settings          |
 |:------------------:|:-----:|:---:|:-------------:|:--------------------------:|
-| Global Average     | 1.060 |  -  |     0.129s    |              -             |
-| Item Average       | 0.942 |  -  |     0.256s    |              -             |
-| User Average       | 0.970 |  -  |     0.256s    |              -             |
-| User-Item Baseline | 0.877 |  -  |     0.361s    |              -             |
+| Global Average     | 1.060 |  0.856  |     0.150s    |              -             |
+| Item Average       | 0.942 |  0.737  |     0.271s    |              -             |
+| User Average       | 0.970 |  0.763  |     0.293s    |              -             |
+| User-Item Baseline | 0.877 |  0.677  |     0.393s    |              -             |
+| BRISMF             | - |  -  |  230.656s/iter | num_factors=15; num_iter=15, learning_rate=0.07; lmbda=0.1 |
 
 
         
