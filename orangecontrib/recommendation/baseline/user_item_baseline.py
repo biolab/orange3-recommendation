@@ -12,8 +12,9 @@ class UserItemBaselineLearner(Learner):
     predictions.
 
     Attributes:
-        verbose: boolean, optional
-            Prints information about the process.
+        verbose: boolean or int, optional
+            Prints information about the process according to the verbosity
+            level. Values: False (verbose=0), True (verbose=1) and INTEGER
     """
 
     name = 'User-Item Baseline'

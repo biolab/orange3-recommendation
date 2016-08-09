@@ -79,8 +79,10 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
 
             # TODO: Loss function
 
+        # Print process
         if verbose:
-            print('\t- Loss: %.3f' % objective)
+            if verbose > 1:
+                print('\t- Loss: %.3f' % objective)
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
@@ -113,8 +115,9 @@ class CLiMFLearner(Learner):
             Controls the importance of the regularization term (general).
             Avoids overfitting by penalizing the magnitudes of the parameters.
 
-        verbose: boolean, optional
-            Prints information about the process.
+        verbose: boolean or int, optional
+            Prints information about the process according to the verbosity
+            level. Values: False (verbose=0), True (verbose=1) and INTEGER
 
         random_state: int, optional
             Set the seed for the numpy random generator, so it makes the random
