@@ -67,27 +67,27 @@ All modules can be found inside **orangecontrib.recommendation.***. Thus, to imp
 
 Let's presume that we want to load a dataset, train it and predict its first three pairs of (id_user, id_item)
 
-    >>> import Orange
-    >>> from orangecontrib.recommendation import BRISMFLearner
-    >>> data = Orange.data.Table('movielens100k.tab')
-    >>> learner = BRISMFLearner(num_factors=15, num_iter=25, learning_rate=0.07, lmbda=0.1)
-    >>> recommender = learner(data)
-    >>> prediction = recommender(data[:3])
-    >>> print(prediction)
-    [ 3.79505151  3.75096513  1.293013 ]
+    import Orange
+    from orangecontrib.recommendation import BRISMFLearner
+    data = Orange.data.Table('movielens100k.tab')
+    learner = BRISMFLearner(num_factors=15, num_iter=25, learning_rate=0.07, lmbda=0.1)
+    recommender = learner(data)
+    prediction = recommender(data[:3])
+    print(prediction)
+    >>> [ 3.79505151  3.75096513  1.293013 ]
     
     
 **Recommend items for set of users:**
 
 Now we want to get all the predictions (all items) for a set of users:
 
-    >>> import numpy as np
-    >>> indices_users = np.array([4, 12, 36])
-    >>> prediction = recommender.predict_items(indices_users)
-    >>> print(prediction)
-    [[ 1.34743879  4.61513578  3.90757263 ...,  3.03535099  4.08221699 4.26139511]
-     [ 1.16652757  4.5516808   3.9867497  ...,  2.94690548  3.67274108 4.1868596 ]
-     [ 2.74395768  4.04859096  4.04553826 ...,  3.22923456  3.69682699 4.95043435]]
+    import numpy as np
+    indices_users = np.array([4, 12, 36])
+    prediction = recommender.predict_items(indices_users)
+    print(prediction)
+    >>> [[ 1.34743879  4.61513578  3.90757263 ...,  3.03535099  4.08221699 4.26139511]
+         [ 1.16652757  4.5516808   3.9867497  ...,  2.94690548  3.67274108 4.1868596 ]
+         [ 2.74395768  4.04859096  4.04553826 ...,  3.22923456  3.69682699 4.95043435]]
 
 Performance
 -----------
