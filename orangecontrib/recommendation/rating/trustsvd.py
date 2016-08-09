@@ -187,15 +187,17 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
         Y -= learning_rate * tempY
         W -= learning_rate * tempW
 
+        # Print process
         if verbose:
-            # Set parameters and compute loss
-            data_t = (ratings, trust)
-            bias_t = (global_avg, bu, bi)
-            low_rank_matrices = (P, Q, Y, W)
-            params = (lmbda, bias_lmbda, social_lmbda)
-            objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
+            if verbose > 1:
+                # Set parameters and compute loss
+                data_t = (ratings, trust)
+                bias_t = (global_avg, bu, bi)
+                low_rank_matrices = (P, Q, Y, W)
+                params = (lmbda, bias_lmbda, social_lmbda)
+                objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
 
-            print('\t- Loss: %.3f' % objective)
+                print('\t- Loss: %.3f' % objective)
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
@@ -361,12 +363,14 @@ class TrustSVDLearner(Learner):
         trust: Orange.data.Table
             Social trust information.
 
-        verbose: boolean, optional
-            Prints information about the process.
+        verbose: boolean or int, optional
+            Prints information about the process according to the verbosity
+            level. Values: False (verbose=0), True (verbose=1) and INTEGER
 
-        random_state: int, optional
+        random_state: int seed, optional
             Set the seed for the numpy random generator, so it makes the random
             numbers predictable. This a debbuging feature.
+
 
     """
 

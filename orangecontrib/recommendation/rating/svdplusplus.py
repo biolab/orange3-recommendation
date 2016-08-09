@@ -96,37 +96,36 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
             # Prediction and error
             ruj_pred, y_term, norm_feedback = \
                 _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback_u)
-            eij = ruj_pred - ratings[u, j]
+            eij = ratings[u, j] - ruj_pred
 
             # Compute gradients
-            tempBu = eij + bias_lmbda * bu[u]
-            tempBi = eij + bias_lmbda * bi[j]
+            #tempBu = eij - bias_lmbda * bu[u]
+            #tempBi = eij - bias_lmbda * bi[j]
             tempP = eij * Q[j, :] - lmbda * P[u, :]
             tempQ = eij * (P[u, :] + y_term) - lmbda * Q[j, :]
 
-            # Gradient Y
-            if norm_feedback > 0:
-                for i in feedback_u:
-                    Y[i, :] -= bias_learning_rate * (eij/norm_feedback * Q[j, :]
-                                                     - lmbda * Y[i, :])
-
             # Update the gradients at the same time
             # I use the loss function divided by 2, to simplify the gradients
-            bu[u] -= bias_learning_rate * tempBu
-            bi[j] -= bias_learning_rate * tempBi
-            P[u, :] -= learning_rate * tempP
-            Q[j, :] -= learning_rate * tempQ
+            #bu[u] += bias_learning_rate * tempBu
+            #bi[j] += bias_learning_rate * tempBi
+            P[u, :] += learning_rate * tempP
+            Q[j, :] += learning_rate * tempQ
+            if norm_feedback > 0:  # Gradient Y
+                Y[feedback_u, :] += learning_rate * (eij/norm_feedback * Q[j, :]
+                                                     - lmbda * Y[feedback_u, :])
 
+        # Print process
         if verbose:
-            # Set parameters and compute loss
-            loss_feedback = feedback if feedback else users_cached
-            data_t = (ratings, loss_feedback)
-            bias_t = (global_avg, bu, bi)
-            low_rank_matrices = (P, Q, Y)
-            params = (lmbda, bias_lmbda)
-            objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
+            if verbose > 1:
+                # Set parameters and compute loss
+                loss_feedback = feedback if feedback else users_cached
+                data_t = (ratings, loss_feedback)
+                bias_t = (global_avg, bu, bi)
+                low_rank_matrices = (P, Q, Y)
+                params = (lmbda, bias_lmbda)
+                objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
 
-            print('\t- Loss: %.3f' % objective)
+                print('\t- Loss: %.3f' % objective)
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
@@ -180,7 +179,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
 
         # Prediction 
         ruj_pred = _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback_u)[0]
-        objective += (ruj_pred - ratings[u, j]) ** 2  # error^2
+        objective += (ratings[u, j] - ruj_pred) ** 2  # error^2
 
         # Regularization
         temp_y = np.sum(Y[feedback_u, :], axis=0)
@@ -234,8 +233,9 @@ class SVDPlusPlusLearner(Learner):
             information will be inferred from the ratings (e.g.: item rated,
             means items seen).
 
-        verbose: boolean, optional
-            Prints information about the process.
+        verbose: boolean or int, optional
+            Prints information about the process according to the verbosity
+            level. Values: False (verbose=0), True (verbose=1) and INTEGER
 
         random_state: int, optional
             Set the seed for the numpy random generator, so it makes the random
@@ -421,7 +421,6 @@ class SVDPlusPlusModel(Model):
             predictions.append(pred)
 
         predictions = np.asarray(predictions)
-
 
         # Return top-k recommendations
         if top is not None:

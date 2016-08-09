@@ -54,29 +54,31 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
 
             # Prediction and error
             rij_pred = _predict(u, j, global_avg, bu, bi, P, Q)
-            eij = rij_pred - ratings[u, j]
+            eij = ratings[u, j] - rij_pred
 
             # Compute gradients
-            tempBu = eij + bias_lmbda * bu[u]
-            tempBi = eij + bias_lmbda * bi[j]
+            tempBu = eij - bias_lmbda * bu[u]
+            tempBi = eij - bias_lmbda * bi[j]
             tempP = eij * Q[j, :] - lmbda * P[u, :]
             tempQ = eij * P[u, :] - lmbda * Q[j, :]
 
             # Update the gradients at the same time
             # I use the loss function divided by 2, to simplify the gradients
-            bu[u] -= bias_learning_rate * tempBu
-            bi[j] -= bias_learning_rate * tempBi
-            P[u, :] -= learning_rate * tempP
-            Q[j, :] -= learning_rate * tempQ
+            bu[u] += bias_learning_rate * tempBu
+            bi[j] += bias_learning_rate * tempBi
+            P[u, :] += learning_rate * tempP
+            Q[j, :] += learning_rate * tempQ
 
+        # Print process
         if verbose:
-            # Set parameters and compute loss
-            bias = (global_avg, bu, bi)
-            low_rank_matrices = (P, Q)
-            params = (lmbda, bias_lmbda)
-            objective = compute_loss(ratings, bias, low_rank_matrices, params)
+            if verbose > 1:
+                # Set parameters and compute loss
+                bias = (global_avg, bu, bi)
+                low_rank_matrices = (P, Q)
+                params = (lmbda, bias_lmbda)
+                objective = compute_loss(ratings, bias, low_rank_matrices, params)
 
-            print('\tLoss: %.3f' % objective)
+                print('\tLoss: %.3f' % objective)
             print('\tTime: %.3fs' % (time.time() - start))
             print('')
 
@@ -105,7 +107,7 @@ def compute_loss(data, bias, low_rank_matrices, params):
     objective = 0
     for u, j in zip(*ratings.nonzero()):
         ruj_pred = _predict(u, j, global_avg, bu, bi, P, Q)
-        objective += (ruj_pred - ratings[u, j]) ** 2  # error^2
+        objective += (ratings[u, j] - ruj_pred) ** 2  # error^2
 
         # Regularization
         objective += lmbda * (np.linalg.norm(P[u, :]) ** 2 +
@@ -150,8 +152,9 @@ class BRISMFLearner(Learner):
             Defines the upper bound for the predictions. If None (default),
             ratings won't be bounded.
 
-        verbose: boolean, optional
-            Prints information about the process.
+        verbose: boolean or int, optional
+            Prints information about the process according to the verbosity
+            level. Values: False (verbose=0), True (verbose=1) and INTEGER
 
         random_state: int, optional
             Set the seed for the numpy random generator, so it makes the random
