@@ -77,16 +77,56 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
 
             U[i] += learning_rate * dU
 
-            # TODO: Loss function
-
         # Print process
         if verbose:
             if verbose > 1:
+                # Set parameters and compute loss
+                low_rank_matrices = (U, V)
+                params = lmbda
+                objective = compute_loss(ratings, low_rank_matrices, params)
+
                 print('\t- Loss: %.3f' % objective)
+
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
     return U, V
+
+
+def compute_loss(data, low_rank_matrices, params):
+
+    # Set parameters
+    ratings = data
+    U, V = low_rank_matrices
+    lmbda = params
+
+    # Check data type
+    if isinstance(ratings, __sparse_format__):
+        pass
+    elif isinstance(ratings, Table):
+        # Preprocess Orange.data.Table and transform it to sparse
+        ratings, order, shape = preprocess(ratings)
+        ratings = table2sparse(ratings, shape, order, m_type=__sparse_format__)
+    else:
+        raise TypeError('Invalid data type')
+
+    M, N = U.shape[0], V.shape[0]
+    Ys = ratings
+
+    W1 = np.log(sigmoid(U.dot(V.T)))
+    W2 = np.zeros(Ys.shape)
+
+    for i in range(M):
+        for j in range(N):
+            W2[i, j] = sum((np.log(
+                1 - Ys[i, k] * sigmoid(U[i, :].dot(V[k, :] - V[j, :])))
+                            for k in range(N)))
+
+    objective = Ys.multiply(W1 - W2).sum()
+    objective -= lmbda / 2.0 * (np.linalg.norm(U, ord="fro") ** 2
+                                + np.linalg.norm(V, ord="fro") ** 2)
+
+    return objective
 
 
 class CLiMFLearner(Learner):
@@ -126,8 +166,8 @@ class CLiMFLearner(Learner):
 
     name = 'CLiMF'
 
-    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
-                 lmbda=0.1, preprocessors=None, verbose=False,
+    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.0001,
+                 lmbda=0.001, preprocessors=None, verbose=False,
                  random_state=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
@@ -213,31 +253,6 @@ class CLiMFModel(Model):
             predictions = predictions[:, :top_k]
 
         return predictions
-
-    def compute_objective(self, X, Y, U, V, lmbda):
-        # TODO: Cast rows, cols through preprocess
-        # X and Y are original data
-        # Construct explicit sparse matrix to evaluate the objective function
-        M, N = U.shape[0], V.shape[0]
-        Ys = dok_matrix((M, N))
-        for (i, j), y in zip(X, Y):
-            Ys[i, j] = y
-        Ys = Ys.tocsr()
-
-        W1 = np.log(sigmoid(U.dot(V.T)))
-        W2 = np.zeros(Ys.shape)
-
-        for i in range(M):
-            for j in range(N):
-                W2[i, j] = sum((np.log(
-                    1 - Ys[i, k] * sigmoid(U[i, :].dot(V[k, :] - V[j, :])))
-                                for k in range(N)))
-
-        objective = Ys.multiply(W1 - W2).sum()
-        objective -= lmbda / 2.0 * (np.linalg.norm(U, ord="fro") ** 2
-                                        + np.linalg.norm(V, ord="fro") ** 2)
-
-        return objective
 
     def getUTable(self):
         variable = self.original_domain.variables[self.order[0]]
