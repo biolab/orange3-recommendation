@@ -29,30 +29,6 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
 
         self.indices_missing = (idxs_users_missing, idxs_items_missing)
 
-    def fix_predictions(self, X, predictions, bias):
-        idxs_users_missing, idxs_items_missing = self.indices_missing
-
-        # Set average when neither the user nor the item exist
-        g_avg = bias['globalAvg']
-        common_indices = np.intersect1d(idxs_users_missing, idxs_items_missing)
-        predictions[common_indices] = g_avg
-
-        # Only users exist (return average + {dUser})
-        if 'dUsers' in bias:
-            missing_users = np.setdiff1d(idxs_users_missing, common_indices)
-            if len(missing_users) > 0:
-                user_idxs = X[missing_users, self.order[0]]
-                predictions[missing_users] = g_avg + bias['dUsers'][user_idxs]
-
-        # Only items exist (return average + {dItem})
-        if 'dItems' in bias:
-            missing_items = np.setdiff1d(idxs_items_missing, common_indices)
-            if len(missing_items) > 0:
-                item_idxs = X[missing_items, self.order[1]]
-                predictions[missing_items] = g_avg + bias['dItems'][item_idxs]
-
-        return predictions
-
     @abstractmethod
     def predict(self): pass
 

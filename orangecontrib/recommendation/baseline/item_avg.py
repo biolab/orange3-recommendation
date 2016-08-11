@@ -1,4 +1,4 @@
-from orangecontrib.recommendation.baseline import Learner, Model
+from orangecontrib.recommendation.rating import Learner, Model
 
 import numpy as np
 

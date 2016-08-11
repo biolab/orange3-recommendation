@@ -78,8 +78,9 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
                 params = (lmbda, bias_lmbda)
                 objective = compute_loss(ratings, bias, low_rank_matrices, params)
 
-                print('\tLoss: %.3f' % objective)
-            print('\tTime: %.3fs' % (time.time() - start))
+                print('\t- Loss: %.3f' % objective)
+
+            print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
     return P, Q, bu, bi

@@ -126,6 +126,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
                 objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
 
                 print('\t- Loss: %.3f' % objective)
+
             print('\t- Time: %.3fs' % (time.time() - start))
             print('')
 
