@@ -10,7 +10,7 @@ __dataset__ = 'ratings.tab'
 class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
-        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=True)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=2)
         super().test_input_data_continuous(learner, filename=__dataset__)
 
         fb_ds = Orange.data.Table(__dataset__)

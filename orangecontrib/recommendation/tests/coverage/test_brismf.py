@@ -11,7 +11,7 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
         learner = BRISMFLearner(num_factors=2, num_iter=5, min_rating=0,
-                                max_rating=5, verbose=True)
+                                max_rating=5, verbose=2)
         super().test_input_data_continuous(learner, filename=__dataset__)
 
     def test_input_data_discrete(self):
