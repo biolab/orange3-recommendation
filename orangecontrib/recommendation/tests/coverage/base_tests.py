@@ -1,4 +1,5 @@
 import Orange
+from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
 from sklearn.metrics import mean_squared_error
 
@@ -7,7 +8,7 @@ import numpy as np
 import math
 import random
 
-__all__ = ["TestRatingModels"]
+__all__ = ['TestRatingModels', 'TestRankingModels']
 
 
 class TestRatingModels:
@@ -17,24 +18,6 @@ class TestRatingModels:
     #     if cls is TestRatingModels:
     #         raise unittest.SkipTest("Skip BaseTest tests, it's a base class")
     #     super(TestRatingModels, cls).setUpClass()
-
-    def test_input_data_discrete(self, learner, filename):
-        # Load data
-        data = Orange.data.Table(filename)
-
-        # Train recommender
-        recommender = learner(data)
-        print(str(recommender) + ' trained')
-
-        # Compute predictions
-        y_pred = recommender(data)
-
-        # Compute RMSE
-        rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
-        print('-> RMSE (input data; discrete): %.3f' % rmse)
-
-        # Check correctness
-        self.assertGreaterEqual(rmse, 0)
 
     def test_input_data_continuous(self, learner, filename):
         # Load data
@@ -51,6 +34,24 @@ class TestRatingModels:
         # Compute RMSE
         rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
         print('-> RMSE (input data; continuous): %.3f' % rmse)
+
+        # Check correctness
+        self.assertGreaterEqual(rmse, 0)
+
+    def test_input_data_discrete(self, learner, filename):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        # Train recommender
+        recommender = learner(data)
+        print(str(recommender) + ' trained')
+
+        # Compute predictions
+        y_pred = recommender(data)
+
+        # Compute RMSE
+        rmse = math.sqrt(mean_squared_error(data.Y, y_pred))
+        print('-> RMSE (input data; discrete): %.3f' % rmse)
 
         # Check correctness
         self.assertGreaterEqual(rmse, 0)
@@ -127,6 +128,75 @@ class TestRatingModels:
 
         # Train recommender and check warns
         self.assertWarns(UserWarning, learner, data)
+
+
+class TestRankingModels:
+
+    # @classmethod
+    # def setUpClass(cls):
+    #     if cls is TestRankingModels:
+    #         raise unittest.SkipTest("Skip BaseTest tests, it's a base class")
+    #     super(TestRankingModels, cls).setUpClass()
+
+    def test_input_data_continuous(self, learner, filename):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        recommender = learner(data)
+        print(str(recommender) + ' trained')
+
+        # Create set to test
+        num_users = min(recommender.shape[0], 5)
+        num_items = recommender.shape[1]
+        test_users = random.sample(range(recommender.shape[0]), num_users)
+
+        # Compute predictions 1
+        y_pred = recommender(data[test_users], top_k=None)
+
+        # Compute predictions 2 (Execute the 2nd branch)
+        y_pred2 = recommender(data[test_users].X, top_k=num_items)
+
+        # Compute predictions 3 (Execute the 3rd branch, "no arg")
+        y_pred3 = recommender(data[test_users], no_real_arg='Something')
+
+        # Get relevant items for the user (to test MRR)
+        all_items_u = []
+        for i in test_users:
+            items_u = data.X[data.X[:, recommender.order[0]] == i][:,
+                      recommender.order[1]]
+            all_items_u.append(items_u)
+
+        # Compute MRR
+        mrr = MeanReciprocalRank(results=y_pred, query=all_items_u)
+        print('-> MRR (input data): %.3f' % mrr)
+
+        # Check correctness
+        self.assertGreaterEqual(mrr, 0)
+        np.testing.assert_equal(y_pred, y_pred2)
+        np.testing.assert_equal(y_pred, y_pred3)
+
+    def test_input_data_discrete(self, learner, filename):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        # Train recommender
+        learner(data)
+
+    @unittest.skip("Skipping test")
+    def test_CV(self, learner, filename):
+        pass
+
+    def test_warnings(self, learner, filename):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        # Train recommender and check warns
+        self.assertWarns(UserWarning, learner, data)
+
+        recommender = learner(data)
+        arg = 'Something that is not a table'
+        self.assertRaises(TypeError, recommender, arg)
+
 
 if __name__ == "__main__":
     # Test all
