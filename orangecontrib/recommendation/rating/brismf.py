@@ -1,5 +1,6 @@
 from orangecontrib.recommendation.rating import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
+from orangecontrib.recommendation.utils import sgd_optimizer
 
 import numpy as np
 import time
@@ -43,6 +44,8 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
     bu = bias['dUsers']
     bi = bias['dItems']
 
+    sgd_optimizer.init_optimizers(4)
+
     # Factorize matrix using SGD
     for step in range(num_iter):
         if verbose:
@@ -57,17 +60,23 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
             eij = ratings[u, j] - rij_pred
 
             # Compute gradients
-            tempBu = eij - bias_lmbda * bu[u]
-            tempBi = eij - bias_lmbda * bi[j]
-            tempP = eij * Q[j, :] - lmbda * P[u, :]
-            tempQ = eij * P[u, :] - lmbda * Q[j, :]
+            dx_bu = -eij + bias_lmbda * bu[u]
+            dx_bi = -eij + bias_lmbda * bi[j]
+            dx_pu = -eij * Q[j, :] + lmbda * P[u, :]
+            dx_qi = -eij * P[u, :] + lmbda * Q[j, :]
 
             # Update the gradients at the same time
-            # I use the loss function divided by 2, to simplify the gradients
-            bu[u] += bias_learning_rate * tempBu
-            bi[j] += bias_learning_rate * tempBi
-            P[u, :] += learning_rate * tempP
-            Q[j, :] += learning_rate * tempQ
+            # # I use the loss function divided by 2, to simplify the gradients
+            # bu[u] += bias_learning_rate * tempBu  # bias_learning_rate
+            # bi[j] += bias_learning_rate * tempBi  # bias_learning_rate
+            # P[u, :] += learning_rate * tempP
+            # Q[j, :] += learning_rate * tempQ
+
+            grads = [dx_bu, dx_bi, dx_pu, dx_qi]
+            params = [bu[u], bi[j], P[u, :], Q[j, :]]
+            #new_update = sgd_optimizer.nesterov_momentum(grads, params, learning_rate)
+            new_update = sgd_optimizer.adagrad(grads, params, learning_rate)
+            bu[u], bi[j], P[u, :], Q[j, :] = new_update
 
         # Print process
         if verbose:

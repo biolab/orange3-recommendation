@@ -81,11 +81,11 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
 
 if __name__ == "__main__":
     # # Test all
-    unittest.main()
+    # unittest.main()
 
-    # # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestBRISMF("test_objective"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    # Test single test
+    suite = unittest.TestSuite()
+    suite.addTest(TestBRISMF("test_input_data_continuous"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 
