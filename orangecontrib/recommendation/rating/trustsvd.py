@@ -1,5 +1,6 @@
 from orangecontrib.recommendation.rating import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 from orangecontrib.recommendation.utils.datacaching \
     import cache_norms, cache_rows
 
@@ -9,6 +10,7 @@ import numpy as np
 import math
 import time
 import warnings
+import copy
 
 __all__ = ['TrustSVDLearner']
 __sparse_format__ = lil_matrix
@@ -67,7 +69,7 @@ def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, W, items_u, trustees_u):
 
 def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors, 
                           num_iter, learning_rate, bias_learning_rate, lmbda, 
-                          bias_lmbda, social_lmbda, verbose=False, 
+                          bias_lmbda, social_lmbda, optimizer, verbose=False,
                           random_state=None):
 
     # Seed the generator
@@ -88,6 +90,14 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
     global_avg = bias['globalAvg']
     bu = bias['dUsers']
     bi = bias['dItems']
+
+    # Configure optimizer
+    update_bu = create_opt(optimizer, bias_learning_rate).update
+    update_bj = create_opt(optimizer, bias_learning_rate).update
+    update_pu = create_opt(optimizer, learning_rate).update
+    update_qj = create_opt(optimizer, learning_rate).update
+    update_yi = create_opt(optimizer, learning_rate).update
+    update_wv = create_opt(optimizer, learning_rate).update
 
     # Cache rows
     # >>> From 2 days to 30s
@@ -137,35 +147,47 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
 
             # Gradient Bu
             reg_bu = (bias_lmbda/norm_Iu) * bu[u] if norm_Iu > 0 else 0
-            bu[u] -= bias_learning_rate * (euj + reg_bu)
+            dx_bu = euj + reg_bu
 
             # Gradient Bi
             reg_bi = (bias_lmbda/norm_Uj) * bi[j] if norm_Uj > 0 else 0
-            bi[j] -= bias_learning_rate * (euj + reg_bi)
+            dx_bi = euj + reg_bi
+
+            # Update the gradients Bu, Bi at the same time
+            update_bu(dx_bu, bu, u)
+            update_bj(dx_bi, bi, j)
 
             # Gradient P
             reg_p = (lmbda/norm_Iu) * P[u, :] if norm_Iu > 0 else 0
-            tempP[u, :] = euj * Q[j, :] + reg_p  # P: Part 1
+            #tempP[u, :] = euj * Q[j, :] + reg_p  # P: Part 1
+            dx_pu = euj * Q[j, :] + reg_p
+            update_pu(dx_pu, P, u)
 
             # Gradient Q
             reg_q = (lmbda/norm_Uj) * Q[j, :] if norm_Uj > 0 else 0
-            tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + reg_q
+            #tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + reg_q
+            dx_qi = euj * (P[u, :] + y_term + w_term) + reg_q
+            update_qj(dx_qi, Q, j)
 
             # Gradient Y
             if norm_Iu > 0:
                 tempY1 = (euj/norm_Iu) * Q[j, :]
                 norms = cache_norms(ratings_T, items_u, norm_I)
                 norm_b = (lmbda/np.atleast_2d(norms))
-                tempY[items_u, :] = tempY1 + \
-                                np.multiply(norm_b.T, Y[items_u, :])
+                # tempY[items_u, :] = tempY1 + \
+                #                 np.multiply(norm_b.T, Y[items_u, :])
+                dx_yi = tempY1 + np.multiply(norm_b.T, Y[items_u, :])
+                update_yi(dx_yi, Y, items_u)
 
             # Gradient W
             if norm_Tu > 0:
                 tempW1 = (euj/norm_Tu) * Q[j, :]  # W: Part 1
                 norms = cache_norms(trust_T, trustees_u, norm_Tc)
                 norm_b = (lmbda/np.atleast_2d(norms))
-                tempW[trustees_u, :] = tempW1 + \
-                                      np.multiply(norm_b.T, W[trustees_u, :])
+                # tempW[trustees_u, :] = tempW1 + \
+                #                       np.multiply(norm_b.T, W[trustees_u, :])
+                dx_wv = tempW1 + np.multiply(norm_b.T, W[trustees_u, :])
+                update_wv(dx_wv, W, trustees_u)
 
         # Optimize trust prediction
         for u, v in zip(*trust.nonzero()):
@@ -177,15 +199,14 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
             # Gradient P (Part 2)
             norm_Tu = cache_norms(trust, u, norm_Tr)
             reg_p = P[u, :]/norm_Tu if norm_Tu > 0 else 0
-            tempP[u, :] += social_lmbda * (euv * W[v, :] + reg_p)
+            #tempP[u, :] += social_lmbda * (euv * W[v, :] + reg_p)
+            dx_pu = social_lmbda * (euv * W[v, :] + reg_p)
+            update_pu(dx_pu, P, u)
 
             # Gradient W (Part 2)
-            tempW[v, :] += social_lmbda * euv * P[u, :]  # W: Part 2
-
-        P -= learning_rate * tempP
-        Q -= learning_rate * tempQ
-        Y -= learning_rate * tempY
-        W -= learning_rate * tempW
+            #tempW[v, :] += social_lmbda * euv * P[u, :]  # W: Part 2
+            dx_wv = social_lmbda * euv * P[u, :]
+            update_wv(dx_wv, W, v)
 
         # Print process
         if verbose:
@@ -363,6 +384,10 @@ class TrustSVDLearner(Learner):
         trust: Orange.data.Table
             Social trust information.
 
+        optimizer: Optimizer, optional
+            Set the optimizer for SGD. If None (default), classical SGD will be
+            applied.
+
         verbose: boolean or int, optional
             Prints information about the process according to the verbosity
             level. Values: False (verbose=0), True (verbose=1) and INTEGER
@@ -379,7 +404,7 @@ class TrustSVDLearner(Learner):
     def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
                  bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
                  social_lmbda=0.05, min_rating=None, max_rating=None,
-                 trust=None, preprocessors=None, verbose=False,
+                 trust=None, optimizer=None, preprocessors=None, verbose=False,
                  random_state=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
@@ -388,6 +413,7 @@ class TrustSVDLearner(Learner):
         self.lmbda = lmbda
         self.bias_lmbda = bias_lmbda
         self.social_lmbda = social_lmbda
+        self.optimizer = SGD() if optimizer is None else optimizer
         self.random_state = random_state
 
         # Correct assignments
@@ -446,6 +472,7 @@ class TrustSVDLearner(Learner):
                                   lmbda=self.lmbda,
                                   bias_lmbda=self.bias_lmbda,
                                   social_lmbda=self.social_lmbda,
+                                  optimizer=self.optimizer,
                                   verbose=self.verbose,
                                   random_state=self.random_state)
 

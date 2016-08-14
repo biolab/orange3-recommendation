@@ -1,20 +1,30 @@
 import Orange
 from orangecontrib.recommendation.tests.coverage import TestRatingModels
 from orangecontrib.recommendation import TrustSVDLearner
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 
 import unittest
 
 __dataset__ = 'filmtrust/trust_small.tab'
 __trust_dataset__ = 'filmtrust/trust_small.tab'
+__optimizers__ = [SGD(), Momentum(momentum=0.9),
+                  NesterovMomentum(momentum=0.9), AdaGrad(),
+                  RMSProp(rho=0.9), AdaDelta(rho=0.95),
+                  Adam(beta1=0.9, beta2=0.999)]
 
 
 class TestTrustSVD(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
         trust = Orange.data.Table(__trust_dataset__)
-        learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust,
+        learner = TrustSVDLearner(num_factors=2, num_iter=5, trust=trust,
                                   verbose=2)
-        super().test_input_data_continuous(learner, filename=__dataset__)
+
+        # Test SGD optimizers too
+        for opt in __optimizers__:
+            learner.optimizer = opt
+            print(learner.optimizer)
+            super().test_input_data_continuous(learner, filename=__dataset__)
 
     @unittest.skip("Skipping test")
     def test_input_data_discrete(self):
@@ -100,7 +110,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestTrustSVD("test_objective"))
+    suite.addTest(TestTrustSVD("test_input_data_continuous"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

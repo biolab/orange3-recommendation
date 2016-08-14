@@ -1,6 +1,7 @@
 from orangecontrib.recommendation.rating import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
 from orangecontrib.recommendation.utils.datacaching import cache_rows
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 
 from collections import defaultdict
 
@@ -8,6 +9,7 @@ import numpy as np
 import math
 import time
 import warnings
+import copy
 
 __all__ = ['SVDPlusPlusLearner']
 __sparse_format__ = lil_matrix
@@ -53,7 +55,7 @@ def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, feedback_u):
 
 def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
                           learning_rate, bias_learning_rate, lmbda, bias_lmbda,
-                          verbose=False, random_state=None):
+                          optimizer, verbose=False, random_state=None):
 
     # Seed the generator
     if random_state is not None:
@@ -72,6 +74,13 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
     bu = bias['dUsers']
     bi = bias['dItems']
 
+    # Configure optimizer
+    update_bu = create_opt(optimizer, bias_learning_rate).update
+    update_bj = create_opt(optimizer, bias_learning_rate).update
+    update_pu = create_opt(optimizer, learning_rate).update
+    update_qj = create_opt(optimizer, learning_rate).update
+    update_yi = create_opt(optimizer, learning_rate).update
+
     # Cache rows
     users_cached = defaultdict(list)
     feedback_cached = defaultdict(list)
@@ -83,7 +92,6 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
             print('- Step: %d' % (step + 1))
 
         # Optimize rating prediction
-        objective = 0
         for u, j in zip(*ratings.nonzero()):
 
             # if there is no feedback, infer it from the ratings
@@ -99,20 +107,20 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
             eij = ratings[u, j] - ruj_pred
 
             # Compute gradients
-            #tempBu = eij - bias_lmbda * bu[u]
-            #tempBi = eij - bias_lmbda * bi[j]
-            tempP = eij * Q[j, :] - lmbda * P[u, :]
-            tempQ = eij * (P[u, :] + y_term) - lmbda * Q[j, :]
+            dx_bu = -eij + bias_lmbda * bu[u]
+            dx_bi = -eij + bias_lmbda * bi[j]
+            dx_pu = -eij * Q[j, :] + lmbda * P[u, :]
+            dx_qi = -eij * (P[u, :] + y_term) + lmbda * Q[j, :]
 
             # Update the gradients at the same time
-            # I use the loss function divided by 2, to simplify the gradients
-            #bu[u] += bias_learning_rate * tempBu
-            #bi[j] += bias_learning_rate * tempBi
-            P[u, :] += learning_rate * tempP
-            Q[j, :] += learning_rate * tempQ
+            update_bu(dx_bu, bu, u)
+            update_bj(dx_bi, bi, j)
+            update_pu(dx_pu, P, u)
+            update_qj(dx_qi, Q, j)
+
             if norm_feedback > 0:  # Gradient Y
-                Y[feedback_u, :] += learning_rate * (eij/norm_feedback * Q[j, :]
-                                                     - lmbda * Y[feedback_u, :])
+                dx_yi = -eij/norm_feedback * Q[j, :] + lmbda * Y[feedback_u, :]
+                update_yi(dx_yi, Y, feedback_u)
 
         # Print process
         if verbose:
@@ -234,6 +242,10 @@ class SVDPlusPlusLearner(Learner):
             information will be inferred from the ratings (e.g.: item rated,
             means items seen).
 
+        optimizer: Optimizer, optional
+            Set the optimizer for SGD. If None (default), classical SGD will be
+            applied.
+
         verbose: boolean or int, optional
             Prints information about the process according to the verbosity
             level. Values: False (verbose=0), True (verbose=1) and INTEGER
@@ -246,16 +258,18 @@ class SVDPlusPlusLearner(Learner):
 
     name = 'SVD++'
 
-    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
+    def __init__(self, num_factors=5, num_iter=25, learning_rate=0.01,
                  bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
                  min_rating=None, max_rating=None, feedback=None,
-                 preprocessors=None, verbose=False, random_state=None):
+                 optimizer=None, preprocessors=None, verbose=False,
+                 random_state=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
         self.learning_rate = learning_rate
         self.bias_learning_rate = bias_learning_rate
         self.lmbda = lmbda
         self.bias_lmbda = bias_lmbda
+        self.optimizer = SGD() if optimizer is None else optimizer
         self.random_state = random_state
 
         # Correct assignments
@@ -312,6 +326,7 @@ class SVDPlusPlusLearner(Learner):
                                   bias_learning_rate=self.bias_learning_rate,
                                   lmbda=self.lmbda,
                                   bias_lmbda=self.bias_lmbda,
+                                  optimizer=self.optimizer,
                                   verbose=self.verbose,
                                   random_state=self.random_state)
 

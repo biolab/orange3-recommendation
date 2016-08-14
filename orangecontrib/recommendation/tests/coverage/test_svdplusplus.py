@@ -1,17 +1,27 @@
 import Orange
 from orangecontrib.recommendation.tests.coverage import TestRatingModels
 from orangecontrib.recommendation import SVDPlusPlusLearner
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 
 import unittest
 
 __dataset__ = 'ratings.tab'
+__optimizers__ = [SGD(), Momentum(momentum=0.9),
+                  NesterovMomentum(momentum=0.9), AdaGrad(),
+                  RMSProp(rho=0.9), AdaDelta(rho=0.95),
+                  Adam(beta1=0.9, beta2=0.999)]
 
 
 class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
-        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=2)
-        super().test_input_data_continuous(learner, filename=__dataset__)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=5, verbose=2)
+
+        # Test SGD optimizers too
+        for opt in __optimizers__:
+            learner.optimizer = opt
+            print(learner.optimizer)
+            super().test_input_data_continuous(learner, filename=__dataset__)
 
         fb_ds = Orange.data.Table(__dataset__)
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, feedback=fb_ds)
@@ -86,12 +96,12 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
 
 
 if __name__ == "__main__":
-    # # Test all
-    unittest.main()
+    # Test all
+    # unittest.main()
 
-    # # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestSVDPlusPlus("test_objective"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    # Test single test
+    suite = unittest.TestSuite()
+    suite.addTest(TestSVDPlusPlus("test_input_data_continuous"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
 

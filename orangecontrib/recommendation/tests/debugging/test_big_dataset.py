@@ -12,57 +12,57 @@ def test_learners():
     start = time.time()
 
     # Load data
-    data = Orange.data.Table('/Users/salvacarrion/Desktop/datasets/big_datasets/MovieLens10M.tab')
+    data = Orange.data.Table('filmtrust/ratings.tab')  #'movielens100K.tab')
     print('- Loading time: %.3fs' % (time.time() - start))
 
-    # Global average
-    start = time.time()
-    learner = GlobalAvgLearner()
-    recommender = learner(data)
-    print('- Time (GlobalAvgLearner): %.3fs' % (time.time() - start))
-    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    mae = mean_absolute_error(data.Y, recommender(data))
-    print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
-    print('- MAE (GlobalAvgLearner): %.3f' % mae)
-    print('')
-
-    # Item average
-    start = time.time()
-    learner = ItemAvgLearner()
-    recommender = learner(data)
-    print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
-    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    mae = mean_absolute_error(data.Y, recommender(data))
-    print('- RMSE (ItemAvgLearner): %.3f' % rmse)
-    print('- MAE (ItemAvgLearner): %.3f' % mae)
-    print('')
-
-    # User average
-    start = time.time()
-    learner = UserAvgLearner()
-    recommender = learner(data)
-    print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
-    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    mae = mean_absolute_error(data.Y, recommender(data))
-    print('- RMSE (UserAvgLearner): %.3f' % rmse)
-    print('- MAE (UserAvgLearner): %.3f' % mae)
-    print('')
-
-    # User-Item baseline
-    start = time.time()
-    learner = UserItemBaselineLearner()
-    recommender = learner(data)
-    print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
-    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    mae = mean_absolute_error(data.Y, recommender(data))
-    print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
-    print('- MAE (UserItemBaselineLearner): %.3f' % mae)
-    print('')
+    # # Global average
+    # start = time.time()
+    # learner = GlobalAvgLearner()
+    # recommender = learner(data)
+    # print('- Time (GlobalAvgLearner): %.3fs' % (time.time() - start))
+    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    # mae = mean_absolute_error(data.Y, recommender(data))
+    # print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
+    # print('- MAE (GlobalAvgLearner): %.3f' % mae)
+    # print('')
+    #
+    # # Item average
+    # start = time.time()
+    # learner = ItemAvgLearner()
+    # recommender = learner(data)
+    # print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
+    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    # mae = mean_absolute_error(data.Y, recommender(data))
+    # print('- RMSE (ItemAvgLearner): %.3f' % rmse)
+    # print('- MAE (ItemAvgLearner): %.3f' % mae)
+    # print('')
+    #
+    # # User average
+    # start = time.time()
+    # learner = UserAvgLearner()
+    # recommender = learner(data)
+    # print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
+    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    # mae = mean_absolute_error(data.Y, recommender(data))
+    # print('- RMSE (UserAvgLearner): %.3f' % rmse)
+    # print('- MAE (UserAvgLearner): %.3f' % mae)
+    # print('')
+    #
+    # # User-Item baseline
+    # start = time.time()
+    # learner = UserItemBaselineLearner()
+    # recommender = learner(data)
+    # print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
+    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    # mae = mean_absolute_error(data.Y, recommender(data))
+    # print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
+    # print('- MAE (UserItemBaselineLearner): %.3f' % mae)
+    # print('')
 
     # BRISMF
     start = time.time()
-    learner = BRISMFLearner(num_factors=15, num_iter=15, learning_rate=0.07,
-                            lmbda=0.1, bias_learning_rate=None, verbose=1)
+    learner = BRISMFLearner(num_factors=15, num_iter=15, learning_rate=0.1,
+                            lmbda=0.1, bias_learning_rate=None, verbose=2)
     recommender = learner(data)
     print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
     rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))

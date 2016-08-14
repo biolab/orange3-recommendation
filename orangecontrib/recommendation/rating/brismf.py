@@ -1,10 +1,11 @@
 from orangecontrib.recommendation.rating import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
-from orangecontrib.recommendation.utils import sgd_optimizer
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 
 import numpy as np
 import time
 import warnings
+import copy
 
 __all__ = ['BRISMFLearner']
 __sparse_format__ = lil_matrix
@@ -27,7 +28,7 @@ def _predict_all_items(users, global_avg, bu, bi, P, Q):
 
 def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
                           learning_rate, bias_learning_rate, lmbda, bias_lmbda,
-                          verbose=False, random_state=None):
+                          optimizer, verbose=False, random_state=None):
     # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
@@ -44,13 +45,18 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
     bu = bias['dUsers']
     bi = bias['dItems']
 
-    sgd_optimizer.init_optimizers(4)
+    # Configure optimizer
+    update_bu = create_opt(optimizer, bias_learning_rate).update
+    update_bj = create_opt(optimizer, bias_learning_rate).update
+    update_pu = create_opt(optimizer, learning_rate).update
+    update_qj = create_opt(optimizer, learning_rate).update
 
     # Factorize matrix using SGD
     for step in range(num_iter):
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
+
 
         # Optimize rating prediction
         for u, j in zip(*ratings.nonzero()):
@@ -66,17 +72,10 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
             dx_qi = -eij * P[u, :] + lmbda * Q[j, :]
 
             # Update the gradients at the same time
-            # # I use the loss function divided by 2, to simplify the gradients
-            # bu[u] += bias_learning_rate * tempBu  # bias_learning_rate
-            # bi[j] += bias_learning_rate * tempBi  # bias_learning_rate
-            # P[u, :] += learning_rate * tempP
-            # Q[j, :] += learning_rate * tempQ
-
-            grads = [dx_bu, dx_bi, dx_pu, dx_qi]
-            params = [bu[u], bi[j], P[u, :], Q[j, :]]
-            #new_update = sgd_optimizer.nesterov_momentum(grads, params, learning_rate)
-            new_update = sgd_optimizer.adagrad(grads, params, learning_rate)
-            bu[u], bi[j], P[u, :], Q[j, :] = new_update
+            update_bu(dx_bu, bu, u)
+            update_bj(dx_bi, bi, j)
+            update_pu(dx_pu, P, u)
+            update_qj(dx_qi, Q, j)
 
         # Print process
         if verbose:
@@ -162,6 +161,10 @@ class BRISMFLearner(Learner):
             Defines the upper bound for the predictions. If None (default),
             ratings won't be bounded.
 
+        optimizer: Optimizer, optional
+            Set the optimizer for SGD. If None (default), classical SGD will be
+            applied.
+
         verbose: boolean or int, optional
             Prints information about the process according to the verbosity
             level. Values: False (verbose=0), True (verbose=1) and INTEGER
@@ -176,14 +179,15 @@ class BRISMFLearner(Learner):
 
     def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
                  bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
-                 min_rating=None, max_rating=None, preprocessors=None,
-                 verbose=False, random_state=None):
+                 min_rating=None, max_rating=None, optimizer=None,
+                 preprocessors=None, verbose=False, random_state=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
         self.learning_rate = learning_rate
         self.bias_learning_rate = bias_learning_rate
         self.lmbda = lmbda
         self.bias_lmbda = bias_lmbda
+        self.optimizer = SGD() if optimizer is None else optimizer
         self.random_state = random_state
 
         # Correct assignments
@@ -231,6 +235,7 @@ class BRISMFLearner(Learner):
                                      bias_learning_rate=self.bias_learning_rate,
                                      lmbda=self.lmbda,
                                      bias_lmbda=self.bias_lmbda,
+                                     optimizer=self.optimizer,
                                      verbose=self.verbose,
                                      random_state=self.random_state)
 

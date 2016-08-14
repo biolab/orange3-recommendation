@@ -1,10 +1,15 @@
 import Orange
 from orangecontrib.recommendation.tests.coverage import TestRatingModels
 from orangecontrib.recommendation import BRISMFLearner
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 
 import unittest
 
 __dataset__ = 'ratings.tab'
+__optimizers__ = [SGD(), Momentum(momentum=0.9),
+                  NesterovMomentum(momentum=0.9), AdaGrad(),
+                  RMSProp(rho=0.9), AdaDelta(rho=0.95),
+                  Adam(beta1=0.9, beta2=0.999)]
 
 
 class TestBRISMF(unittest.TestCase, TestRatingModels):
@@ -12,7 +17,12 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
     def test_input_data_continuous(self):
         learner = BRISMFLearner(num_factors=2, num_iter=5, min_rating=0,
                                 max_rating=5, verbose=2)
-        super().test_input_data_continuous(learner, filename=__dataset__)
+
+        # Test SGD optimizers too
+        for opt in __optimizers__:
+            learner.optimizer = opt
+            print(learner.optimizer)
+            super().test_input_data_continuous(learner, filename=__dataset__)
 
     def test_input_data_discrete(self):
         learner = BRISMFLearner(num_factors=2, num_iter=1)
