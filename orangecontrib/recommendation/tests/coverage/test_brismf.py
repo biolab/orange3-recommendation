@@ -15,7 +15,7 @@ __optimizers__ = [SGD(), Momentum(momentum=0.9),
 class TestBRISMF(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
-        learner = BRISMFLearner(num_factors=2, num_iter=5, min_rating=0,
+        learner = BRISMFLearner(num_factors=2, num_iter=1, min_rating=0,
                                 max_rating=5, verbose=2)
 
         # Test SGD optimizers too

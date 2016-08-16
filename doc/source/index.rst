@@ -26,6 +26,7 @@ Scripting Reference
    :maxdepth: 2
 
    scripting/recommendation.rst
+   scripting/updates.rst
 
 
 Widgets

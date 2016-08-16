@@ -15,7 +15,7 @@ __optimizers__ = [SGD(), Momentum(momentum=0.9),
 class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self):
-        learner = SVDPlusPlusLearner(num_factors=2, num_iter=5, verbose=2)
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=2)
 
         # Test SGD optimizers too
         for opt in __optimizers__:
