@@ -1,5 +1,8 @@
-from orangecontrib.recommendation import Learner, Model
 from Orange.data import Table
+from orangecontrib.recommendation import Learner, Model
+from orangecontrib.recommendation.utils.format_data import *
+from orangecontrib.recommendation.evaluation.ranking import MeanReciprocalRank
+from scipy.sparse import lil_matrix
 
 import numpy as np
 
@@ -29,8 +32,31 @@ class ModelRecommendation(Model):
 
         return prediction
 
-    def compute_objective(self):
-        pass
+    def compute_mrr(self, data, users, queries=None):
+
+        # Check data type
+        if isinstance(data, lil_matrix):
+            pass
+        elif isinstance(data, Table):
+            # Preprocess Orange.data.Table and transform it to sparse
+            data, order, shape = preprocess(data)
+            data = table2sparse(data, shape, order, m_type=lil_matrix)
+        else:
+            raise TypeError('Invalid data type')
+
+        # Make predictions
+        y_pred = self(users)
+
+        # Get relevant items for the user[i]
+        if queries is None:
+            queries = []
+            add_items = queries.append
+            for u in users:
+                add_items(np.asarray(data.rows[u]))
+
+        # Compute Mean Reciprocal Rank (MRR)
+        mrr = MeanReciprocalRank(results=y_pred, query=queries)
+        return mrr, queries
 
 
 class LearnerRecommendation(Learner):

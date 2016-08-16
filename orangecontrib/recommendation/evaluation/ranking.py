@@ -24,21 +24,24 @@ def ReciprocalRank(results, query):
     all_ranks = []
     for i in range(len(results)):
 
-        all_rr = []
-        for j in query[i]:
-            rank = np.where(results[i] == j)[0]
+        if len(query[i]) > 0:
+            temp_ranks = []
+            for j in query[i]:
+                # TODO: Replace 'np.where' by a "return first appearance"
+                # Explanation: 'np.where' walks through all the array, but we
+                # only need the first appearance. 'np.where' is use because it's
+                # fastest than a function written in pure python
+                rank = np.where(results[i] == j)[0]
 
-            if len(rank) == 0:  # Check values not found
-                rank = len(results[i])
-            else:
-                rank = rank[0]
-            all_rr.append(rank)
+                if len(rank) == 0:  # Check values not found
+                    rank = len(results[i])
+                else:
+                    rank = rank[0]
+                temp_ranks.append(rank)
 
-        # Get the item best ranked (the smaller, the better; 1st, 2nd,..)
-        min_rank = min(all_rr)
-
-        rr = 1.0 / (min_rank + 1)
-        all_ranks.append(rr)
+            # Get the item best ranked (the smaller, the better; 1st, 2nd,..)
+            rr = 1.0 / (min(temp_ranks) + 1)
+            all_ranks.append(rr)
 
     return all_ranks
 

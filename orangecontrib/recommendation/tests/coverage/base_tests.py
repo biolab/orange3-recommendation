@@ -159,19 +159,6 @@ class TestRankingModels:
         # Compute predictions 3 (Execute the 3rd branch, "no arg")
         y_pred3 = recommender(data[test_users], no_real_arg='Something')
 
-        # Get relevant items for the user (to test MRR)
-        all_items_u = []
-        for i in test_users:
-            items_u = data.X[data.X[:, recommender.order[0]] == i][:,
-                      recommender.order[1]]
-            all_items_u.append(items_u)
-
-        # Compute MRR
-        mrr = MeanReciprocalRank(results=y_pred, query=all_items_u)
-        print('-> MRR (input data): %.3f' % mrr)
-
-        # Check correctness
-        self.assertGreaterEqual(mrr, 0)
         np.testing.assert_equal(y_pred, y_pred2)
         np.testing.assert_equal(y_pred, y_pred3)
 
@@ -181,6 +168,29 @@ class TestRankingModels:
 
         # Train recommender
         learner(data)
+
+    def test_mrr(self, learner, filename, testdata=None):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        # Train recommender
+        recommender = learner(data)
+
+        # Check if there is a test dataset
+        if testdata:
+            data = testdata
+
+        # Prepare samples
+        users = np.unique(data.X[:, 0]).astype(int)
+        num_users = len(users)
+        num_samples = min(num_users, 10)
+        users_sampled = np.random.choice(users, num_samples)
+
+        # Compute predictions
+        mrr, _ = recommender.compute_mrr(data=data, users=users_sampled)
+
+        print('MRR: %.4f' % mrr)
+        self.assertGreaterEqual(mrr, 0)
 
     @unittest.skip("Skipping test")
     def test_CV(self, learner, filename):

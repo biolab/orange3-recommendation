@@ -1,11 +1,11 @@
 from orangecontrib.recommendation.ranking import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 from orangecontrib.recommendation.utils.datacaching import cache_rows
 
 from collections import defaultdict
 
 from scipy.special import expit as sigmoid
-from scipy.sparse import dok_matrix
 
 import numpy as np
 import time
@@ -25,9 +25,8 @@ def _dg(x):
     y = ex / (1 + ex) ** 2
     return y
 
-
 def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
-                          lmbda, verbose=False, random_state=None):
+                          lmbda, optimizer, verbose=False, random_state=None):
     # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
@@ -39,8 +38,27 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
     U = 0.01 * np.random.rand(num_users, num_factors)  # User-feature matrix
     V = 0.01 * np.random.rand(num_items, num_factors)  # Item-feature matrix
 
+    # Configure optimizer
+    update_ui = create_opt(optimizer, learning_rate).update
+    update_vw = create_opt(optimizer, learning_rate).update
+
     # Cache rows
     users_cached = defaultdict(list)
+
+    # Print information about the verbosity level
+    if verbose:
+        print('CLiMF factorization started.')
+        print('\tLevel of verbosity: ' + str(int(verbose)))
+        print('\t\t- Verbosity = 1\t->\t[time/iter]')
+        print('\t\t- Verbosity = 2\t->\t[time/iter, loss, MRR]')
+        print('\t\t- Verbosity = 3\t->\t[time/iter, loss, MRR]')
+        print('')
+
+        # Prepare sample of users
+        if verbose > 1:
+            queries = None
+            num_samples = min(num_users, 1000)
+            users_sampled = np.random.choice(np.arange(num_users), num_samples)
 
     # Factorize matrix using SGD
     for step in range(num_iter):
@@ -49,7 +67,6 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
             print('- Step: %d' % (step + 1))
 
         # Optimize rating prediction
-        objective = 0
         for i in range(len(U)):
             dU = -lmbda * U[i]
 
@@ -67,7 +84,9 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
                        (1 / (1 - _g(f - f[j])) - 1 / (1 - _g(f[j] - f)))
                 dV += np.einsum('i,j->ij', vec1, U[i]).sum(axis=0)
 
-                V[w] += learning_rate * dV
+                #V[w] += learning_rate * dV
+                update_vw(-dV, V, w)
+
                 dU += _g(-f[j]) * V[w]
 
                 # For II
@@ -75,19 +94,25 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
                 vec3 = _dg(f - f[j]) / (1 - _g(f - f[j]))
                 dU += np.einsum('ij,i->ij', vec2, vec3).sum(axis=0)
 
-            U[i] += learning_rate * dU
+            #U[i] += learning_rate * dU
+            update_ui(-dU, U, i)
 
         # Print process
         if verbose:
+            print('\t- Time: %.3fs' % (time.time() - start))
+
             if verbose > 1:
                 # Set parameters and compute loss
                 low_rank_matrices = (U, V)
                 params = lmbda
                 objective = compute_loss(ratings, low_rank_matrices, params)
+                print('\t- Training loss: %.3f' % objective)
 
-                print('\t- Loss: %.3f' % objective)
-
-            print('\t- Time: %.3fs' % (time.time() - start))
+                if verbose > 2:
+                    model = CLiMFModel(U=U, V=V)
+                    mrr, queries = \
+                        model.compute_mrr(ratings, users_sampled, queries)
+                    print('\t- Train MRR: %.4f' % mrr)
             print('')
 
     return U, V
@@ -110,23 +135,20 @@ def compute_loss(data, low_rank_matrices, params):
     else:
         raise TypeError('Invalid data type')
 
-    M, N = U.shape[0], V.shape[0]
-    Ys = ratings
+    # Cache rows
+    users_cached = defaultdict(list)
 
-    W1 = np.log(sigmoid(U.dot(V.T)))
-    W2 = np.zeros(Ys.shape)
+    F = -0.5*lmbda*(np.sum(U*U)+np.sum(V*V))
 
-    for i in range(M):
-        for j in range(N):
-            W2[i, j] = sum((np.log(
-                1 - Ys[i, k] * sigmoid(U[i, :].dot(V[k, :] - V[j, :])))
-                            for k in range(N)))
+    for i in range(len(U)):
+        # Precompute f (f[j] = <U[i], V[j]>)
+        items = cache_rows(ratings, i, users_cached)
+        f = np.einsum('j,ij->i', U[i], V[items])
 
-    objective = Ys.multiply(W1 - W2).sum()
-    objective -= lmbda / 2.0 * (np.linalg.norm(U, ord="fro") ** 2
-                                + np.linalg.norm(V, ord="fro") ** 2)
-
-    return objective
+        for j in range(len(items)):  # j=items
+            F += np.log(_g(f[j]))
+            F += np.log(1 - _g(f - f[j])).sum(axis=0)  # For I
+    return F
 
 
 class CLiMFLearner(Learner):
@@ -155,6 +177,10 @@ class CLiMFLearner(Learner):
             Controls the importance of the regularization term (general).
             Avoids overfitting by penalizing the magnitudes of the parameters.
 
+        optimizer: Optimizer, optional
+            Set the optimizer for SGD. If None (default), classical SGD will be
+            applied.
+
         verbose: boolean or int, optional
             Prints information about the process according to the verbosity
             level. Values: False (verbose=0), True (verbose=1) and INTEGER
@@ -167,12 +193,13 @@ class CLiMFLearner(Learner):
     name = 'CLiMF'
 
     def __init__(self, num_factors=5, num_iter=25, learning_rate=0.0001,
-                 lmbda=0.001, preprocessors=None, verbose=False,
+                 lmbda=0.001, preprocessors=None, optimizer=None, verbose=False,
                  random_state=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
         self.learning_rate = learning_rate
         self.lmbda = lmbda
+        self.optimizer = SGD() if optimizer is None else optimizer
         self.random_state = random_state
 
         super().__init__(preprocessors=preprocessors, verbose=verbose)
@@ -206,7 +233,8 @@ class CLiMFLearner(Learner):
                                      num_factors=self.num_factors,
                                      num_iter=self.num_iter,
                                      learning_rate=self.learning_rate,
-                                     lmbda=self.lmbda, verbose=self.verbose,
+                                     lmbda=self.lmbda, optimizer=self.optimizer,
+                                     verbose=self.verbose,
                                      random_state=self.random_state)
 
         # Construct model
@@ -241,11 +269,14 @@ class CLiMFModel(Model):
 
         """
 
+        if X.ndim != 1:
+            X = X[:, self.order[0]]
+
         # Compute scores
         predictions = np.dot(self.U[X], self.V.T)
 
         # Return indices of the sorted predictions
-        predictions = np.argsort(predictions)
+        predictions = np.argsort(predictions, axis=1)
         predictions = np.fliplr(predictions)
 
         # Return top-k recommendations

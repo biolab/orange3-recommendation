@@ -1,18 +1,28 @@
 import Orange
 from orangecontrib.recommendation.tests.coverage import TestRankingModels
 from orangecontrib.recommendation import CLiMFLearner
+from orangecontrib.recommendation.utils.sgd_optimizer import *
 
 import unittest
 
 __dataset__ = 'binary_data.tab'
 __dataset2__ = 'binary_data_dis.tab'
+__optimizers__ = [SGD(), Momentum(momentum=0.9),
+                  NesterovMomentum(momentum=0.9), AdaGrad(),
+                  RMSProp(rho=0.9), AdaDelta(rho=0.95),
+                  Adam(beta1=0.9, beta2=0.999)]
 
 
 class TestCLiMF(unittest.TestCase, TestRankingModels):
 
     def test_input_data_continuous(self):
-        learner = CLiMFLearner(num_factors=2, num_iter=1, verbose=2)
-        super().test_input_data_continuous(learner, filename=__dataset__)
+        learner = CLiMFLearner(num_factors=2, num_iter=5, verbose=2)
+
+        # Test SGD optimizers too
+        for opt in __optimizers__:
+            learner.optimizer = opt
+            print(learner.optimizer)
+            super().test_input_data_continuous(learner, filename=__dataset__)
 
     def test_input_data_discrete(self):
         learner = CLiMFLearner(num_factors=2, num_iter=1)
@@ -35,7 +45,7 @@ class TestCLiMF(unittest.TestCase, TestRankingModels):
 
         steps = [1, 10, 30]
         objectives = []
-        learner = CLiMFLearner(num_factors=2, random_state=42)
+        learner = CLiMFLearner(num_factors=10, random_state=42, verbose=0)
 
         for step in steps:
             learner.num_iter = step
@@ -52,6 +62,10 @@ class TestCLiMF(unittest.TestCase, TestRankingModels):
         test = list(
             map(lambda t: t[0] <= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
+
+    def test_mrr(self):
+        learner = CLiMFLearner(num_factors=2, num_iter=1, verbose=0)
+        super().test_mrr(learner, filename=__dataset__)
 
     def test_outputs(self):
         # Load data
@@ -71,11 +85,11 @@ class TestCLiMF(unittest.TestCase, TestRankingModels):
 
 
 if __name__ == "__main__":
-    # Test all
-    unittest.main()
+    # # Test all
+    # unittest.main()
 
-    # # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestCLiMF("test_objective"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    # Test single test
+    suite = unittest.TestSuite()
+    suite.addTest(TestCLiMF("test_objective"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
