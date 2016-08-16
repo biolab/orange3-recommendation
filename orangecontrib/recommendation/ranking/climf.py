@@ -50,7 +50,7 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
         print('CLiMF factorization started.')
         print('\tLevel of verbosity: ' + str(int(verbose)))
         print('\t\t- Verbosity = 1\t->\t[time/iter]')
-        print('\t\t- Verbosity = 2\t->\t[time/iter, loss, MRR]')
+        print('\t\t- Verbosity = 2\t->\t[time/iter, loss]')
         print('\t\t- Verbosity = 3\t->\t[time/iter, loss, MRR]')
         print('')
 
