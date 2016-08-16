@@ -55,7 +55,7 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
         print('')
 
         # Prepare sample of users
-        if verbose > 1:
+        if verbose > 2:
             queries = None
             num_samples = min(num_users, 1000)
             users_sampled = np.random.choice(np.arange(num_users), num_samples)
