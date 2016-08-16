@@ -44,6 +44,12 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
         learner = BRISMFLearner(num_factors=2, num_iter=1, learning_rate=0.0)
         super().test_warnings(learner, filename=__dataset__)
 
+    def test_swap_columns(self):
+        learner = BRISMFLearner(num_factors=2, num_iter=1, random_state=42)
+        super().test_swap_columns(learner, filename1='ratings_dis.tab',
+                                  filename2='ratings_dis_swap.tab')
+
+
     def test_objective(self):
         from orangecontrib.recommendation.rating.brismf import compute_loss
 
@@ -87,6 +93,7 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
 
         diff = len(set([P.X.shape[1], Q.X.shape[1]]))
         self.assertEqual(diff, 1)
+
 
 
 if __name__ == "__main__":

@@ -42,6 +42,13 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
         super().test_predict_items(learner, filename=__dataset__)
 
+    def test_swap_columns(self):
+        trust = Orange.data.Table(__trust_dataset__)
+        learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust,
+                                  random_state=42)
+        super().test_swap_columns(learner, filename1='ratings_dis.tab',
+                                  filename2='ratings_dis_swap.tab')
+
     def test_CV(self):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)

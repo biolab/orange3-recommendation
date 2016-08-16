@@ -39,6 +39,11 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
         super().test_predict_items(learner, filename=__dataset__)
 
+    def test_swap_columns(self):
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, random_state=42)
+        super().test_swap_columns(learner, filename1='ratings_dis.tab',
+                                  filename2='ratings_dis_swap.tab')
+
     def test_CV(self):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
         super().test_CV(learner, filename=__dataset__)

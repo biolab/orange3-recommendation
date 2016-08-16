@@ -24,6 +24,11 @@ class TestGlobalAvg(unittest.TestCase, TestRatingModels):
         learner = GlobalAvgLearner()
         super().test_predict_items(learner, filename=__dataset__)
 
+    def test_swap_columns(self):
+        learner = GlobalAvgLearner()
+        super().test_swap_columns(learner, filename1='ratings_dis.tab',
+                                  filename2='ratings_dis_swap.tab')
+
     def test_CV(self):
         learner = GlobalAvgLearner()
         super().test_CV(learner, filename=__dataset__)

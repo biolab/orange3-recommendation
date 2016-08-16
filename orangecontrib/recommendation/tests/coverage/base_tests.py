@@ -129,6 +129,20 @@ class TestRatingModels:
         # Train recommender and check warns
         self.assertWarns(UserWarning, learner, data)
 
+    def test_swap_columns(self, learner, filename1, filename2):
+        # Load data
+        data1 = Orange.data.Table(filename1)
+        data2 = Orange.data.Table(filename2)
+
+        # Train recommender
+        recommender1 = learner(data1)
+        recommender2 = learner(data2)
+
+        # Compute predictions
+        y_pred1 = recommender1(data1)
+        y_pred2 = recommender2(data2)
+
+        np.testing.assert_array_equal(y_pred1, y_pred2)
 
 class TestRankingModels:
 
