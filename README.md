@@ -1,8 +1,8 @@
 Orange3 Recommendation
 ======================
 
-[![Build Status](https://travis-ci.org/salvacarrion/orange3-recommendation.svg?branch=master)](https://travis-ci.org/salvacarrion/orange3-recommendation)
-[![codecov](https://codecov.io/gh/salvacarrion/orange3-recommendation/branch/master/graph/badge.svg)](https://codecov.io/gh/salvacarrion/orange3-recommendation)
+[![Build Status](https://travis-ci.org/biolab/orange3-recommendation.svg?branch=master)](https://travis-ci.org/biolab/orange3-recommendation)
+[![codecov](https://codecov.io/gh/biolab/orange3-recommendation/branch/master/graph/badge.svg)](https://codecov.io/gh/biolab/orange3-recommendation)
 [![Documentation Status](https://readthedocs.org/projects/orange3-recommendation/badge/?version=latest)](http://orange3-recommendation.readthedocs.io/en/latest/?badge=latest)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9488fe350c4446f395d0d260f8be49f5)](https://www.codacy.com/app/salva-carrion/orange3-recommendation?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=salvacarrion/orange3-recommendation&amp;utm_campaign=Badge_Grade)
 
