@@ -85,6 +85,14 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
     users_cached = defaultdict(list)
     feedback_cached = defaultdict(list)
 
+    # Print information about the verbosity level
+    if verbose:
+        print('SVD++ factorization started.')
+        print('\tLevel of verbosity: ' + str(int(verbose)))
+        print('\t\t- Verbosity = 1\t->\t[time/iter]')
+        print('\t\t- Verbosity = 2\t->\t[time/iter, loss]')
+        print('')
+
     # Factorize matrix using SGD
     for step in range(num_iter):
         if verbose:
@@ -124,6 +132,8 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
 
         # Print process
         if verbose:
+            print('\t- Time: %.3fs' % (time.time() - start))
+
             if verbose > 1:
                 # Set parameters and compute loss
                 loss_feedback = feedback if feedback else users_cached
@@ -133,9 +143,7 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
                 params = (lmbda, bias_lmbda)
                 objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
 
-                print('\t- Loss: %.3f' % objective)
-
-            print('\t- Time: %.3fs' % (time.time() - start))
+                print('\t- Training loss: %.3f' % objective)
             print('')
 
     if feedback is None:

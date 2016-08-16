@@ -51,6 +51,14 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
     update_pu = create_opt(optimizer, learning_rate).update
     update_qj = create_opt(optimizer, learning_rate).update
 
+    # Print information about the verbosity level
+    if verbose:
+        print('BRISMF factorization started.')
+        print('\tLevel of verbosity: ' + str(int(verbose)))
+        print('\t\t- Verbosity = 1\t->\t[time/iter]')
+        print('\t\t- Verbosity = 2\t->\t[time/iter, loss]')
+        print('')
+
     # Factorize matrix using SGD
     for step in range(num_iter):
         if verbose:
@@ -79,16 +87,15 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
 
         # Print process
         if verbose:
+            print('\t- Time: %.3fs' % (time.time() - start))
+
             if verbose > 1:
                 # Set parameters and compute loss
                 bias = (global_avg, bu, bi)
                 low_rank_matrices = (P, Q)
                 params = (lmbda, bias_lmbda)
                 objective = compute_loss(ratings, bias, low_rank_matrices, params)
-
-                print('\t- Loss: %.3f' % objective)
-
-            print('\t- Time: %.3fs' % (time.time() - start))
+                print('\t- Training loss: %.3f' % objective)
             print('')
 
     return P, Q, bu, bi

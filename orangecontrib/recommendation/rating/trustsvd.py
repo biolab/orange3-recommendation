@@ -114,6 +114,14 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
     ratings_T = ratings.T
     trust_T = trust.T
 
+    # Print information about the verbosity level
+    if verbose:
+        print('TrustSVD factorization started.')
+        print('\tLevel of verbosity: ' + str(int(verbose)))
+        print('\t\t- Verbosity = 1\t->\t[time/iter]')
+        print('\t\t- Verbosity = 2\t->\t[time/iter, loss]')
+        print('')
+
     # Factorize matrix using SGD
     for step in range(num_iter):
         if verbose:
@@ -210,6 +218,8 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
 
         # Print process
         if verbose:
+            print('\t- Time: %.3fs' % (time.time() - start))
+
             if verbose > 1:
                 # Set parameters and compute loss
                 data_t = (ratings, trust)
@@ -218,8 +228,7 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
                 params = (lmbda, bias_lmbda, social_lmbda)
                 objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
 
-                print('\t- Loss: %.3f' % objective)
-            print('\t- Time: %.3fs' % (time.time() - start))
+                print('\t- Training loss: %.3f' % objective)
             print('')
 
     return P, Q, Y, W, bu, bi, users_cache
