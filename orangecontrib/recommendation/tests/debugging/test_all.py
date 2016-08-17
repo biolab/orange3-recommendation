@@ -1,5 +1,6 @@
 import unittest
 
+
 def run_tests():
     testmodules = [
         'test_global_avg',

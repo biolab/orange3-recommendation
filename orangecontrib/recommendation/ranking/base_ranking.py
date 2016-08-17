@@ -1,4 +1,3 @@
-from Orange.data import Table
 from orangecontrib.recommendation import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
 from orangecontrib.recommendation.evaluation.ranking import MeanReciprocalRank
