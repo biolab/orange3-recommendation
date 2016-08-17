@@ -1,7 +1,7 @@
 from orangecontrib.recommendation.rating import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
 from orangecontrib.recommendation.utils.datacaching import cache_rows
-from orangecontrib.recommendation.utils.sgd_optimizer import *
+from orangecontrib.recommendation.optimizers import *
 
 from collections import defaultdict
 
@@ -9,7 +9,6 @@ import numpy as np
 import math
 import time
 import warnings
-import copy
 
 __all__ = ['SVDPlusPlusLearner']
 __sparse_format__ = lil_matrix

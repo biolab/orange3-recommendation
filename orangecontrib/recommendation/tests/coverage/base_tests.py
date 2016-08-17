@@ -1,5 +1,4 @@
 import Orange
-from orangecontrib.recommendation.evaluation import MeanReciprocalRank
 
 from sklearn.metrics import mean_squared_error
 
@@ -192,16 +191,20 @@ class TestRankingModels:
 
         # Check if there is a test dataset
         if testdata:
-            data = testdata
+            # Prepare samples
+            testdata = Orange.data.Table(testdata)
+            users = np.unique(testdata.X[:, 0]).astype(int)
+            mrr, _ = recommender.compute_mrr(data=testdata, users=users)
 
-        # Prepare samples
-        users = np.unique(data.X[:, 0]).astype(int)
-        num_users = len(users)
-        num_samples = min(num_users, 10)
-        users_sampled = np.random.choice(users, num_samples)
+        else:
+            # Prepare samples
+            users = np.unique(data.X[:, 0]).astype(int)
+            num_users = len(users)
+            num_samples = min(num_users, 10)
+            users_sampled = np.random.choice(users, num_samples)
 
-        # Compute predictions
-        mrr, _ = recommender.compute_mrr(data=data, users=users_sampled)
+            # Compute predictions
+            mrr, _ = recommender.compute_mrr(data=data, users=users_sampled)
 
         print('MRR: %.4f' % mrr)
         self.assertGreaterEqual(mrr, 0)

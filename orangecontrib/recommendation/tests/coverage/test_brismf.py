@@ -1,7 +1,7 @@
 import Orange
 from orangecontrib.recommendation.tests.coverage import TestRatingModels
 from orangecontrib.recommendation import BRISMFLearner
-from orangecontrib.recommendation.utils.sgd_optimizer import *
+from orangecontrib.recommendation.optimizers import *
 
 import unittest
 

@@ -1,6 +1,6 @@
 from orangecontrib.recommendation.ranking import Learner, Model
 from orangecontrib.recommendation.utils.format_data import *
-from orangecontrib.recommendation.utils.sgd_optimizer import *
+from orangecontrib.recommendation.optimizers import *
 from orangecontrib.recommendation.utils.datacaching import cache_rows
 
 from collections import defaultdict

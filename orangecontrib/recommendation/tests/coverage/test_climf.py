@@ -1,7 +1,7 @@
 import Orange
 from orangecontrib.recommendation.tests.coverage import TestRankingModels
 from orangecontrib.recommendation import CLiMFLearner
-from orangecontrib.recommendation.utils.sgd_optimizer import *
+from orangecontrib.recommendation.optimizers import *
 
 import unittest
 
