@@ -10,8 +10,8 @@ need to *drag and drop* widgets to build your pipeline.
 .. figure:: ../resources/images/example_latent_factor_models.png
 
 
-Why there is no widget for any ranking model?
-=============================================
+Why is there no widget for the ranking models?
+==============================================
 
 **Short answer:** Currently Orange3 does not support ranking.
 
@@ -21,12 +21,12 @@ is related with "safety", as most of the regression and classification models
 return just one single value.
 
 In ranking problems, multiple results are returned. Therefore, Orange3 treats
-the output as the outout of a classification, returning the maximun value in the
+the output as the output of a classification, returning the maximun value in the
 sequence.
 
 
-Is the library prepared for big data
-====================================
+Is the library prepared for big data?
+=====================================
 
 Not really. From its very beginnings we were focused on building something easy
 to use, mostly oriented towards educational purposes and research.
@@ -48,8 +48,8 @@ operations as we can (keeping in mind the spacial cost), and also we try to
 vectorized everything we can.
 
 
-Why you don't use Cython or Numba
-=================================
+Why don't you use Cython or Numba?
+==================================
 
 As it is been said before, readability and flexibility are a top priority.
 *Cython* is not as simple to read as *Numpy* vectorized operations and *Numba*
