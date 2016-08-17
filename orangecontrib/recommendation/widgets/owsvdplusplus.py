@@ -7,7 +7,7 @@ from Orange.widgets import gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import SVDPlusPlusLearner
-from orangecontrib.recommendation.utils.sgd_optimizer import *
+from orangecontrib.recommendation.optimizers import *
 
 
 class OWSVDPlusPlus(OWBaseLearner):

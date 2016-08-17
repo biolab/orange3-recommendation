@@ -7,7 +7,7 @@ from Orange.widgets import gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import BRISMFLearner
-from orangecontrib.recommendation.utils.sgd_optimizer import *
+from orangecontrib.recommendation.optimizers import *
 
 class OWBRISMF(OWBaseLearner):
     # Widget needs a name, or it is considered an abstract widget
