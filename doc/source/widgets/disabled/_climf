@@ -2,7 +2,7 @@
 CLiMF
 =====
 
-.. figure:: icons/climf.svg
+.. figure:: ../resources/icons/climf.svg
     :width: 64pt
 
 Matrix factorization for scenarios with binary relevance data when only a few
@@ -17,30 +17,30 @@ Signals
 
 -  **Data**
 
-Data set.
+   Data set.
 
 -  **Preprocessor**
 
-Preprocessed data.
+   Preprocessed data.
 
 **Outputs**:
 
 -  **Learner**
 
-The learning algorithm with the supplied parameters
+   The learning algorithm with the supplied parameters
 
 -  **Predictor**
 
-Trained recommender. Signal *Predictor* sends the output signal only if
-input *Data* is present.
+   Trained recommender. Signal *Predictor* sends the output signal only if
+   input *Data* is present.
 
 -  **U**
 
-Latent features of the users
+   Latent features of the users
 
 -  **V**
 
-Latent features of the items
+   Latent features of the items
 
 
 

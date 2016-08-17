@@ -1,8 +1,7 @@
-=========
 Baselines
 =========
 
-.. figure:: icons/user-item-baseline.svg
+.. figure:: ../resources/icons/user-item-baseline.svg
     :width: 64pt
 
 This widget includes four basic baseline models: Global average, User average,
@@ -15,39 +14,42 @@ Signals
 
 -  **Data**
 
-Data set.
+   Data set.
 
 -  **Preprocessor**
 
-Preprocessed data.
+   Preprocessed data.
 
 **Outputs**:
 
 -  **Learner**
 
-The selected learner in the widget.
+   The selected learner in the widget.
 
 -  **Predictor**
 
-Trained recommender. Signal *Predictor* sends the output signal only if
-input *Data* is present.
+   Trained recommender. Signal *Predictor* sends the output signal only if
+   input *Data* is present.
 
 
 Description
 -----------
 
 -  **Global average:**
-Computes the average of all ratings and use it to make predictions.
+
+   Computes the average of all ratings and use it to make predictions.
 
 -  **User average:**
-Takes the average rating value of a user to make predictions.
+
+   Takes the average rating value of a user to make predictions.
 
 -  **Item average:**
-Takes the average rating value of an item to make predictions.
+
+   Takes the average rating value of an item to make predictions.
 
 -  **User-Item baseline:**
-Takes the bias of users and items plus the global average to make
-predictions.
+
+   Takes the bias of users and items plus the global average to make predictions.
 
 
 Example
@@ -59,4 +61,4 @@ into `Predictions <http://docs.orange.biolab.si/3/visual-programming/widgets/eva
 widget and view the results in `Data Table <http://docs.orange.biolab.si/3/visual-programming/widgets/data/datatable.html>`_.
 For *Learner* we can compare different learners in `Test&Score <http://docs.orange.biolab.si/3/visual-programming/widgets/evaluation/testlearners.html>`_ widget.
 
-.. figure:: images/example_baselines.png
+.. figure:: ../resources/images/example_baselines.png

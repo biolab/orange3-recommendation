@@ -1,9 +1,7 @@
-########
 Tutorial
-########
+********
 
 
-==========
 Input data
 ==========
 
@@ -67,10 +65,8 @@ movielens100k.tab, binary_data.tab, epinions_train.tab, epinions_test.tab,...*
 and a few more.
 
 
-===============
 Getting started
 ===============
-
 
 Rating pairs (user, item)
 -------------------------
@@ -132,6 +128,7 @@ we have to add the parameter *top=INTEGER* to the function
    [[ 1.34743879  4.61513578]
     [ 1.16652757  4.5516808]
     [ 2.74395768  4.04859096]]
+
 
 Evaluation
 ----------

@@ -3,39 +3,63 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Orange3-Recommendation's documentation!
-==================================================
+Welcome to Orange3-Recommendation!
+==================================
 
-Orange3 Recommendation is a Python module that extends Orange3 to include
-support for recommender systems. All features can be combined with powerful data
-mining techniques from the Orange data mining framework.
+Orange3-Recommendation is a Python library that extends Orange3 to include
+support for recommender systems. The code is open source, and `available on github`_.
 
-Tutorial
---------
+.. _available on github: https://github.com/biolab/orange3-recommendation
+
+The main documentation for the site is organized into a couple sections:
+
+* :ref:`user-guide-ref`
+* :ref:`widgets-ref`
+* :ref:`scripting-ref`
+* :ref:`performance-ref`
+
+.. _user-guide-ref:
+
+.. toctree::
+   :maxdepth: 1
+   :caption: User Guide
+
+   user/installation.rst
+   user/tutorial.rst
+   user/faq.rst
+
+
+.. _widgets-ref:
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Widgets
+
+   widgets/baselines.rst
+   widgets/brismf.rst
+   widgets/svdplusplus.rst
+   widgets/trustsvd.rst
+
+
+.. _scripting-ref:
 
 .. toctree::
    :maxdepth: 2
+   :caption: Scripting Reference
 
-   tutorial/tutorial.rst
-
-
-Scripting Reference
--------------------
-
-.. toctree::
-   :maxdepth: 2
-
-   scripting/recommendation.rst
-   scripting/updates.rst
+   scripting/baseline.rst
+   scripting/rating.rst
+   scripting/ranking.rst
+   scripting/optimizers.rst
 
 
-Widgets
--------
+.. _performance-ref:
 
 .. toctree::
    :maxdepth: 2
+   :caption: Performance
 
-   widgets/widgets.rst
+   performance/benchmarks.rst
 
 
 Indices and tables
@@ -45,3 +69,4 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. _GitHub: https://github.com/biolab/orange3-recommendation

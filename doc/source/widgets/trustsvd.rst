@@ -1,8 +1,7 @@
-========
 TrustSVD
 ========
 
-.. figure:: icons/trustsvd.svg
+.. figure:: ../resources/icons/trustsvd.svg
     :width: 64pt
 
 Trust-based matrix factorization, which extends SVD++ with trust information.
@@ -15,48 +14,44 @@ Signals
 
 -  **Data**
 
-Data set.
+   Data set.
 
 -  **Preprocessor**
 
-Preprocessed data.
+   Preprocessed data.
 
 -  **Trust information**
 
-Trust information. The weights of the connections can be integer or float
-(binary relations can represented by 0 or 1).
+   Trust information. The weights of the connections can be integer or float
+   (binary relations can represented by 0 or 1).
 
--  **Feedback information**
-
-Implicit feedback information.
-Optional, if None (default), it will be inferred from the ratings.
 
 **Outputs**:
 
 -  **Learner**
 
-The learning algorithm with the supplied parameters.
+   The learning algorithm with the supplied parameters.
 
 -  **Predictor**
 
-Trained recommender. Signal *Predictor* sends the output signal only if
-input *Data* is present.
+   Trained recommender. Signal *Predictor* sends the output signal only if
+   input *Data* is present.
 
 -  **P**
 
-Latent features of the users.
+   Latent features of the users.
 
 -  **Q**
 
-Latent features of the items.
+   Latent features of the items.
 
 -  **Y**
 
-Latent features of the implicit information.
+   Latent features of the implicit information.
 
 -  **W**
 
-Latent features of the trust information.
+   Latent features of the trust information.
 
 Description
 -----------
@@ -77,5 +72,5 @@ into `Predictions <http://docs.orange.biolab.si/3/visual-programming/widgets/eva
 widget and view the results in `Data Table <http://docs.orange.biolab.si/3/visual-programming/widgets/data/datatable.html>`_.
 For *Learner* we can compare different learners in `Test&Score <http://docs.orange.biolab.si/3/visual-programming/widgets/evaluation/testlearners.html>`_ widget.
 
-.. figure:: images/example_latent_factor_models.png
+.. figure:: ../resources/images/example_latent_factor_models.png
 
