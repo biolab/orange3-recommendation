@@ -1,26 +1,8 @@
-"""
-Functions to generate updates for training.
-
-The update functions implement different methods to control the learning
-rate for use with stochastic gradient descent.
-
-Update functions take a list of gradient expressions and a list of
-parameters as input and return list of updates.
-
-.. autosummary::
-    :nosignatures:
-
-    SGD
-    Momentum
-    NesterovMomentum
-    AdaGrad
-    RMSProp
-    AdaDelta
-    Adam
-"""
-
 import numpy as np
 import copy
+
+__all__ = ['SGD', 'Momentum', 'NesterovMomentum', 'AdaGrad', 'RMSProp',
+           'AdaDelta', 'Adam', 'create_opt']
 
 
 def create_opt(opt2copy, learning_rate=None):
@@ -253,7 +235,7 @@ class RMSProp:
     """RMSProp
 
     Scale learning rates by dividing with the moving average of the root mean
-    squared (RMS) gradients. See [1]_ for further description.
+    squared (RMS) gradients. See [3]_ for further description.
 
     Args:
         learning_rate: float
@@ -276,7 +258,7 @@ class RMSProp:
            \\eta_t &= \\frac{\\eta}{\\sqrt{r_t + \\epsilon}}
 
     References:
-        .. [1] Tieleman, T. and Hinton, G. (2012):
+        .. [3] Tieleman, T. and Hinton, G. (2012):
                Neural Networks for Machine Learning, Lecture 6.5 - rmsprop.
                Coursera. http://www.youtube.com/watch?v=O3sxAc4hxZU
                (formula @5:20)
@@ -316,7 +298,7 @@ class AdaDelta:
     """AdaDelta
 
     Scale learning rates by a the ratio of accumulated gradients to accumulated
-    step sizes, see [1]_ and notes for further description.
+    step sizes, see [4]_ and notes for further description.
 
     Args:
         learning_rate: float
@@ -349,7 +331,7 @@ class AdaDelta:
            s_t &= \\rho s_{t-1} + (1-\\rho)*g^2
 
     References:
-        .. [1] Zeiler, M. D. (2012):
+        .. [4] Zeiler, M. D. (2012):
                ADADELTA: An Adaptive Learning Rate Method.
                arXiv Preprint arXiv:1212.5701.
     """
@@ -398,7 +380,7 @@ class AdaDelta:
 class Adam:
     """Adam
 
-    Adam updates implemented as in [1]_.
+    Adam updates implemented as in [5]_.
 
     Args:
         learning_rate : float
@@ -411,12 +393,12 @@ class Adam:
             Constant for numerical stability.
 
     Notes:
-        The paper [1]_ includes an additional hyperparameter lambda. This is only
+        The paper [5]_ includes an additional hyperparameter lambda. This is only
         needed to prove convergence of the algorithm and has no practical use
         (personal communication with the authors), it is therefore omitted here.
 
     References:
-        .. [1] Kingma, Diederik, and Jimmy Ba (2014):
+        .. [5] Kingma, Diederik, and Jimmy Ba (2014):
                Adam: A Method for Stochastic Optimization.
                arXiv preprint arXiv:1412.6980.
 
@@ -459,8 +441,8 @@ class Adam:
         #     sqrt(1-0.999^x)*(1-0.9^x)
         # or this:
         #     (1-0.999^x)*(1-0.9^x)
-        # Computing bias-corrected first and second moment estimates to counteract
-        # the effect of vt and mt been biased towards zero
+        # Computing bias-corrected first and second moment estimates to
+        # counteract the effect of vt and mt been biased towards zero
         a_t = self.learning_rate * np.sqrt(1 - self.beta2 ** t) / (1 - self.beta1 ** t)
 
         self.m_prev[indices] = self.beta1 * self.m_prev[indices] + (1 - self.beta1) * grads
