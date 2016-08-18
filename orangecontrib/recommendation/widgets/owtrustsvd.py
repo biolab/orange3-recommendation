@@ -2,8 +2,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication
 
 from Orange.data import Table
-from Orange.widgets import settings
-from Orange.widgets import gui
+from Orange.widgets import settings, gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import TrustSVDLearner

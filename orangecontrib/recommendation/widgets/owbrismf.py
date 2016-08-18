@@ -2,8 +2,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication
 
 from Orange.data import Table
-from Orange.widgets import settings
-from Orange.widgets import gui
+from Orange.widgets import settings, gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import BRISMFLearner
@@ -35,7 +34,7 @@ class OWBRISMF(OWBaseLearner):
     # SGD optimizers
     sgd, momentum, nag, adagrad, rmsprop, adadelta, adam = range(7)
     opt_type = settings.Setting(sgd)
-    opt_names = ['SGD', 'Momentum', "Nesterov's AG",
+    opt_names = ['SGD', 'Momentum', "Nesterov momentum",
                  'AdaGrad', 'RMSprop', 'AdaDelta', 'Adam']
     momentum = settings.Setting(0.9)
     rho = settings.Setting(0.9)

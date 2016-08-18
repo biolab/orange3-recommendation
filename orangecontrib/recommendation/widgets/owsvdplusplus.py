@@ -2,8 +2,7 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QApplication
 
 from Orange.data import Table
-from Orange.widgets import settings
-from Orange.widgets import gui
+from Orange.widgets import settings, gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import SVDPlusPlusLearner
@@ -120,7 +119,6 @@ class OWSVDPlusPlus(OWBaseLearner):
                    [False, True, False, False],  # AdaDelta
                    [False, False, True, True],  # Adam
                 ]
-
         mask = enabled[self.opt_type]
         for spin, enabled in zip(self._opt_params, mask):
             [spin.box.hide, spin.box.show][enabled]()
