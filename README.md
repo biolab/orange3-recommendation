@@ -6,17 +6,10 @@ Orange3 Recommendation
 [![Documentation Status](https://readthedocs.org/projects/orange3-recommendation/badge/?version=latest)](http://orange3-recommendation.readthedocs.io/en/latest/?badge=latest)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9488fe350c4446f395d0d260f8be49f5)](https://www.codacy.com/app/salva-carrion/orange3-recommendation?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=salvacarrion/orange3-recommendation&amp;utm_campaign=Badge_Grade)
 
-Orange3 Recommendation is a Python module that extends [Orange3](http://orange.biolab.si) to include support for recommender systems.
-All features can be combined with powerful data mining techniques from the Orange data mining framework.
+Orange3 Recommendation is a Python module that extends [Orange3](https://github.com/biolab/orange3) to include support for recommender systems.
 
 For more information, see our [documentation](http://orange3-recommendation.readthedocs.io)
 
-**DISCLAIMER: THIS LIBRARY IS STILL IN A VERY EARLY DEVELOPMENT STAGE (ALPHA)**
-_Currently the algorithms are too slow to use them in big datasets, so right now this 
-library is oriented towards educational purposes.
-Further modifications have to be done in the main architecture of the library. Moreover, 
-extra parameters must be added for latent factor models, along with a function to check the
-convergece rate of SGD/ALS._
  
 Dependencies
 ============
@@ -42,22 +35,11 @@ To install for all users on Unix/Linux::
 For development mode use:
 
     python setup.py develop
-    
-
-
-Widget usage
-------------
-
-After the installation, the widgets from this add-on are registered with Orange. To run Orange from the terminal,
-use
-
-    python3 -m Orange.canvas
-
-new widgets are in the toolbox bar under *Recommendation* section.
       
 
 Scripting
 ---------
+
 All modules can be found inside **orangecontrib.recommendation.***. Thus, to import all modules we can type:
 
     from orangecontrib.recommendation import *
@@ -92,49 +74,14 @@ Now we want to get all the predictions (all items) for a set of users:
 Performance
 -----------
 
-All the errors refer to the training errors.
-
-**MovieLens100K:** (Loading time: 0.748s)
-
-|      Algorithm     |  RMSE | MAE |  Train time  |          Settings          |
-|:------------------:|:-----:|:---:|:------------:|:--------------------------:|
-| Global Average     | 1.126 |  0.945  |    0.001s    |              -             |
-| Item Average       | 1.000 |  0.799  |    0.001s    |              -             |
-| User Average       | 1.031 |  0.826  |    0.001s    |              -             |
-| User-Item Baseline | 0.938 |  0.738  |    0.001s    |              -             |
-| BRISMF             | 0.810 |  0.642  |  2.027s/iter | num_factors=15; num_iter=15, learning_rate=0.07; lmbda=0.1 |
-| SVD++              | 0.823 |  0.648  |  7.252s/iter | num_factors=15; num_iter=15; learning_rate=0.02;  bias_learning_rate=0.01; lmbda=0.1; bias_lmbda=0.007 |
-
-**MovieLens1M:** (Loading time: 5.144s)
-
-|      Algorithm     |  RMSE | MAE |  Train time   |          Settings          |
-|:------------------:|:-----:|:---:|:-------------:|:--------------------------:|
-| Global Average     | 1.117 |  0.934  |    0.010s     |              -             |
-| Item Average       | 0.975 |  0.779  |    0.018s     |              -             |
-| User Average       | 1.028 |  0.823  |    0.021s     |              -             |
-| User-Item Baseline | 0.924 |  0.727  |    0.027s     |              -             |
-| BRISMF             | 0.886 |  0.704  |  19.757s/iter | num_factors=15; num_iter=15, learning_rate=0.07; lmbda=0.1 |
-| SVD++              | 0.858 |  0.677  |  98.249s/iter | num_factors=15; num_iter=15; learning_rate=0.02;  bias_learning_rate=0.01; lmbda=0.1; bias_lmbda=0.007 |
-
-
-
-**MovieLens10M:** (Loading time: 55.312s)
-
-|      Algorithm     |  RMSE | MAE |   Train time  |          Settings          |
-|:------------------:|:-----:|:---:|:-------------:|:--------------------------:|
-| Global Average     | 1.060 |  0.856  |     0.150s    |              -             |
-| Item Average       | 0.942 |  0.737  |     0.271s    |              -             |
-| User Average       | 0.970 |  0.763  |     0.293s    |              -             |
-| User-Item Baseline | 0.877 |  0.677  |     0.393s    |              -             |
-| BRISMF             | - |  -  |  230.656s/iter | num_factors=15; num_iter=15, learning_rate=0.07; lmbda=0.1 |
-
+See [performance](http://orange3-recommendation.readthedocs.io/en/latest/performance/benchmarks.html) section in the documentation.
 
         
 Relevant links
 ==============
 
-- Official source code repo: [https://github.com/salvacarrion/orange3-recommendation](https://github.com/salvacarrion/orange3-recommendation)
+- Official source code repo: [https://github.com/biolab/orange3-recommendation](https://github.com/biolab/orange3-recommendation)
 - HTML documentation: [http://orange3-recommendation.readthedocs.io](http://orange3-recommendation.readthedocs.io)
-- Download releases: [https://github.com/salvacarrion/orange3-recommendation/releases](https://github.com/salvacarrion/orange3-recommendation/releases)
-- Issue tracker: [https://github.com/salvacarrion/orange3-recommendation/issues](https://github.com/salvacarrion/orange3-recommendation/issues)
+- Download releases: [https://github.com/biolab/orange3-recommendation/releases](https://github.com/biolab/orange3-recommendation/releases)
+- Issue tracker: [https://github.com/biolab/orange3-recommendation/issues](https://github.com/biolab/orange3-recommendation/issues)
 
