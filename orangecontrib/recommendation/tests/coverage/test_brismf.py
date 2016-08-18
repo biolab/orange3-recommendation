@@ -14,7 +14,7 @@ __optimizers__ = [SGD(), Momentum(momentum=0.9),
 
 class TestBRISMF(unittest.TestCase, TestRatingModels):
 
-    def test_input_data_continuous(self):
+    def test_input_data_continuous(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1, min_rating=0,
                                 max_rating=5, verbose=2)
 
@@ -24,31 +24,30 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
             print(learner.optimizer)
             super().test_input_data_continuous(learner, filename=__dataset__)
 
-    def test_input_data_discrete(self):
+    def test_input_data_discrete(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1)
         super().test_input_data_discrete(learner, filename='ratings_dis.tab')
 
-    def test_pairs(self):
+    def test_pairs(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1)
         super().test_pairs(learner, filename=__dataset__)
 
-    def test_predict_items(self):
+    def test_predict_items(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1)
         super().test_predict_items(learner, filename=__dataset__)
 
-    def test_CV(self):
+    def test_CV(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1)
         super().test_CV(learner, filename=__dataset__)
 
-    def test_warnings(self):
+    def test_warnings(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1, learning_rate=0.0)
         super().test_warnings(learner, filename=__dataset__)
 
-    def test_swap_columns(self):
+    def test_swap_columns(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1, random_state=42)
         super().test_swap_columns(learner, filename1='ratings_dis.tab',
                                   filename2='ratings_dis_swap.tab')
-
 
     def test_objective(self):
         from orangecontrib.recommendation.rating.brismf import compute_loss
@@ -93,7 +92,6 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
 
         diff = len(set([P.X.shape[1], Q.X.shape[1]]))
         self.assertEqual(diff, 1)
-
 
 
 if __name__ == "__main__":
