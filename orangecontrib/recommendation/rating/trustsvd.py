@@ -106,6 +106,7 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
     # Cache norms (slower than list, but allows vectorization)
     # >>>  Lists: 6s; Arrays: 12s -> vectorized: 2s
     norm_I = np.zeros(num_users)  # norms of Iu
+    norm_U = np.zeros(num_items)  # norms of Ui
     norm_Tr = np.zeros(num_users)  # norms of Tu
     norm_Tc = np.zeros(num_users)  # norms of Tv
 
@@ -127,12 +128,6 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
             start = time.time()
             print('- Step: %d' % (step + 1))
 
-        # To update the gradients at the same time
-        tempP = np.zeros(P.shape)
-        tempQ = np.zeros(Q.shape)
-        tempY = np.zeros(Y.shape)
-        tempW = np.zeros(W.shape)
-
         # Optimize rating prediction
         for u, j in zip(*ratings.nonzero()):
 
@@ -150,7 +145,7 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
             # Store/Compute norms
             norm_I[u] = norm_Iu
             norm_Tr[u] = norm_Tu
-            norm_Uj = cache_norms(ratings_T, j, norm_I)
+            norm_Uj = cache_norms(ratings_T, j, norm_U)
 
             # Gradient Bu
             reg_bu = (bias_lmbda/norm_Iu) * bu[u] if norm_Iu > 0 else 0
@@ -179,7 +174,7 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
             # Gradient Y
             if norm_Iu > 0:
                 tempY1 = (euj/norm_Iu) * Q[j, :]
-                norms = cache_norms(ratings_T, items_u, norm_I)
+                norms = cache_norms(ratings_T, items_u, norm_U)
                 norm_b = (lmbda/np.atleast_2d(norms))
                 # tempY[items_u, :] = tempY1 + \
                 #                 np.multiply(norm_b.T, Y[items_u, :])
@@ -440,6 +435,8 @@ class TrustSVDLearner(Learner):
             # Transform trust matrix into a sparse matrix
             self.trust = table2sparse(self.trust, self.shape_t, order_t,
                                       m_type=__sparse_format__)
+        else:
+            raise TypeError('Missing trust information')
 
         super().__init__(preprocessors=preprocessors, verbose=verbose,
                          min_rating=min_rating, max_rating=max_rating)
