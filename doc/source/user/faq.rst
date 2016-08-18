@@ -36,7 +36,7 @@ This doesn't mean that you cannot run big datasets. For instance, you can train
 recommend you to use other alternatives highly optimized for those purposes.
 
 
-Why the algorithms are not implemented in C/C++?
+Why are the algorithms not implemented in C/C++?
 ================================================
 
 I refer back to the answer above. We want to speed-up the code as much as we
