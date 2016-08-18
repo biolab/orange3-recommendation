@@ -192,6 +192,15 @@ class OWBRISMF(OWBaseLearner):
         self._check_data()
         super().update_model()
 
+        P = None
+        Q = None
+        if self.valid_data:
+            P = self.model.getPTable()
+            Q = self.model.getQTable()
+
+        self.send("P", P)
+        self.send("Q", Q)
+
 if __name__ == '__main__':
     app = QApplication([])
     widget = OWBRISMF()
