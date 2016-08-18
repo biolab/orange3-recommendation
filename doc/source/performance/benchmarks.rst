@@ -1,10 +1,58 @@
 Benchmarks
-==========
+**********
 
 
-All the errors refer to the training errors.
+Rating
+======
 
-**MovieLens100K:** (Loading time: 0.748s)
+All this results refer to the training phase.
+
+FilmTrust
+---------
+
+**Additional information:**
+
+- Loading time: 0.748s
+- Training dataset: users=1,508; items=2,071; ratings=35,497; sparsity: 1.14%
+- No optimizers for SGD used.
+
++--------------------+---------+-------+---------------+----------------------------+
+| Algorithm          | RMSE    | MAE   | Train time    | Settings                   |
++====================+=========+=======+===============+============================+
+| Global Average     | 0.919   | 0.715 | 0.000s        | `-`                        |
++--------------------+---------+-------+---------------+----------------------------+
+| Item Average       | 0.861   | 0.674 | 0.000s        | `-`                        |
++--------------------+---------+-------+---------------+----------------------------+
+| User Average       | 0.785   | 0.606 | 0.000s        | `-`                        |
++--------------------+---------+-------+---------------+----------------------------+
+| User-Item Baseline | 0.738   | 0.566 | 0.001s        | `-`                        |
++--------------------+---------+-------+---------------+----------------------------+
+| BRISMF             | 0.712   | 0.551 | 0.820s/iter   | num\_factors=10;           |
+|                    |         |       |               | num\_iter=15,              |
+|                    |         |       |               | learning\_rate=0.01;       |
+|                    |         |       |               | lmbda=0.1                  |
++--------------------+---------+-------+---------------+----------------------------+
+| SVD++              | 0.707   | 0.546 | 1.974s/iter   | num\_factors=10;           |
+|                    |         |       |               | num\_iter=15;              |
+|                    |         |       |               | learning\_rate=0.01;       |
+|                    |         |       |               | lmbda=0.1;                 |
++--------------------+---------+-------+---------------+----------------------------+
+| TrustSVD           | 0.677   | 0.520 | 3.604s/iter   | num\_factors=10;           |
+|                    |         |       |               | num\_iter=15;              |
+|                    |         |       |               | learning\_rate=0.01;       |
+|                    |         |       |               | lmbda=0.12;                |
+|                    |         |       |               | social\_lmbda=0.09         |
++--------------------+---------+-------+---------------+----------------------------+
+
+
+MovieLens100K
+-------------
+
+**Additional information:**
+
+- Loading time: 0.748s
+- Training dataset: users=943; items=1,682; ratings=100,000; sparsity: 6.30%
+- No optimizers for SGD used.
 
 +--------------------+---------+-------+---------------+----------------------------+
 | Algorithm          | RMSE    | MAE   | Train time    | Settings                   |
@@ -31,7 +79,14 @@ All the errors refer to the training errors.
 +--------------------+---------+-------+---------------+----------------------------+
 
 
-**MovieLens1M:** (Loading time: 5.144s)
+MovieLens1M
+-----------
+
+**Additional information:**
+
+- Loading time: 5.144s
+- Training dataset: users=6,040; items=3,706; ratings=1,000,209; sparsity: 4.47%
+- No optimizers for SGD used.
 
 +--------------------+---------+-------+----------------+----------------------------+
 | Algorithm          | RMSE    | MAE   | Train time     | Settings                   |
@@ -57,7 +112,15 @@ All the errors refer to the training errors.
 |                    |         |       |                | bias\_lmbda=0.007          |
 +--------------------+---------+-------+----------------+----------------------------+
 
-**MovieLens10M:** (Loading time: 55.312s)
+
+MovieLens10M
+------------
+
+**Additional information:**
+
+- Loading time: 55.312s
+- Training dataset: users=71,567; items=10,681; ratings=10,000,054; sparsity: 1.308%
+- No optimizers for SGD used.
 
 +----------------------+---------+---------+-----------------+-----------------------------------------------------------------+
 | Algorithm            | RMSE    | MAE     | Train time      | Settings                                                        |
@@ -72,3 +135,27 @@ All the errors refer to the training errors.
 +----------------------+---------+---------+-----------------+-----------------------------------------------------------------+
 | BRISMF               | `-`     | `-`     | 230.656s/iter   | num\_factors=15; num\_iter=15, learning\_rate=0.07; lmbda=0.1   |
 +----------------------+---------+---------+-----------------+-----------------------------------------------------------------+
+
+
+Ranking
+=======
+
+
+Epinions
+--------
+
+**Additional information:**
+
+- Loading time (training dataset): 0.094s
+- Loading time (test dataset): 1.392s
+- Training dataset: users=4,718; items=49,288; ratings=23,590; sparsity: 0.0101%
+- Testing dataset: users=4,718; items=49,288; ratings=322,445; sparsity: 0.1386%
+- No optimizers for SGD used.
+
++---------+----------+----------+----------+-----------------------------------------+
+| Algorit | MRR      | MRR      | Train    | Settings                                |
+| hm      | (train)  | (test)   | time     |                                         |
++=========+==========+==========+==========+=========================================+
+| CLiMF   | 0.0758   | 0.3975   | 1.323s/i | num\_factors=10; num\_iter=10;          |
+|         |          |          | ter      | learning\_rate=0.0001; lmda=0.001       |
++---------+----------+----------+----------+-----------------------------------------+
