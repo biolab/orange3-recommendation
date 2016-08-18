@@ -8,6 +8,7 @@ from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import TrustSVDLearner
 from orangecontrib.recommendation.optimizers import *
+from orangecontrib.recommendation.utils import format_data
 
 
 class OWTrustSVD(OWBaseLearner):
@@ -174,16 +175,54 @@ class OWTrustSVD(OWBaseLearner):
                 ("Social regularization", self.social_lmbda),
                 ("SGD optimizer", self.opt_names[self.opt_type]))
 
-    def update_learner(self):
-        if self.trust is None:
-            self.warning(self.MISSING_DATA_WARNING,
-                         "Trust data input is needed.")
-            return
-        else:
+    def _check_data(self):
+        self.valid_data = False
+
+        if self.data is None:
+            # Remove trust alert is there is not rating data
             self.warning(self.MISSING_DATA_WARNING)
-        super().update_learner()
+
+        else:
+            try:   # Check ratings data
+                valid_ratings = format_data.check_data(self.data)
+            except Exception as e:
+                valid_ratings = False
+                print('Error checking trust data: ' + str(e))
+
+            if not valid_ratings:  # Check if it's valid
+                self.Error.data_error(
+                    "Data not valid for rating models.")
+            else:
+                # Check trust data
+                if self.trust is None:
+                    self.warning(self.MISSING_DATA_WARNING,
+                                 "Trust data input is needed.")
+                else:
+                    self.warning(self.MISSING_DATA_WARNING)
+
+                    try:  # Check trust data
+                        valid_trust = format_data.check_data(self.trust)
+                    except Exception as e:
+                        valid_trust = False
+                        print('Error checking rating data: ' + str(e))
+
+                    if not valid_trust:  # Check if it's valid
+                        self.Error.data_error(
+                            "Trust data not valid for rating models.")
+                    else:
+                        self.valid_data = True
+        return self.valid_data
+
+    def update_learner(self):
+        self._check_data()
+
+        # If our method return false, could be because there is no data.
+        # But when cross-validating, the data is in the widget Test&Score
+        if self.valid_data or self.data is None:
+            super().update_learner()
 
     def update_model(self):
+        self._check_data()
         super().update_model()
 
         P = None

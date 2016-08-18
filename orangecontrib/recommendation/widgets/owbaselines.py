@@ -6,7 +6,8 @@ from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import GlobalAvgLearner, ItemAvgLearner, \
     UserAvgLearner, UserItemBaselineLearner
-
+from orangecontrib.recommendation.utils import format_data
+import Orange.evaluation.scoring
 
 class OWBaselines(OWBaseLearner):
     # Widget needs a name, or it is considered an abstract widget
@@ -52,6 +53,37 @@ class OWBaselines(OWBaseLearner):
             raise TypeError('Unknown learner class')
 
         return self.LEARNER()
+
+    def _check_data(self):
+        self.valid_data = False
+
+        if self.data is not None:
+            try:  # Check ratings data
+                valid_ratings = format_data.check_data(self.data)
+            except Exception as e:
+                valid_ratings = False
+                print('Error checking rating data: ' + str(e))
+
+            if not valid_ratings:  # Check if it's valid
+                self.Error.data_error(
+                    "Data not valid for rating models.")
+            else:
+                self.valid_data = True
+
+        return self.valid_data
+
+    def update_learner(self):
+        self._check_data()
+
+        # If our method returns 'False', it could be because there is no data.
+        # But when cross-validating, a learner is required, as the data is in
+        # the widget Test&Score
+        if self.valid_data or self.data is None:
+            super().update_learner()
+
+    def update_model(self):
+        self._check_data()
+        super().update_model()
 
 if __name__ == '__main__':
     app = QApplication([])

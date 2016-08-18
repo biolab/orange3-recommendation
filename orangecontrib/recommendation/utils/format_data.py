@@ -32,28 +32,33 @@ def preprocess(data):
 
     """
 
+    if not check_data(data):
+        raise TypeError('Input data not valid. See documentation.')
+
     try:
         # Get index of column with the 'col' attribute set to 1 (col=1)
         col_attributes = [a for a in data.domain.attributes + data.domain.metas
                           if a.attributes.get("col")]
         col_attribute = col_attributes[0] if len(
-            col_attributes) == 1 else print("warning")
+            col_attributes) == 1 else print("'col' attribute not found in data.")
 
         # Get index of column with the 'row' attribute set to 1 (row=1)
         row_attributes = [a for a in data.domain.attributes + data.domain.metas
                           if a.attributes.get("row")]
         row_attribute = row_attributes[0] if len(
-            row_attributes) == 1 else print("warning")
+            row_attributes) == 1 else print("'row' attribute not found in data.")
 
         # Get indices of the columns
         idx_items = data.domain.variables.index(col_attribute)
         idx_users = data.domain.variables.index(row_attribute)
 
-    except AttributeError:
+    except (AttributeError, ValueError) as e:
         idx_items = 1
         idx_users = 0
         warnings.warn('Row/Column metadata not found. Applying heuristics '
                       '{users: col=0, items: col=1}')
+        print('Warning cause: ' + str(e))
+
 
     # Find the highest value on each column
     try:
@@ -74,6 +79,13 @@ def preprocess(data):
     data.X = data.X.astype(int)
 
     return data, order, shape
+
+
+def check_data(data):
+    conditions = [data.X.ndim == 2, data.Y.ndim == 1, len(data.X) > 0,
+                  len(data.Y) > 0, data.X.shape[1] >= 2
+                  ]
+    return all(conditions)
 
 
 def table2sparse(data, shape, order, m_type=lil_matrix):
