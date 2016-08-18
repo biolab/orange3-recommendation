@@ -14,7 +14,7 @@ __optimizers__ = [SGD(), Momentum(momentum=0.9),
 
 class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
 
-    def test_input_data_continuous(self):
+    def test_input_data_continuous(self, *args):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, verbose=2)
 
         # Test SGD optimizers too
@@ -27,28 +27,28 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, feedback=fb_ds)
         super().test_input_data_continuous(learner, filename=__dataset__)
 
-    def test_input_data_discrete(self):
+    def test_input_data_discrete(self, *args):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
         super().test_input_data_discrete(learner, filename='ratings_dis.tab')
 
-    def test_pairs(self):
+    def test_pairs(self, *args):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
         super().test_pairs(learner, filename=__dataset__)
 
-    def test_predict_items(self):
+    def test_predict_items(self, *args):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
         super().test_predict_items(learner, filename=__dataset__)
 
-    def test_swap_columns(self):
+    def test_swap_columns(self, *args):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1, random_state=42)
         super().test_swap_columns(learner, filename1='ratings_dis.tab',
                                   filename2='ratings_dis_swap.tab')
 
-    def test_CV(self):
+    def test_CV(self, *args):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1)
         super().test_CV(learner, filename=__dataset__)
 
-    def test_warnings(self):
+    def test_warnings(self, *args):
         learner = SVDPlusPlusLearner(num_factors=2, num_iter=1,
                                      learning_rate=0.0)
         super().test_warnings(learner, filename=__dataset__)
@@ -96,7 +96,7 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
         Q = recommender.getQTable()
         Y = recommender.getYTable()
 
-        diff = len(set([P.X.shape[1], Q.X.shape[1], Y.X.shape[1]]))
+        diff = len({P.X.shape[1], Q.X.shape[1], Y.X.shape[1]})
         self.assertEqual(diff, 1)
 
 

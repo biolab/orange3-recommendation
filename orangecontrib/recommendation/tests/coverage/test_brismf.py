@@ -90,7 +90,7 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
         P = recommender.getPTable()
         Q = recommender.getQTable()
 
-        diff = len(set([P.X.shape[1], Q.X.shape[1]]))
+        diff = len({P.X.shape[1], Q.X.shape[1]})
         self.assertEqual(diff, 1)
 
 

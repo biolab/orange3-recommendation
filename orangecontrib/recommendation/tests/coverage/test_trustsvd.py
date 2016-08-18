@@ -15,7 +15,7 @@ __optimizers__ = [SGD(), Momentum(momentum=0.9),
 
 class TestTrustSVD(unittest.TestCase, TestRatingModels):
 
-    def test_input_data_continuous(self):
+    def test_input_data_continuous(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust,
                                   verbose=2)
@@ -27,34 +27,34 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
             super().test_input_data_continuous(learner, filename=__dataset__)
 
     @unittest.skip("Skipping test")
-    def test_input_data_discrete(self):
+    def test_input_data_discrete(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
         super().test_input_data_discrete(learner, filename='ratings_dis.tab')
 
-    def test_pairs(self):
+    def test_pairs(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
         super().test_pairs(learner, filename=__dataset__)
 
-    def test_predict_items(self):
+    def test_predict_items(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
         super().test_predict_items(learner, filename=__dataset__)
 
-    def test_swap_columns(self):
+    def test_swap_columns(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust,
                                   random_state=42)
         super().test_swap_columns(learner, filename1='ratings_dis.tab',
                                   filename2='ratings_dis_swap.tab')
 
-    def test_CV(self):
+    def test_CV(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust)
         super().test_CV(learner, filename=__dataset__)
 
-    def test_warnings(self):
+    def test_warnings(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1,
                                   learning_rate=0.0, trust=trust)
@@ -107,8 +107,7 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
         Y = recommender.getYTable()
         W = recommender.getWTable()
 
-        diff = len(set([P.X.shape[1], Q.X.shape[1], Y.X.shape[1],
-                        W.X.shape[1]]))
+        diff = len({P.X.shape[1], Q.X.shape[1], Y.X.shape[1], W.X.shape[1]})
         self.assertEqual(diff, 1)
 
 if __name__ == "__main__":
