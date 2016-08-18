@@ -57,7 +57,7 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
         # Prepare sample of users
         if verbose > 2:
             queries = None
-            num_samples = min(num_users, 1000)
+            num_samples = min(num_users, 1000)  # max. number to sample
             users_sampled = np.random.choice(np.arange(num_users), num_samples)
 
     # Factorize matrix using SGD
