@@ -12,57 +12,61 @@ def test_learners():
     start = time.time()
 
     # Load data
-    data = Orange.data.Table('filmtrust/ratings.tab')  #'movielens100K.tab')
+    #data = Orange.data.Table('epinions_test.tab')
+    data = Orange.data.Table('filmtrust/ratings.tab')
+    trust = Orange.data.Table('filmtrust/trust.tab')
+
     print('- Loading time: %.3fs' % (time.time() - start))
 
-    # # Global average
-    # start = time.time()
-    # learner = GlobalAvgLearner()
-    # recommender = learner(data)
-    # print('- Time (GlobalAvgLearner): %.3fs' % (time.time() - start))
-    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    # mae = mean_absolute_error(data.Y, recommender(data))
-    # print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
-    # print('- MAE (GlobalAvgLearner): %.3f' % mae)
-    # print('')
-    #
-    # # Item average
-    # start = time.time()
-    # learner = ItemAvgLearner()
-    # recommender = learner(data)
-    # print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
-    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    # mae = mean_absolute_error(data.Y, recommender(data))
-    # print('- RMSE (ItemAvgLearner): %.3f' % rmse)
-    # print('- MAE (ItemAvgLearner): %.3f' % mae)
-    # print('')
-    #
-    # # User average
-    # start = time.time()
-    # learner = UserAvgLearner()
-    # recommender = learner(data)
-    # print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
-    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    # mae = mean_absolute_error(data.Y, recommender(data))
-    # print('- RMSE (UserAvgLearner): %.3f' % rmse)
-    # print('- MAE (UserAvgLearner): %.3f' % mae)
-    # print('')
-    #
-    # # User-Item baseline
-    # start = time.time()
-    # learner = UserItemBaselineLearner()
-    # recommender = learner(data)
-    # print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
-    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    # mae = mean_absolute_error(data.Y, recommender(data))
-    # print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
-    # print('- MAE (UserItemBaselineLearner): %.3f' % mae)
-    # print('')
+
+    # Global average
+    start = time.time()
+    learner = GlobalAvgLearner()
+    recommender = learner(data)
+    print('- Time (GlobalAvgLearner): %.3fs' % (time.time() - start))
+    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    mae = mean_absolute_error(data.Y, recommender(data))
+    print('- RMSE (GlobalAvgLearner): %.3f' % rmse)
+    print('- MAE (GlobalAvgLearner): %.3f' % mae)
+    print('')
+
+    # Item average
+    start = time.time()
+    learner = ItemAvgLearner()
+    recommender = learner(data)
+    print('- Time (ItemAvgLearner): %.3fs' % (time.time() - start))
+    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    mae = mean_absolute_error(data.Y, recommender(data))
+    print('- RMSE (ItemAvgLearner): %.3f' % rmse)
+    print('- MAE (ItemAvgLearner): %.3f' % mae)
+    print('')
+
+    # User average
+    start = time.time()
+    learner = UserAvgLearner()
+    recommender = learner(data)
+    print('- Time (UserAvgLearner): %.3fs' % (time.time() - start))
+    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    mae = mean_absolute_error(data.Y, recommender(data))
+    print('- RMSE (UserAvgLearner): %.3f' % rmse)
+    print('- MAE (UserAvgLearner): %.3f' % mae)
+    print('')
+
+    # User-Item baseline
+    start = time.time()
+    learner = UserItemBaselineLearner()
+    recommender = learner(data)
+    print('- Time (UserItemBaselineLearner): %.3fs' % (time.time() - start))
+    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    mae = mean_absolute_error(data.Y, recommender(data))
+    print('- RMSE (UserItemBaselineLearner): %.3f' % rmse)
+    print('- MAE (UserItemBaselineLearner): %.3f' % mae)
+    print('')
 
     # BRISMF
     start = time.time()
-    learner = BRISMFLearner(num_factors=15, num_iter=15, learning_rate=0.1,
-                            lmbda=0.1, bias_learning_rate=None, verbose=2)
+    learner = BRISMFLearner(num_factors=10, num_iter=15, learning_rate=0.01,
+                            lmbda=0.1, verbose=0)
     recommender = learner(data)
     print('- Time (BRISMFLearner): %.3fs' % (time.time() - start))
     rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
@@ -71,18 +75,30 @@ def test_learners():
     print('- MAE (BRISMFLearner): %.3f' % mae)
     print('')
 
-    # # SVD++
-    # start = time.time()
-    # learner = SVDPlusPlusLearner(num_factors=15, num_iter=15,
-    #                              learning_rate=0.02, bias_learning_rate=0.01,
-    #                              lmbda=0.1, bias_lmbda=0.007, verbose=1)
-    # recommender = learner(data)
-    # print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
-    # rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
-    # mae = mean_absolute_error(data.Y, recommender(data))
-    # print('- RMSE (SVDPlusPlusLearner): %.3f' % rmse)
-    # print('- MAE (SVDPlusPlusLearner): %.3f' % mae)
-    # print('')
+    # SVD++
+    start = time.time()
+    learner = SVDPlusPlusLearner(num_factors=10, num_iter=15,
+                                 learning_rate=0.01, lmbda=0.1, verbose=0)
+    recommender = learner(data)
+    print('- Time (SVDPlusPlusLearner): %.3fs' % (time.time() - start))
+    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    mae = mean_absolute_error(data.Y, recommender(data))
+    print('- RMSE (SVDPlusPlusLearner): %.3f' % rmse)
+    print('- MAE (SVDPlusPlusLearner): %.3f' % mae)
+    print('')
+
+    # TrustSVD
+    start = time.time()
+    learner = TrustSVDLearner(num_factors=10, num_iter=15, learning_rate=0.01,
+                              lmbda=0.12, social_lmbda=0.9, trust=trust,
+                              verbose=0)
+    recommender = learner(data)
+    print('- Time (TrustSVD): %.3fs' % (time.time() - start))
+    rmse = math.sqrt(mean_squared_error(data.Y, recommender(data)))
+    mae = mean_absolute_error(data.Y, recommender(data))
+    print('- RMSE (TrustSVD): %.3f' % rmse)
+    print('- MAE (TrustSVD): %.3f' % mae)
+    print('')
 
 
 def test_CV():

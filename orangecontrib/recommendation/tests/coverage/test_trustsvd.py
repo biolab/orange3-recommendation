@@ -112,12 +112,12 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
         self.assertEqual(diff, 1)
 
 if __name__ == "__main__":
-    # # Test all
-    # unittest.main()
+    # Test all
+    unittest.main()
 
-    # Test single test
-    suite = unittest.TestSuite()
-    suite.addTest(TestTrustSVD("test_input_data_continuous"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # # Test single test
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestTrustSVD("test_input_data_continuous"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
 

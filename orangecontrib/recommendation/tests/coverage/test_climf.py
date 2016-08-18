@@ -67,6 +67,12 @@ class TestCLiMF(unittest.TestCase, TestRankingModels):
         learner = CLiMFLearner(num_factors=2, num_iter=1, verbose=0)
         super().test_mrr(learner, filename=__dataset__)
 
+    @unittest.skip("Skipping test")
+    def test_mrr2(self):
+        learner = CLiMFLearner(num_factors=10, num_iter=10, verbose=3)
+        super().test_mrr(learner, filename='epinions_train.tab',
+                         testdata='epinions_test.tab')
+
     def test_outputs(self):
         # Load data
         data = Orange.data.Table(__dataset__)
@@ -76,7 +82,7 @@ class TestCLiMF(unittest.TestCase, TestRankingModels):
         # Train recommender
         recommender = learner(data)
 
-        # Check tables P, Q, Y and W
+        # Check tables P, Q
         U = recommender.getUTable()
         V = recommender.getVTable()
 
@@ -90,6 +96,6 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestCLiMF("test_objective"))
+    suite.addTest(TestCLiMF("test_mrr2"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
