@@ -22,30 +22,29 @@ Example
    :linenos:
 
     import Orange
+    import numpy as np
     from orangecontrib.recommendation import CLiMFLearner
 
-    # Load data and train the model
+    # Load data
     data = Orange.data.Table('epinions_train.tab')
+
+    # Train recommender
     learner = CLiMFLearner(num_factors=10, num_iter=10, learning_rate=0.0001, lmbda=0.001)
     recommender = learner(data)
 
-    # Load testing set
-    data = Orange.data.Table('epinions_test.tab')
+    # Load test dataset
+    testdata = Orange.data.Table('epinions_test.tab')
 
-    # Compute predictions
-    y_pred = recommender(data)
-
-    # Get relevant items for the user[i]
-    all_items_u = []
-    for i in data.X[:, recommender.order[0]]:
-       items_u = data.X[data.X[:, recommender.order[0]] == i][:, recommender.order[1]]
-       all_items_u.append(items_u)
+    # Sample users
+    num_users = len(recommender.U)
+    num_samples = min(num_users, 1000)  # max. number to sample
+    users_sampled = np.random.choice(np.arange(num_users), num_samples)
 
     # Compute Mean Reciprocal Rank (MRR)
-    mrr = MeanReciprocalRank(results=y_pred, query=all_items_u)
-    print('MRR: %.3f' % mrr)
+    mrr, _ = recommender.compute_mrr(data=testdata, users=users_sampled)
+    print('MRR: %.4f' % mrr)
     >>>
-    MRR: 0.481
+    MRR: 0.3975
 
 .. autoclass:: CLiMFLearner
    :members:
