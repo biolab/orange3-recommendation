@@ -15,8 +15,6 @@ class ModelRecommendation(Model):
 
             if self.max_rating is not None:
                 predictions[predictions > self.max_rating] = self.max_rating
-        except AttributeError:
-            pass
         finally:
             return predictions
 

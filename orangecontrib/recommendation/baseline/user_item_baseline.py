@@ -68,7 +68,7 @@ class UserItemBaselineModel(Model):
         """
 
         # Prepare data (set valid indices for non-existing (CV))
-        super().prepare_predict(X)
+        X = super().prepare_predict(X)
 
         users = X[:, self.order[0]]
         items = X[:, self.order[1]]

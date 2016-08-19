@@ -15,8 +15,6 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
         self.indices_missing = ([], [])
 
     def prepare_predict(self, X):
-        # TODO: CORRECT INDICES!!! THIS IS NOT CORRECT!!!!
-
         # Check if all indices exist. If not, return random index.
         # On average, random indices is equivalent to return a global_average!!!
         idxs_users_missing = np.where(X[:, self.order[0]] >= self.shape[0])[0]
@@ -28,6 +26,9 @@ class ModelRecommendation(Model, metaclass=ABCMeta):
         X[idxs_items_missing, self.order[1]] = dumb_index
 
         self.indices_missing = (idxs_users_missing, idxs_items_missing)
+
+        # Return X, but before cast indices to integer
+        return X.astype(int)
 
     @abstractmethod
     def predict(self): pass

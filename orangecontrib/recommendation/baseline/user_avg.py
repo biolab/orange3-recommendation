@@ -66,7 +66,7 @@ class UserAvgModel(Model):
         """
 
         # Prepare data (set valid indices for non-existing (CV))
-        super().prepare_predict(X)
+        X = super().prepare_predict(X)
 
         # Preserve just the indices of the items
         users = X[:, self.order[0]]

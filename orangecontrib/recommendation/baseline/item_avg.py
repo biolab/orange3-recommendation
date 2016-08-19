@@ -66,7 +66,7 @@ class ItemAvgModel(Model):
         """
 
         # Prepare data (set valid indices for non-existing (CV))
-        super().prepare_predict(X)
+        X = super().prepare_predict(X)
 
         # Preserve just the indices of the items
         items = X[:, self.order[1]]
