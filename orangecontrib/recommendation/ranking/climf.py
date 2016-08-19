@@ -269,19 +269,27 @@ class CLiMFModel(Model):
 
         """
 
-        if X.ndim != 1:
-            X = X[:, self.order[0]]
+        # Check if is an array
+        if isinstance(X, np.ndarray):
+            if X.ndim != 1:
+                X = X[:, self.order[0]]
+
+        elif not isinstance(X, int):  # Check if is not an int
+            raise TypeError("'Invalid input data. Array or 'int'")
 
         # Compute scores
         predictions = np.dot(self.U[X], self.V.T)
 
         # Return indices of the sorted predictions
-        predictions = np.argsort(predictions, axis=1)
-        predictions = np.fliplr(predictions)
-
-        # Return top-k recommendations
-        if top_k is not None:
-            predictions = predictions[:, :top_k]
+        # (Return top-k recommendations, optional)
+        if isinstance(X, int):  # Array of 1D
+            predictions = np.argsort(predictions)
+            predictions = predictions[::-1]
+            predictions = predictions[:top_k] if top_k else predictions
+        else:
+            predictions = np.argsort(predictions, axis=1)
+            predictions = np.fliplr(predictions)
+            predictions = predictions[:, :top_k] if top_k else predictions
 
         return predictions
 

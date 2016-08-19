@@ -173,8 +173,12 @@ class TestRankingModels:
         # Compute predictions 3 (Execute the 3rd branch, "no arg")
         y_pred3 = recommender(data[test_users], no_real_arg='Something')
 
+        # Compute predictions 4 (Check single user)
+        y_pred4 = recommender(X=0, top_k=num_items)
+
         np.testing.assert_equal(y_pred, y_pred2)
         np.testing.assert_equal(y_pred, y_pred3)
+        np.testing.assert_equal(y_pred[0], y_pred[0])
 
     def test_input_data_discrete(self, learner, filename):
         # Load data

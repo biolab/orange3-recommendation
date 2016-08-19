@@ -16,12 +16,17 @@ class ModelRecommendation(Model):
         transforms the output of model.predict() to 'argmax(probabilities=X)'
         """
 
-        data = args[0]
+        if len(args)>0:
+            data = args[0]
+        else:
+            if 'X' in kwargs:
+                data = kwargs['X']
+
         top_k = None
         if 'top_k' in kwargs:  # Check if this parameters exists
             top_k = kwargs['top_k']
 
-        if isinstance(data, np.ndarray):
+        if isinstance(data, np.ndarray) or isinstance(data, int):
             prediction = self.predict(X=data, top_k=top_k)
         elif isinstance(data, Table):
             prediction = self.predict(X=data.X.astype(int), top_k=top_k)
