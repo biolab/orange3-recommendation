@@ -215,6 +215,9 @@ class OWTrustSVD(OWBaseLearner):
     def update_learner(self):
         self._check_data()
 
+        if self.trust is None:
+            return
+
         # If our method return false, could be because there is no data.
         # But when cross-validating, the data is in the widget Test&Score
         if self.valid_data or self.data is None:

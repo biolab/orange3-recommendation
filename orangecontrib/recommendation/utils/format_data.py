@@ -35,29 +35,46 @@ def preprocess(data):
     if not check_data(data):
         raise TypeError('Input data not valid. See documentation.')
 
-    try:
-        # Get index of column with the 'col' attribute set to 1 (col=1)
-        col_attributes = [a for a in data.domain.attributes + data.domain.metas
-                          if a.attributes.get("col")]
-        col_attribute = col_attributes[0] if len(
-            col_attributes) == 1 else print("'col' attribute not found in data.")
+    errors = {'e.col': False, 'e.row': False}
+    idx_users, idx_items = (0, 1)
 
-        # Get index of column with the 'row' attribute set to 1 (row=1)
+    try:
+        # [USERS] Get index of column with the 'row' attribute set to 1 (row=1)
         row_attributes = [a for a in data.domain.attributes + data.domain.metas
                           if a.attributes.get("row")]
-        row_attribute = row_attributes[0] if len(
-            row_attributes) == 1 else print("'row' attribute not found in data.")
 
-        # Get indices of the columns
-        idx_items = data.domain.variables.index(col_attribute)
-        idx_users = data.domain.variables.index(row_attribute)
+        # Get indices of the users column
+        if len(row_attributes) == 1:
+            row_attribute = row_attributes[0]
+            idx_users = data.domain.variables.index(row_attribute)
+        else:
+            errors['e.row'] = True
 
-    except (AttributeError, ValueError) as e:
-        idx_items = 1
-        idx_users = 0
-        warnings.warn('Row/Column metadata not found. Applying heuristics '
-                      '{users: col=0, items: col=1}')
-        print('Warning cause: ' + str(e))
+        # [ITEMS] Get index of column with the 'col' attribute set to 1 (col=1)
+        col_attributes = [a for a in data.domain.attributes + data.domain.metas
+                          if a.attributes.get("col")]
+
+        # Get indices of the items column
+        if len(col_attributes) == 1:
+            col_attribute = col_attributes[0]
+            idx_items = data.domain.variables.index(col_attribute)
+        else:
+            errors['e.col'] = True
+
+        # Check for errors
+        if any(errors.values()):
+            raise AttributeError('Meta attributes not found')
+
+    except (AttributeError, ValueError):
+        if errors['e.row']:
+            text_warning = 'Row meta attribute not found. ' \
+                       'Applying heuristics {users: col=' + str(idx_users) + '}'
+            warnings.warn(text_warning)
+
+        if errors['e.col']:
+            text_warning = 'Column meta attribute not found. ' \
+                       'Applying heuristics {items: row=' + str(idx_items) + '}'
+            warnings.warn(text_warning)
 
     # Find the highest value on each column
     users = int(np.max(data.X[:, idx_users]) + 1)
