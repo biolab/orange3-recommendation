@@ -1,4 +1,5 @@
 import Orange
+from orangecontrib.recommendation.utils.format_data import *
 
 from sklearn.metrics import mean_squared_error
 
@@ -198,11 +199,20 @@ class TestRankingModels:
         num_samples = min(num_users, 1000)  # max. number to sample
         users_sampled = np.random.choice(np.arange(num_users), num_samples)
 
-        # Compute MRR
-        mrr, _ = recommender.compute_mrr(data=data, users=users_sampled)
+        # Compute MRR 1 - Check Orange.Table branch
+        mrr1, _ = recommender.compute_mrr(data=data, users=users_sampled)
+        print('MRR: %.4f' % mrr1)
 
-        print('MRR: %.4f' % mrr)
-        self.assertGreaterEqual(mrr, 0)
+        if not testdata:  # Extra checks
+            # Compute MRR 2 - Check lil_matrix branch
+            data, _, _ = preprocess(data)
+            mrr2, _ = recommender.compute_mrr(data=data, users=users_sampled)
+
+            # Compute MRR 3 - Check error branch
+            self.assertRaises(TypeError,
+                              lambda: recommender.compute_mrr(None, None))
+
+        self.assertGreaterEqual(mrr1, 0)
 
     @unittest.skip("Skipping test")
     def test_CV(self, learner, filename):

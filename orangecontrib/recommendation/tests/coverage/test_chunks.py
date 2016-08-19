@@ -1,3 +1,4 @@
+import Orange
 from orangecontrib.recommendation.utils.format_data import *
 from orangecontrib.recommendation.utils.datacaching import *
 from orangecontrib.recommendation.evaluation import ReciprocalRank
@@ -35,8 +36,13 @@ class TestChunks(unittest.TestCase):
         self.assertEqual(len(ranks), len(query))
 
     def test_preprocess(self):
+        # Test error
         param = "Something to raise an error"
-        self.assertRaises(AttributeError, lambda: preprocess(param))
+        self.assertRaises(TypeError, lambda: preprocess(param))
+
+        # Test heuristics
+        iris = Orange.data.Table("iris.tab")
+        preprocess(iris)
 
     def test_caches(self):
         row = np.array([0, 0, 1, 2, 2, 2])
@@ -55,14 +61,27 @@ class TestChunks(unittest.TestCase):
         self.assertRaises(TypeError, lambda: cache_norms(m, indices, indices))
         self.assertRaises(TypeError, lambda: cache_norms(m, indices, "error"))
 
+    def test_fix_predictions_rating(self):
+        from orangecontrib.recommendation import BRISMFLearner
 
+        data = Orange.data.Table('ratings.tab')
+        learner = BRISMFLearner(num_factors=2, num_iter=1)
+        recommender = learner(data)
+
+        # Predict: {user, item} exists
+        # Predict: Only user exists
+        # Predict Only item exists
+        # Predict: No one exists
+
+        samples = np.array([[0, 0], [0, 1e5], [1e5, 0], [1e5, 1e5]])
+        recommender(samples)
 
 if __name__ == "__main__":
-    # Test all
-    unittest.main()
+    # # Test all
+    # unittest.main()
 
-    # # Test single test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestChunks("test_Chunks_ReciprocalRank"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
+    # Test single test
+    suite = unittest.TestSuite()
+    suite.addTest(TestChunks("test_fix_predictions_rating"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)

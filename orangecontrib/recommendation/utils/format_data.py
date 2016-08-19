@@ -59,17 +59,9 @@ def preprocess(data):
                       '{users: col=0, items: col=1}')
         print('Warning cause: ' + str(e))
 
-
     # Find the highest value on each column
-    try:
-        users = int(np.max(data.X[:, idx_users]) + 1)
-    except ValueError:
-        users = 0
-
-    try:
-        items = int(np.max(data.X[:, idx_items]) + 1)
-    except ValueError:
-        items = 0
+    users = int(np.max(data.X[:, idx_users]) + 1)
+    items = int(np.max(data.X[:, idx_items]) + 1)
 
     # Construct tuples
     order = (idx_users, idx_items)
@@ -82,10 +74,14 @@ def preprocess(data):
 
 
 def check_data(data):
-    conditions = [data.X.ndim == 2, data.Y.ndim == 1, len(data.X) > 0,
-                  len(data.Y) > 0, data.X.shape[1] >= 2
-                  ]
-    return all(conditions)
+
+    try:
+        conditions = [data.X.ndim == 2, data.Y.ndim == 1, len(data.X) > 0,
+                      len(data.Y) > 0, data.X.shape[1] >= 2
+                      ]
+        return all(conditions)
+    except AttributeError:
+        return False
 
 
 def table2sparse(data, shape, order, m_type=lil_matrix):
