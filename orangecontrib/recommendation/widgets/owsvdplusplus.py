@@ -27,13 +27,19 @@ class OWSVDPlusPlus(OWBaseLearner):
                ("Q", Table),
                ("Y", Table)]
 
-    num_factors = settings.Setting(5)
-    num_iter = settings.Setting(25)
-    learning_rate = settings.Setting(0.005)
-    bias_learning_rate = settings.Setting(0.005)
-    lmbda = settings.Setting(0.02)
-    bias_lmbda = settings.Setting(0.02)
+    # Parameters (general)
+    num_factors = settings.Setting(10)
+    num_iter = settings.Setting(15)
+    learning_rate = settings.Setting(0.01)
+    bias_learning_rate = settings.Setting(0.01)
+    lmbda = settings.Setting(0.1)
+    bias_lmbda = settings.Setting(0.1)
     feedback = None
+
+    # Seed (Random state)
+    RND_SEED, FIXED_SEED = range(2)
+    seed_type = settings.Setting(RND_SEED)
+    random_seed = settings.Setting(42)
 
     # SGD optimizers
     sgd, momentum, nag, adagrad, rmsprop, adadelta, adam = range(7)
@@ -50,7 +56,6 @@ class OWSVDPlusPlus(OWBaseLearner):
 
         # Frist groupbox (Common parameters)
         box = gui.widgetBox(self.controlArea, "Parameters")
-        self.base_estimator = SVDPlusPlusLearner()
 
         gui.spin(box, self, "num_factors", 1, 10000,
                  label="Number of latent factors:",
@@ -66,7 +71,7 @@ class OWSVDPlusPlus(OWBaseLearner):
                        callback=self.settings_changed)
 
         gui.doubleSpin(box, self, "bias_learning_rate", minv=1e-5, maxv=1e+5,
-                       step=1e-5, label="Bias learning rate:", decimals=5,
+                       step=1e-5, label="     Bias learning rate:", decimals=5,
                        alignment=Qt.AlignRight, controlWidth=90,
                        callback=self.settings_changed)
 
@@ -76,7 +81,7 @@ class OWSVDPlusPlus(OWBaseLearner):
                        callback=self.settings_changed)
 
         gui.doubleSpin(box, self, "bias_lmbda", minv=1e-4, maxv=1e+4, step=1e-4,
-                       label="Bias regularization:", decimals=4,
+                       label="     Bias regularization:", decimals=4,
                        alignment=Qt.AlignRight, controlWidth=90,
                        callback=self.settings_changed)
 
@@ -109,6 +114,17 @@ class OWSVDPlusPlus(OWBaseLearner):
         gui.rubber(box)
         self._opt_params = [_m_comp, _r_comp, _b1_comp, _b2_comp]
         self._show_right_optimizer()
+
+        # Third groupbox (Random state)
+        box = gui.widgetBox(self.controlArea, "Random state")
+        rndstate = gui.radioButtons(box, self, "seed_type",
+                                    callback=self.settings_changed)
+        gui.appendRadioButton(rndstate, "Random seed")
+        gui.appendRadioButton(rndstate, "Fixed seed")
+        ibox = gui.indentedBox(rndstate)
+        gui.spin(ibox, self, "random_seed", -1e5, 1e5,
+                 label="Seed:", alignment=Qt.AlignRight,
+                 callback=self.settings_changed)
 
     def _show_right_optimizer(self):
         enabled = [[False, False, False, False],  # SGD
@@ -144,6 +160,12 @@ class OWSVDPlusPlus(OWBaseLearner):
             return SGD()
 
     def create_learner(self):
+        # Set random state
+        if self.seed_type == self.FIXED_SEED:
+            seed = self.random_seed
+        else:
+            seed = None
+
         return self.LEARNER(
             num_factors=self.num_factors,
             num_iter=self.num_iter,
@@ -153,6 +175,7 @@ class OWSVDPlusPlus(OWBaseLearner):
             bias_lmbda=self.bias_lmbda,
             feedback=self.feedback,
             optimizer=self.select_optimizer(),
+            random_state=seed,
             callback=self.progress_callback
         )
 
@@ -215,7 +238,7 @@ class OWSVDPlusPlus(OWBaseLearner):
         if iter == 1:  # Start it
             self.progressBarInit()
 
-        elif iter == self.num_iter:  # Finish
+        if iter == self.num_iter:  # Finish
             self.progressBarFinished()
             return
 
