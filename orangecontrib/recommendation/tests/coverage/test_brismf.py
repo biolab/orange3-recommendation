@@ -16,7 +16,8 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
 
     def test_input_data_continuous(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1, min_rating=0,
-                                max_rating=5, verbose=2)
+                                max_rating=5, verbose=2,
+                                callback=lambda x: None)
 
         # Test SGD optimizers too
         for opt in __optimizers__:

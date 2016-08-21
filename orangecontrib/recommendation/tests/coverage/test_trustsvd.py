@@ -18,7 +18,7 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
     def test_input_data_continuous(self, *args):
         trust = Orange.data.Table(__trust_dataset__)
         learner = TrustSVDLearner(num_factors=2, num_iter=1, trust=trust,
-                                  verbose=2)
+                                  verbose=2, callback=lambda x: None)
 
         # Test SGD optimizers too
         for opt in __optimizers__:

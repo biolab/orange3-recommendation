@@ -25,8 +25,10 @@ def _dg(x):
     y = ex / (1 + ex) ** 2
     return y
 
+
 def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
-                          lmbda, optimizer, verbose=False, random_state=None):
+                          lmbda, optimizer, verbose=False, random_state=None,
+                          callback=None):
     # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
@@ -115,6 +117,10 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
                     print('\t- Train MRR: %.4f' % mrr)
             print('')
 
+        # Send information about the process
+        if callback:
+            callback(step+1)
+
     return U, V
 
 
@@ -188,19 +194,23 @@ class CLiMFLearner(Learner):
         random_state: int, optional
             Set the seed for the numpy random generator, so it makes the random
             numbers predictable. This a debbuging feature.
+
+        callback: callable
+
     """
 
     name = 'CLiMF'
 
     def __init__(self, num_factors=5, num_iter=25, learning_rate=0.0001,
                  lmbda=0.001, preprocessors=None, optimizer=None, verbose=False,
-                 random_state=None):
+                 random_state=None, callback=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
         self.learning_rate = learning_rate
         self.lmbda = lmbda
         self.optimizer = SGD() if optimizer is None else optimizer
         self.random_state = random_state
+        self.callback = callback
 
         super().__init__(preprocessors=preprocessors, verbose=verbose)
 
@@ -235,7 +245,8 @@ class CLiMFLearner(Learner):
                                      learning_rate=self.learning_rate,
                                      lmbda=self.lmbda, optimizer=self.optimizer,
                                      verbose=self.verbose,
-                                     random_state=self.random_state)
+                                     random_state=self.random_state,
+                                     callback=self.callback)
 
         # Construct model
         model = CLiMFModel(U=U, V=V)

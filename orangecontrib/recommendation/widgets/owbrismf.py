@@ -46,7 +46,6 @@ class OWBRISMF(OWBaseLearner):
 
         # Frist groupbox (Common parameters)
         box = gui.widgetBox(self.controlArea, "Parameters")
-        self.base_estimator = BRISMFLearner()
 
         gui.spin(box, self, "num_factors", 1, 10000,
                  label="Number of latent factors:",
@@ -148,7 +147,8 @@ class OWBRISMF(OWBaseLearner):
             bias_learning_rate=self.bias_learning_rate,
             lmbda=self.lmbda,
             bias_lmbda=self.bias_lmbda,
-            optimizer=self.select_optimizer()
+            optimizer=self.select_optimizer(),
+            callback=self.progress_callback
         )
 
     def get_learner_parameters(self):
@@ -199,6 +199,20 @@ class OWBRISMF(OWBaseLearner):
 
         self.send("P", P)
         self.send("Q", Q)
+
+    def progress_callback(self, *args, **kwargs):
+        iter = args[0]
+
+        # Start/Finish progress bar
+        if iter == 1:  # Start it
+            self.progressBarInit()
+
+        elif iter == self.num_iter:  # Finish
+            self.progressBarFinished()
+            return
+
+        if self.num_iter > 0:
+            self.progressBarSet(int(iter/self.num_iter * 100))
 
 if __name__ == '__main__':
     app = QApplication([])

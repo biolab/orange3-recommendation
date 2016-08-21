@@ -27,7 +27,8 @@ def _predict_all_items(users, global_avg, bu, bi, P, Q):
 
 def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
                           learning_rate, bias_learning_rate, lmbda, bias_lmbda,
-                          optimizer, verbose=False, random_state=None):
+                          optimizer, verbose=False, random_state=None,
+                          callback=None):
     # Seed the generator
     if random_state is not None:
         np.random.seed(random_state)
@@ -64,6 +65,9 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
             start = time.time()
             print('- Step: %d' % (step + 1))
 
+        # Send information about the process
+        if callback:
+            callback(step + 1)
 
         # Optimize rating prediction
         for u, j in zip(*ratings.nonzero()):
@@ -179,6 +183,8 @@ class BRISMFLearner(Learner):
             Set the seed for the numpy random generator, so it makes the random
             numbers predictable. This a debbuging feature.
 
+        callback: callable
+
     """
 
     name = 'BRISMF'
@@ -186,7 +192,8 @@ class BRISMFLearner(Learner):
     def __init__(self, num_factors=5, num_iter=25, learning_rate=0.07,
                  bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
                  min_rating=None, max_rating=None, optimizer=None,
-                 preprocessors=None, verbose=False, random_state=None):
+                 preprocessors=None, verbose=False, random_state=None,
+                 callback=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
         self.learning_rate = learning_rate
@@ -195,6 +202,7 @@ class BRISMFLearner(Learner):
         self.bias_lmbda = bias_lmbda
         self.optimizer = SGD() if optimizer is None else optimizer
         self.random_state = random_state
+        self.callback = callback
 
         # Correct assignments
         if self.bias_learning_rate is None:
@@ -243,7 +251,8 @@ class BRISMFLearner(Learner):
                                      bias_lmbda=self.bias_lmbda,
                                      optimizer=self.optimizer,
                                      verbose=self.verbose,
-                                     random_state=self.random_state)
+                                     random_state=self.random_state,
+                                     callback=self.callback)
 
         # Update biases
         bias['dUsers'] = bu

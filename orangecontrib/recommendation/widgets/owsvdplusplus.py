@@ -152,7 +152,8 @@ class OWSVDPlusPlus(OWBaseLearner):
             lmbda=self.lmbda,
             bias_lmbda=self.bias_lmbda,
             feedback=self.feedback,
-            optimizer=self.select_optimizer()
+            optimizer=self.select_optimizer(),
+            callback=self.progress_callback
         )
 
     def get_learner_parameters(self):
@@ -206,6 +207,20 @@ class OWSVDPlusPlus(OWBaseLearner):
         self.send("P", P)
         self.send("Q", Q)
         self.send("Y", Y)
+
+    def progress_callback(self, *args, **kwargs):
+        iter = args[0]
+
+        # Start/Finish progress bar
+        if iter == 1:  # Start it
+            self.progressBarInit()
+
+        elif iter == self.num_iter:  # Finish
+            self.progressBarFinished()
+            return
+
+        if self.num_iter > 0:
+            self.progressBarSet(int(iter/self.num_iter * 100))
 
     def set_feedback(self, feedback):
         self.feedback = feedback

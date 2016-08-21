@@ -16,7 +16,8 @@ __optimizers__ = [SGD(), Momentum(momentum=0.9),
 class TestCLiMF(unittest.TestCase, TestRankingModels):
 
     def test_input_data_continuous(self, *args):
-        learner = CLiMFLearner(num_factors=2, num_iter=1, verbose=2)
+        learner = CLiMFLearner(num_factors=2, num_iter=1, verbose=2,
+                               callback=lambda x: None)
 
         # Test SGD optimizers too
         for opt in __optimizers__:

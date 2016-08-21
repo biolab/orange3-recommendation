@@ -161,7 +161,8 @@ class OWTrustSVD(OWBaseLearner):
             lmbda=self.lmbda,
             bias_lmbda=self.bias_lmbda,
             trust=self.trust,
-            optimizer=self.select_optimizer()
+            optimizer=self.select_optimizer(),
+            callback=self.progress_callback
         )
 
     def get_learner_parameters(self):
@@ -242,9 +243,25 @@ class OWTrustSVD(OWBaseLearner):
         self.send("Y", Y)
         self.send("W", W)
 
+    def progress_callback(self, *args, **kwargs):
+        iter = args[0]
+
+        # Start/Finish progress bar
+        if iter == 1:  # Start it
+            self.progressBarInit()
+
+        elif iter == self.num_iter:  # Finish
+            self.progressBarFinished()
+            return
+
+        if self.num_iter > 0:
+            self.progressBarSet(int(iter/self.num_iter * 100))
+
     def set_trust(self, trust):
         self.trust = trust
-        self.update_learner()
+
+        if self.auto_apply:
+            self.apply()
 
 
 if __name__ == '__main__':

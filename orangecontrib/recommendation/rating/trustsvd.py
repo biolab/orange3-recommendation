@@ -69,7 +69,7 @@ def _predict_all_items(u, global_avg, bu, bi, P, Q, Y, W, items_u, trustees_u):
 def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors, 
                           num_iter, learning_rate, bias_learning_rate, lmbda, 
                           bias_lmbda, social_lmbda, optimizer, verbose=False,
-                          random_state=None):
+                          random_state=None, callback=None):
 
     # Seed the generator
     if random_state is not None:
@@ -127,6 +127,10 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
         if verbose:
             start = time.time()
             print('- Step: %d' % (step + 1))
+
+        # Send information about the process
+        if callback:
+            callback(step + 1)
 
         # Optimize rating prediction
         for u, j in zip(*ratings.nonzero()):
@@ -224,6 +228,10 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
 
                 print('\t- Training loss: %.3f' % objective)
             print('')
+
+        # Send information about the process
+        if callback:
+            callback(step+1)
 
     return P, Q, Y, W, bu, bi, users_cache
 
@@ -399,6 +407,7 @@ class TrustSVDLearner(Learner):
             Set the seed for the numpy random generator, so it makes the random
             numbers predictable. This a debbuging feature.
 
+        callback: callable
 
     """
 
@@ -408,7 +417,7 @@ class TrustSVDLearner(Learner):
                  bias_learning_rate=None, lmbda=0.1, bias_lmbda=None,
                  social_lmbda=0.05, min_rating=None, max_rating=None,
                  trust=None, optimizer=None, preprocessors=None, verbose=False,
-                 random_state=None):
+                 random_state=None, callback=None):
         self.num_factors = num_factors
         self.num_iter = num_iter
         self.learning_rate = learning_rate
@@ -418,6 +427,7 @@ class TrustSVDLearner(Learner):
         self.social_lmbda = social_lmbda
         self.optimizer = SGD() if optimizer is None else optimizer
         self.random_state = random_state
+        self.callback = callback
 
         # Correct assignments
         if self.bias_learning_rate is None:
@@ -479,7 +489,8 @@ class TrustSVDLearner(Learner):
                                   social_lmbda=self.social_lmbda,
                                   optimizer=self.optimizer,
                                   verbose=self.verbose,
-                                  random_state=self.random_state)
+                                  random_state=self.random_state,
+                                  callback=self.callback)
 
         # Update biases
         bias['dUsers'] = bu
