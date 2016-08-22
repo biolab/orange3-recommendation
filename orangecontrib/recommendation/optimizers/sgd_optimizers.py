@@ -2,7 +2,7 @@ import numpy as np
 import copy
 
 __all__ = ['SGD', 'Momentum', 'NesterovMomentum', 'AdaGrad', 'RMSProp',
-           'AdaDelta', 'Adam', 'create_opt']
+           'AdaDelta', 'Adam', 'Adamax', 'create_opt']
 
 
 def create_opt(opt2copy, learning_rate=None):
@@ -100,7 +100,8 @@ class Momentum:
         if self.velocity is None:
             self.velocity = np.zeros(params.shape)
 
-        self.velocity[indices] = self.momentum * self.velocity[indices] - self.learning_rate * grads
+        self.velocity[indices] = \
+            self.momentum * self.velocity[indices] - self.learning_rate * grads
         params[indices] += self.velocity[indices]
 
     def __str__(self):
@@ -175,8 +176,10 @@ class NesterovMomentum:
             self.velocity = np.zeros(params.shape)
 
         v_prev = self.velocity[indices]
-        self.velocity[indices] = self.momentum * self.velocity[indices] - self.learning_rate * grads
-        params[indices] += -self.momentum * v_prev + (1 + self.momentum) * self.velocity[indices]
+        self.velocity[indices] = \
+            self.momentum * self.velocity[indices] - self.learning_rate * grads
+        params[indices] += -self.momentum * v_prev + \
+                           (1 + self.momentum) * self.velocity[indices]
 
     def __str__(self):
         return self.name
@@ -197,8 +200,8 @@ class AdaGrad:
             Small value added for numerical stability
 
     Notes:
-        Using step size eta Adagrad calculates the learning rate for feature i at
-        time step t as:
+        Using step size eta Adagrad calculates the learning rate for feature i
+        at time step t as:
 
         .. math:: \\eta_{t,i} = \\frac{\\eta}
            {\\sqrt{\\sum^t_{t^\\prime} g^2_{t^\\prime,i}+\\epsilon}} g_{t,i}
@@ -311,8 +314,10 @@ class RMSProp:
         if self.accu is None:
             self.accu = np.zeros(params.shape)
 
-        self.accu[indices] = self.rho * self.accu[indices] + (1 - self.rho) * grads ** 2
-        params[indices] -= self.learning_rate * grads/np.sqrt(self.accu[indices] + self.epsilon)
+        self.accu[indices] = \
+            self.rho * self.accu[indices] + (1 - self.rho) * grads ** 2
+        params[indices] -= self.learning_rate * grads /\
+                           np.sqrt(self.accu[indices] + self.epsilon)
 
     def __str__(self):
         return self.name
@@ -397,7 +402,8 @@ class AdaDelta:
         params[indices] -= self.learning_rate * update
 
         # update delta_accu (as accu, but accumulating updates)
-        delta_accu_new = self.rho * self.delta_accu[indices] + (1 - self.rho) * update ** 2
+        delta_accu_new = \
+            self.rho * self.delta_accu[indices] + (1 - self.rho) * update ** 2
         self.delta_accu[indices] = delta_accu_new
 
         return params
@@ -422,9 +428,9 @@ class Adam:
             Constant for numerical stability.
 
     Notes:
-        The paper [5]_ includes an additional hyperparameter lambda. This is only
-        needed to prove convergence of the algorithm and has no practical use
-        (personal communication with the authors), it is therefore omitted here.
+        The paper [5]_ includes an additional hyperparameter lambda. This is
+        only needed to prove convergence of the algorithm and has no practical
+        use, it is therefore omitted here.
 
     References:
         .. [5] Kingma, Diederik, and Jimmy Ba (2014):
@@ -454,7 +460,8 @@ class Adam:
             params: array
                 The variables to generate update expressions for
             indices: array, optional
-                Indices in params to update
+                Indices of parameters ('params') to update. If None (default),
+                all parameters will be updated.
 
         Returns
             updates: list of float
@@ -477,11 +484,90 @@ class Adam:
         #     (1-0.999^x)*(1-0.9^x)
         # Computing bias-corrected first and second moment estimates to
         # counteract the effect of vt and mt been biased towards zero
-        a_t = self.learning_rate * np.sqrt(1 - self.beta2 ** t) / (1 - self.beta1 ** t)
+        a_t = self.learning_rate * np.sqrt(1 - self.beta2 ** t) / \
+              (1 - self.beta1 ** t)
 
-        self.m_prev[indices] = self.beta1 * self.m_prev[indices] + (1 - self.beta1) * grads
-        self.v_prev[indices] = self.beta2 * self.v_prev[indices] + (1 - self.beta2) * grads ** 2
-        params[indices] -= a_t * self.m_prev[indices] / (np.sqrt(self.v_prev[indices]) + self.epsilon)
+        self.m_prev[indices] = self.beta1 * self.m_prev[indices] + \
+                               (1 - self.beta1) * grads
+        self.v_prev[indices] = self.beta2 * self.v_prev[indices] + \
+                               (1 - self.beta2) * grads ** 2
+        params[indices] -= a_t * self.m_prev[indices] / \
+                           (np.sqrt(self.v_prev[indices]) + self.epsilon)
+
+        self.t_prev = t
+
+    def __str__(self):
+        return self.name
+
+class Adamax:
+    """Adamax
+
+    Adamax updates implemented as in [6]_. This is a variant of of the Adam
+    algorithm based on the infinity norm.
+
+    Args:
+        learning_rate : float
+            The learning rate controlling the size of update steps
+        beta_1 : float
+            Exponential decay rate for the first moment estimates.
+        beta_2 : float
+            Exponential decay rate for the second moment estimates.
+        epsilon : float
+            Constant for numerical stability.
+
+    References:
+        .. [6] Kingma, Diederik, and Jimmy Ba (2014):
+               Adam: A Method for Stochastic Optimization.
+               arXiv preprint arXiv:1412.6980.
+
+    """
+
+    def __init__(self, learning_rate=0.001, beta1=0.9, beta2=0.999,
+         epsilon=1e-8):
+        self.learning_rate = learning_rate
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.epsilon = epsilon
+
+        self.t_prev = 0
+        self.m_prev = None
+        self.u_prev = None
+        self.name = 'Adamax'
+
+    def update(self, grads, params, indices=None):
+        """Adamax updates
+
+        Args:
+            grads: array
+                List of gradient expressions
+            params: array
+                The variables to generate update expressions for
+            indices: array, optional
+                Indices of parameters ('params') to update. If None (default),
+                all parameters will be updated.
+
+        Returns
+            updates: list of float
+                Variables updated with the gradients
+
+        """
+
+        if indices is None:
+            indices = np.arange(len(params))
+
+        if self.m_prev is None or self.u_prev is None:
+            self.m_prev = np.zeros(params.shape)
+            self.u_prev = np.zeros(params.shape)
+
+        t = self.t_prev + 1
+        a_t = self.learning_rate/(1 - self.beta1**t)
+
+        self.m_prev[indices] = self.beta1 * self.m_prev[indices] + \
+                               (1 - self.beta1) * grads
+        self.u_prev[indices] = np.maximum(self.beta2 * self.u_prev[indices],
+                                          np.abs(grads))
+        params[indices] -= a_t * self.m_prev[indices] / \
+                           (self.u_prev[indices] + self.epsilon)
 
         self.t_prev = t
 

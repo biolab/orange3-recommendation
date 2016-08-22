@@ -38,10 +38,10 @@ class OWBRISMF(OWBaseLearner):
     random_seed = settings.Setting(42)
 
     # SGD optimizers
-    sgd, momentum, nag, adagrad, rmsprop, adadelta, adam = range(7)
+    sgd, momentum, nag, adagrad, rmsprop, adadelta, adam, adamax = range(8)
     opt_type = settings.Setting(sgd)
-    opt_names = ['SGD', 'Momentum', "Nesterov momentum",
-                 'AdaGrad', 'RMSprop', 'AdaDelta', 'Adam']
+    opt_names = ['SGD', 'Momentum', "Nesterov momentum", 'AdaGrad', 'RMSprop',
+                 'AdaDelta', 'Adam', 'Adamax']
     momentum = settings.Setting(0.9)
     rho = settings.Setting(0.9)
     beta1 = settings.Setting(0.9)
@@ -130,6 +130,7 @@ class OWBRISMF(OWBaseLearner):
                    [False, True, False, False],  # RMSprop
                    [False, True, False, False],  # AdaDelta
                    [False, False, True, True],  # Adam
+                   [False, False, True, True],  # Adamax
                 ]
 
         mask = enabled[self.opt_type]
@@ -153,6 +154,8 @@ class OWBRISMF(OWBaseLearner):
             return AdaDelta(self.rho)
         elif self.opt_type == self.adam:
             return Adam(beta1=self.beta1, beta2=self.beta2)
+        elif self.opt_type == self.adamax:
+            return Adamax(beta1=self.beta1, beta2=self.beta2)
         else:
             return SGD()
 

@@ -11,6 +11,7 @@ def run_tests():
         'test_climf',
         'test_svdplusplus',
         'test_trustsvd',
+        'test_optimizers',
         'test_chunks'
     ]
 

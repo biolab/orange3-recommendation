@@ -4,14 +4,17 @@ import numpy as np
 import collections
 import unittest
 import copy
-__optimizers__ = [SGD(learning_rate=0.1),
-                  Momentum(learning_rate=0.1, momentum=0.5),
-                  NesterovMomentum(learning_rate=0.1, momentum=0.5),
-                  AdaGrad(learning_rate=0.1),
-                  RMSProp(learning_rate=0.01, rho=0.9, epsilon=1e-6),
-                  AdaDelta(learning_rate=1, rho=0.95, epsilon=1e-6),
-                  Adam(learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8)
-                  ]
+
+__optimizers__ = [
+    SGD(learning_rate=0.1),
+    Momentum(learning_rate=0.1, momentum=0.5),
+    NesterovMomentum(learning_rate=0.1, momentum=0.5),
+    AdaGrad(learning_rate=0.1),
+    RMSProp(learning_rate=0.01, rho=0.9, epsilon=1e-6),
+    AdaDelta(learning_rate=1, rho=0.95, epsilon=1e-6),
+    Adam(learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8),
+    Adamax(learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8)
+    ]
 
 
 def dxf(X):
@@ -63,6 +66,10 @@ class TestOptimizers(unittest.TestCase):
                             0.90034969365796,
                             0.90034968027137]
 
+    torch_values['adamax'] = [0.90211749000754,
+                              0.90211748762402,
+                              0.90211748682951]
+
     def test_torch(self):
         for opt, torch in zip(__optimizers__, self.torch_values.values()):
             opt_copy = copy.copy(opt)  # Shallow copy (test dependent)
@@ -70,7 +77,7 @@ class TestOptimizers(unittest.TestCase):
 
             for _ in range(10):
                 opt_copy.update(dxf(x), x)
-
+            print(x)
             np.testing.assert_almost_equal(x, torch, decimal=4)
 
     def test_convergence(self):

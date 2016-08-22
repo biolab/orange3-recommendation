@@ -76,3 +76,12 @@ Adam
 .. autoclass:: Adam
    :members:
    :special-members: __init__
+
+
+Adamax
+======
+
+.. autoclass:: Adamax
+   :members:
+   :special-members: __init__
+
