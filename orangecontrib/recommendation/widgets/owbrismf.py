@@ -118,9 +118,15 @@ class OWBRISMF(OWBaseLearner):
         gui.appendRadioButton(rndstate, "Random seed")
         gui.appendRadioButton(rndstate, "Fixed seed")
         ibox = gui.indentedBox(rndstate)
-        gui.spin(ibox, self, "random_seed", -1e5, 1e5,
-                 label="Seed:", alignment=Qt.AlignRight,
-                 callback=self.settings_changed)
+        self.spin_rnd_seed = gui.spin(ibox, self, "random_seed", -1e5, 1e5,
+                                 label="Seed:", alignment=Qt.AlignRight,
+                                 callback=self.settings_changed)
+        self.settings_changed()  # Update (extra) settings
+
+    def settings_changed(self):
+        # Enable/Disable Fixed seed control
+        self.spin_rnd_seed.setEnabled(self.seed_type==self.FIXED_SEED)
+        super().settings_changed()
 
     def _show_right_optimizer(self):
         enabled = [[False, False, False, False],  # SGD
