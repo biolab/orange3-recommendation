@@ -18,6 +18,7 @@ The update functions control the learning rate during the SGD optimization
     RMSProp
     AdaDelta
     Adam
+    Adamax
 
 
 Stochastic Gradient Descent
