@@ -1,6 +1,7 @@
 Tutorial
 ********
 
+For a more visual tutorial go to: http://blog.biolab.si
 
 Input data
 ==========
