@@ -470,7 +470,7 @@ class SVDPlusPlusModel(Model):
 
     def getYTable(self):
         domain_name = 'Feedback-feature'
-        variable = self.original_domain.variables[self.order[0]]
+        variable = self.original_domain.variables[self.order[1]]
         return feature_matrix(variable, self.Y, domain_name)
 
 
