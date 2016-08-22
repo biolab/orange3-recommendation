@@ -1,7 +1,7 @@
 Tutorial
 ********
 
-For a more visual tutorial go to: http://blog.biolab.si
+For a more visual tutorial go to `Biolab's blog`_
 
 Input data
 ==========
@@ -174,3 +174,5 @@ all the functions defined in ``Orange.evaluation``.
       - User average          1.04  0.14
       - User-Item Baseline    0.98  0.25
       - BRISMF                0.96  0.28
+
+.. _Biolab's blog: http://blog.biolab.si/2016/08/19/making-recommendations/
