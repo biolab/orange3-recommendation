@@ -40,8 +40,8 @@ class OWBRISMF(OWBaseLearner):
     # SGD optimizers
     sgd, momentum, nag, adagrad, rmsprop, adadelta, adam, adamax = range(8)
     opt_type = settings.Setting(sgd)
-    opt_names = ['SGD', 'Momentum', "Nesterov momentum", 'AdaGrad', 'RMSprop',
-                 'AdaDelta', 'Adam', 'Adamax']
+    opt_names = ['Vanilla SGD', 'Momentum', "Nesterov momentum", 'AdaGrad',
+                 'RMSprop', 'AdaDelta', 'Adam', 'Adamax']
     momentum = settings.Setting(0.9)
     rho = settings.Setting(0.9)
     beta1 = settings.Setting(0.9)
