@@ -33,12 +33,16 @@ class SGD:
         """SGD updates
 
         Args:
-            grads: list of float
+            grads: array
                 List of gradient expressions
-            params: list of float
+            params: array
                 The variables to generate update expressions for
+            indices: array, optional
+                Indices in params to update
 
         """
+        if indices is None:
+            indices = np.arange(len(params))
 
         params[indices] -= self.learning_rate * grads
 
@@ -81,12 +85,17 @@ class Momentum:
         """Momentum updates
 
         Args:
-            grads: list of float
+            grads: array
                 List of gradient expressions
-            params: list of float
+            params: array
                 The variables to generate update expressions for
+            indices: array
+                Indices in params to update
 
         """
+
+        if indices is None:
+            indices = np.arange(len(params))
 
         if self.velocity is None:
             self.velocity = np.zeros(params.shape)
@@ -146,16 +155,22 @@ class NesterovMomentum:
         """NAG updates
 
         Args:
-            grads: list of float
+            grads: array
                 List of gradient expressions
-            params: list of float
+            params: array
                 The variables to generate update expressions for
+            indices: array, optional
+                Indices in params to update
 
         Returns
             updates: list of float
                 Variables updated with the gradients
 
         """
+
+        if indices is None:
+            indices = np.arange(len(params))
+
         if self.velocity is None:
             self.velocity = np.zeros(params.shape)
 
@@ -212,19 +227,23 @@ class AdaGrad:
         """AdaGrad updates
 
         Args:
-            grads: list of float
+            grads: array
                 List of gradient expressions
-            params: list of float
+            params: array
                 The variables to generate update expressions for
+            indices: array, optional
+                Indices in params to update
 
         """
+
+        if indices is None:
+            indices = np.arange(len(params))
 
         if self.accu is None:
             self.accu = np.zeros(params.shape)
 
         self.accu[indices] += grads ** 2
-        a = self.accu[indices]+ self.epsilon
-        den = np.sqrt(a)
+        den = np.sqrt(self.accu[indices] + self.epsilon)
         params[indices] -= self.learning_rate * grads/den
 
     def __str__(self):
@@ -277,12 +296,17 @@ class RMSProp:
         """RMSProp updates
 
         Args:
-            grads: list of float
+            grads: array
                 List of gradient expressions
-            params: list of float
+            params: array
                 The variables to generate update expressions for
+            indices: array, optional
+                Indices in params to update
 
         """
+
+        if indices is None:
+            indices = np.arange(len(params))
 
         if self.accu is None:
             self.accu = np.zeros(params.shape)
@@ -348,19 +372,24 @@ class AdaDelta:
         """AdaDelta updates
 
         Args:
-            grads: list of float
+            grads: array
                 List of gradient expressions
-            params: list of float
+            params: array
                 The variables to generate update expressions for
+            indices: array, optional
+                Indices in params to update
 
         """
+
+        if indices is None:
+            indices = np.arange(len(params))
 
         if self.accu is None or self.delta_accu is None:
             self.accu = np.zeros(params.shape)
             self.delta_accu = np.zeros(params.shape)
 
-        accu_new = self.rho * self.accu[indices] + (1 - self.rho) * grads ** 2
-        self.accu[indices] = accu_new
+        self.accu[indices] = self.rho * self.accu[indices] + \
+                             (1 - self.rho) * grads ** 2
 
         # compute parameter update, using the 'old' delta_accu
         update = grads * np.sqrt(self.delta_accu[indices] + self.epsilon) / \
@@ -420,16 +449,21 @@ class Adam:
         """Adam updates
 
         Args:
-            grads: list of float
+            grads: array
                 List of gradient expressions
-            params: list of float
+            params: array
                 The variables to generate update expressions for
+            indices: array, optional
+                Indices in params to update
 
         Returns
             updates: list of float
                 Variables updated with the gradients
 
         """
+
+        if indices is None:
+            indices = np.arange(len(params))
 
         if self.m_prev is None or self.v_prev is None:
             self.m_prev = np.zeros(params.shape)
