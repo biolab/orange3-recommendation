@@ -104,15 +104,14 @@ class LearnerRecommendation(Learner):
             # not rated will have a count=0. To avoid division by zero, replace
             # zeros by ones
             countings_users = np.bincount(data.X[:, self.order[0]])
-            # Replace zeros by ones (Avoid problems of division by zero)
-            # This only should happen during Cross-Validation!!!
-            countings_users[countings_users == 0] = 1
-            # Sum values along axis 0 and 1
+            # Sum values along axis 0
             sums_users = np.bincount(data.X[:, self.order[0]], weights=data.Y)
             # Compute averages
             averages_users = sums_users / countings_users
             # Compute bias and deltas
             deltaUser = averages_users - bias['globalAvg']
+            # Replace NaN by Zeros
+            deltaUser[np.isnan(deltaUser)] = 0
             # Add to dictionary
             bias['dUsers'] = deltaUser
 
@@ -120,18 +119,16 @@ class LearnerRecommendation(Learner):
         if axis in ['all', 'items']:
             # Count non zeros in rows and columns
             # Bincount() returns an array of length np.amax(x)+1. Therefore, items
-            # not rated will have a count=0. To avoid division by zero, replace
-            # zeros by ones
+            # not rated will have a count=0.
             countings_items = np.bincount(data.X[:, self.order[1]])
-            # Replace zeros by ones (Avoid problems of division by zero)
-            # This only should happen during Cross-Validation!!!
-            countings_items[countings_items == 0] = 1
-            # Sum values along axis 0 and 1
+            # Sum values along axis 1
             sums_items = np.bincount(data.X[:, self.order[1]], weights=data.Y)
             # Compute averages
             averages_items = sums_items / countings_items
             # Compute bias and deltas
             deltaItem = averages_items - bias['globalAvg']
+            # Replace NaN by Zeros
+            deltaItem[np.isnan(deltaItem)] = 0
             # Add to dictionary
             bias['dItems'] = deltaItem
 
