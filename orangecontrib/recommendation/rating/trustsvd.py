@@ -18,19 +18,19 @@ __sparse_format__ = lil_matrix
 def _compute_extra_terms(Y, W, items_u, trustees_u):
     # Implicit information
     norm_Iu = math.sqrt(len(items_u))
+
+    # TODO: Clean this. Hint: np.nans
+    y_term = 0
     if norm_Iu > 0:
         y_sum = np.sum(Y[items_u, :], axis=0)
         y_term = y_sum / norm_Iu
-    else:
-        y_term = 0
 
     # Trust information
+    w_term = 0
     norm_Tu = math.sqrt(len(trustees_u))
     if norm_Tu > 0:
         w_sum = np.sum(W[trustees_u, :], axis=0)
         w_term = w_sum / norm_Tu
-    else:
-        w_term = 0
 
     return y_term, w_term, norm_Iu, norm_Tu
 

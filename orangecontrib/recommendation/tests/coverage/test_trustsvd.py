@@ -92,6 +92,18 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
             map(lambda t: t[0] >= t[1], zip(objectives, objectives[1:])))
         self.assertTrue(all(test))
 
+        # ***** Test chunks - Just for coverage *****
+        data_t = (data, trust)
+        compute_loss(data_t, bias_t, low_rank_matrices, params)
+        data_t = ("Sth. error", "Sth. error")
+        self.assertRaises(TypeError, lambda: compute_loss(data_t, bias_t,
+                                                          low_rank_matrices,
+                                                          params))
+        data_t = (data, "Sth. error")
+        self.assertRaises(TypeError, lambda: compute_loss(data_t, bias_t,
+                                                          low_rank_matrices,
+                                                          params))
+
     def test_outputs(self):
         # Load data
         data = Orange.data.Table(__dataset__)

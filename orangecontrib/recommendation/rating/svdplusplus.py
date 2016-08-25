@@ -17,11 +17,11 @@ __sparse_format__ = lil_matrix
 def _compute_extra_term(Y, feedback_u):
     # Implicit information
     norm_feedback = math.sqrt(len(feedback_u))
+
+    y_term = 0
     if norm_feedback > 0:
         y_sum = np.sum(Y[feedback_u, :], axis=0)
         y_term = y_sum / norm_feedback
-    else:
-        y_term = 0
 
     return y_term, norm_feedback
 
