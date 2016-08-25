@@ -72,12 +72,13 @@ class TestOptimizers(unittest.TestCase):
 
     def test_torch(self):
         for opt, torch in zip(__optimizers__, self.torch_values.values()):
+            print('Testing: %s' % opt.__str__())  # Testing __str__
+
             opt_copy = copy.copy(opt)  # Shallow copy (test dependent)
             x = np.asarray([1., 1., 1.], dtype=np.float64)  # Initial state
 
             for _ in range(10):
                 opt_copy.update(dxf(x), x)
-            print(x)
             np.testing.assert_almost_equal(x, torch, decimal=4)
 
     def test_convergence(self):
@@ -95,6 +96,26 @@ class TestOptimizers(unittest.TestCase):
         test = list(
             map(lambda t: abs(t) < x0, res))
         self.assertTrue(all(test))
+
+    def test_opt_cloner(self):  # Dumb test. Just for coverage
+        opt_1 = create_opt(SGD())
+        opt_1.learning_rate = 0.5
+        opt_2 = create_opt(opt_1, opt_1.learning_rate)
+
+        self.assertIsInstance(opt_1, SGD)
+        self.assertIsInstance(opt_2, SGD)
+        self.assertTrue(opt_1.learning_rate == opt_2.learning_rate)
+
+    def test_params(self):  # Dumb test. Just for coverage
+        x0 = [10, 20, 30]
+        indices = np.arange(len(x0))
+
+        for opt in __optimizers__:
+            opt_copy = copy.copy(opt)  # Shallow copy (test dependent)
+            x = np.asarray(x0, dtype=np.float64)  # Initial state
+
+            for _ in range(10):
+                opt_copy.update(dxf2(x), x, indices)
 
 if __name__ == "__main__":
     # # Test all
