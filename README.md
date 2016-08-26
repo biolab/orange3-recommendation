@@ -1,4 +1,4 @@
-Orange3 Recommendation
+Orange3-Recommendation
 ======================
 
 [![Build Status](https://travis-ci.org/biolab/orange3-recommendation.svg?branch=master)](https://travis-ci.org/biolab/orange3-recommendation)
