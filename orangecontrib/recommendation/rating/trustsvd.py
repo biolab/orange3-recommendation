@@ -165,13 +165,11 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
 
             # Gradient P
             reg_p = (lmbda/norm_Iu) * P[u, :] if norm_Iu > 0 else 0
-            #tempP[u, :] = euj * Q[j, :] + reg_p  # P: Part 1
             dx_pu = euj * Q[j, :] + reg_p
             update_pu(dx_pu, P, u)
 
             # Gradient Q
             reg_q = (lmbda/norm_Uj) * Q[j, :] if norm_Uj > 0 else 0
-            #tempQ[j, :] = euj * (P[u, :] + y_term + w_term) + reg_q
             dx_qi = euj * (P[u, :] + y_term + w_term) + reg_q
             update_qj(dx_qi, Q, j)
 
@@ -180,8 +178,6 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
                 tempY1 = (euj/norm_Iu) * Q[j, :]
                 norms = cache_norms(ratings_T, items_u, norm_U)
                 norm_b = (lmbda/np.atleast_2d(norms))
-                # tempY[items_u, :] = tempY1 + \
-                #                 np.multiply(norm_b.T, Y[items_u, :])
                 dx_yi = tempY1 + np.multiply(norm_b.T, Y[items_u, :])
                 update_yi(dx_yi, Y, items_u)
 
@@ -190,8 +186,6 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
                 tempW1 = (euj/norm_Tu) * Q[j, :]  # W: Part 1
                 norms = cache_norms(trust_T, trustees_u, norm_Tc)
                 norm_b = (lmbda/np.atleast_2d(norms))
-                # tempW[trustees_u, :] = tempW1 + \
-                #                       np.multiply(norm_b.T, W[trustees_u, :])
                 dx_wv = tempW1 + np.multiply(norm_b.T, W[trustees_u, :])
                 update_wv(dx_wv, W, trustees_u)
 
@@ -205,12 +199,10 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
             # Gradient P (Part 2)
             norm_Tu = cache_norms(trust, u, norm_Tr)
             reg_p = P[u, :]/norm_Tu if norm_Tu > 0 else 0
-            #tempP[u, :] += social_lmbda * (euv * W[v, :] + reg_p)
             dx_pu = social_lmbda * (euv * W[v, :] + reg_p)
             update_pu(dx_pu, P, u)
 
             # Gradient W (Part 2)
-            #tempW[v, :] += social_lmbda * euv * P[u, :]  # W: Part 2
             dx_wv = social_lmbda * euv * P[u, :]
             update_wv(dx_wv, W, v)
 
