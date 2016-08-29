@@ -6,8 +6,8 @@ from Orange.widgets import settings, gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
 
 from orangecontrib.recommendation import TrustSVDLearner
-from orangecontrib.recommendation.optimizers import *
 from orangecontrib.recommendation.utils import format_data
+import orangecontrib.recommendation.optimizers as opt
 
 
 class OWTrustSVD(OWBaseLearner):
@@ -46,10 +46,12 @@ class OWTrustSVD(OWBaseLearner):
     random_seed = settings.Setting(42)
 
     # SGD optimizers
-    sgd, momentum, nag, adagrad, rmsprop, adadelta, adam, adamax = range(8)
-    opt_type = settings.Setting(sgd)
-    opt_names = ['Vanilla SGD', 'Momentum', "Nesterov momentum", 'AdaGrad',
+    class _Optimizer:
+        SGD, MOMENTUM, NAG, ADAGRAD, RMSPROP, ADADELTA, ADAM, ADAMAX = range(8)
+        names = ['Vanilla SGD', 'Momentum', "Nesterov momentum", 'AdaGrad',
                  'RMSprop', 'AdaDelta', 'Adam', 'Adamax']
+
+    opt_type = settings.Setting(_Optimizer.SGD)
     momentum = settings.Setting(0.9)
     rho = settings.Setting(0.9)
     beta1 = settings.Setting(0.9)
@@ -98,7 +100,7 @@ class OWTrustSVD(OWBaseLearner):
         box = gui.widgetBox(self.controlArea, "SGD optimizers")
 
         gui.comboBox(box, self, "opt_type", label="SGD optimizer: ",
-            items=self.opt_names, orientation=Qt.Horizontal,
+            items=self._Optimizer.names, orientation=Qt.Horizontal,
             addSpace=4, callback=self._opt_changed)
 
         _m_comp = gui.doubleSpin(box, self, "momentum", minv=1e-4, maxv=1e+4,
@@ -161,22 +163,29 @@ class OWTrustSVD(OWBaseLearner):
         self.settings_changed()
 
     def select_optimizer(self):
-        if self.opt_type == self.momentum:
-            return Momentum(self.momentum)
-        elif self.opt_type == self.nag:
-            return NesterovMomentum(self.momentum)
-        elif self.opt_type == self.adagrad:
-            return AdaGrad()
-        elif self.opt_type == self.rmsprop:
-            return RMSProp(self.rho)
-        elif self.opt_type == self.adadelta:
-            return AdaDelta(self.rho)
-        elif self.opt_type == self.adam:
-            return Adam(beta1=self.beta1, beta2=self.beta2)
-        elif self.opt_type == self.adamax:
-            return Adamax(beta1=self.beta1, beta2=self.beta2)
+        if self.opt_type == self._Optimizer.MOMENTUM:
+            return opt.Momentum(momentum=self.momentum)
+
+        elif self.opt_type == self._Optimizer.NAG:
+            return opt.NesterovMomentum(momentum=self.momentum)
+
+        elif self.opt_type == self._Optimizer.ADAGRAD:
+            return opt.AdaGrad()
+
+        elif self.opt_type == self._Optimizer.RMSPROP:
+            return opt.RMSProp(rho=self.rho)
+
+        elif self.opt_type == self._Optimizer.ADADELTA:
+            return opt.AdaDelta(rho=self.rho)
+
+        elif self.opt_type == self._Optimizer.ADAM:
+            return opt.Adam(beta1=self.beta1, beta2=self.beta2)
+
+        elif self.opt_type == self._Optimizer.ADAMAX:
+            return opt.Adamax(beta1=self.beta1, beta2=self.beta2)
+
         else:
-            return SGD()
+            return opt.SGD()
 
     def create_learner(self):
         # Set random state
@@ -206,7 +215,7 @@ class OWTrustSVD(OWBaseLearner):
                 ("Regularization", self.lmbda),
                 ("Bias regularization", self.bias_lmbda),
                 ("Social regularization", self.social_lmbda),
-                ("SGD optimizer", self.opt_names[self.opt_type]))
+                ("SGD optimizer", self._Optimizer.names[self.opt_type]))
 
     def _check_data(self):
         self.valid_data = False
