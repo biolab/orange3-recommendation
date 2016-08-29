@@ -1,4 +1,4 @@
-from orangecontrib.recommendation.optimizers import *
+import orangecontrib.recommendation.optimizers as opt
 
 import numpy as np
 import collections
@@ -6,14 +6,14 @@ import unittest
 import copy
 
 __optimizers__ = [
-    SGD(learning_rate=0.1),
-    Momentum(learning_rate=0.1, momentum=0.5),
-    NesterovMomentum(learning_rate=0.1, momentum=0.5),
-    AdaGrad(learning_rate=0.1),
-    RMSProp(learning_rate=0.01, rho=0.9, epsilon=1e-6),
-    AdaDelta(learning_rate=1, rho=0.95, epsilon=1e-6),
-    Adam(learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8),
-    Adamax(learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8)
+    opt.SGD(learning_rate=0.1),
+    opt.Momentum(learning_rate=0.1, momentum=0.5),
+    opt.NesterovMomentum(learning_rate=0.1, momentum=0.5),
+    opt.AdaGrad(learning_rate=0.1),
+    opt.RMSProp(learning_rate=0.01, rho=0.9, epsilon=1e-6),
+    opt.AdaDelta(learning_rate=1, rho=0.95, epsilon=1e-6),
+    opt.Adam(learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8),
+    opt.Adamax(learning_rate=0.01, beta1=0.9, beta2=0.999, epsilon=1e-8)
     ]
 
 
@@ -71,10 +71,10 @@ class TestOptimizers(unittest.TestCase):
                               0.90211748682951]
 
     def test_torch(self):
-        for opt, torch in zip(__optimizers__, self.torch_values.values()):
-            print('Testing: %s' % opt.__str__())  # Testing __str__
+        for _opt, torch in zip(__optimizers__, self.torch_values.values()):
+            print('Testing: %s' % _opt.__str__())  # Testing __str__
 
-            opt_copy = copy.copy(opt)  # Shallow copy (test dependent)
+            opt_copy = copy.copy(_opt)  # Shallow copy (test dependent)
             x = np.asarray([1., 1., 1.], dtype=np.float64)  # Initial state
 
             for _ in range(10):
@@ -86,8 +86,8 @@ class TestOptimizers(unittest.TestCase):
         x0 = 100
 
         # Test SGD optimizers too
-        for opt in __optimizers__:
-            opt_copy = copy.copy(opt)  # Shallow copy (test dependent)
+        for _opt in __optimizers__:
+            opt_copy = copy.copy(_opt)  # Shallow copy (test dependent)
             x = np.asarray([x0], dtype=np.float64)  # Initial state
             for _ in range(10):
                 opt_copy.update(dxf2(x), x)
@@ -98,20 +98,20 @@ class TestOptimizers(unittest.TestCase):
         self.assertTrue(all(test))
 
     def test_opt_cloner(self):  # Dumb test. Just for coverage
-        opt_1 = create_opt(SGD())
+        opt_1 = opt.create_opt(opt.SGD())
         opt_1.learning_rate = 0.5
-        opt_2 = create_opt(opt_1, opt_1.learning_rate)
+        opt_2 = opt.create_opt(opt_1, opt_1.learning_rate)
 
-        self.assertIsInstance(opt_1, SGD)
-        self.assertIsInstance(opt_2, SGD)
+        self.assertIsInstance(opt_1, opt.SGD)
+        self.assertIsInstance(opt_2, opt.SGD)
         self.assertTrue(opt_1.learning_rate == opt_2.learning_rate)
 
     def test_params(self):  # Dumb test. Just for coverage
         x0 = [10, 20, 30]
         indices = np.arange(len(x0))
 
-        for opt in __optimizers__:
-            opt_copy = copy.copy(opt)  # Shallow copy (test dependent)
+        for _opt in __optimizers__:
+            opt_copy = copy.copy(_opt)  # Shallow copy (test dependent)
             x = np.asarray(x0, dtype=np.float64)  # Initial state
 
             for _ in range(10):
