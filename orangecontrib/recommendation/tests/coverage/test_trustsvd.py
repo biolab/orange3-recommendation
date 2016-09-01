@@ -60,6 +60,12 @@ class TestTrustSVD(unittest.TestCase, TestRatingModels):
                                   learning_rate=0.0, trust=trust)
         super().test_warnings(learner, filename=__dataset__)
 
+    def test_divergence(self, *args):
+        trust = Orange.data.Table(__trust_dataset__)
+        learner = TrustSVDLearner(num_factors=2, num_iter=1,
+                                  learning_rate=1e20, trust=trust)
+        super().test_divergence(learner, filename=__dataset__)
+
     def test_objective(self):
         from orangecontrib.recommendation.rating.trustsvd import compute_loss
 

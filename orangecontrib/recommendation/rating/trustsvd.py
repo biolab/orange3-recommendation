@@ -122,108 +122,120 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
         print('\t\t- Verbosity = 2\t->\t[time/iter, loss]')
         print('')
 
-    # Factorize matrix using SGD
-    for step in range(num_iter):
-        if verbose:
-            start = time.time()
-            print('- Step: %d' % (step + 1))
+    # Catch warnings
+    with warnings.catch_warnings():
 
-        # Send information about the process
-        if callback:
-            callback(step + 1)
+        # Turn matching warnings into exceptions
+        warnings.filterwarnings('error')
+        try:
 
-        # Optimize rating prediction
-        for u, j in zip(*ratings.nonzero()):
+            # Factorize matrix using SGD
+            for step in range(num_iter):
+                if verbose:
+                    start = time.time()
+                    print('- Step: %d' % (step + 1))
 
-            # Store lists in cache
-            items_u = cache_rows(ratings, u, users_cache)
-            trustees_u = cache_rows(trust, u, trusters_cache)
-            # No need to cast for CV because of "max(num_users, shape_t[0])"
+                # Send information about the process
+                if callback:
+                    callback(step + 1)
 
-            # Prediction and error
-            ruj_pred, y_term, w_term, norm_Iu, norm_Tu = \
-                _predict(u, j, global_avg, bu, bi, P, Q, Y, W, items_u,
-                           trustees_u)
-            euj = ruj_pred - ratings[u, j]
+                # Optimize rating prediction
+                for u, j in zip(*ratings.nonzero()):
 
-            # Store/Compute norms
-            norm_I[u] = norm_Iu
-            norm_Tr[u] = norm_Tu
-            norm_Uj = cache_norms(ratings_T, j, norm_U)
+                    # Store lists in cache
+                    items_u = cache_rows(ratings, u, users_cache)
+                    trustees_u = cache_rows(trust, u, trusters_cache)
+                    # No need to cast for CV due to max(num_users, shape_t[0])
 
-            # Gradient Bu
-            reg_bu = (bias_lmbda/norm_Iu) * bu[u] if norm_Iu > 0 else 0
-            dx_bu = euj + reg_bu
+                    # Prediction and error
+                    ruj_pred, y_term, w_term, norm_Iu, norm_Tu = \
+                        _predict(u, j, global_avg, bu, bi, P, Q, Y, W, items_u,
+                                   trustees_u)
+                    euj = ruj_pred - ratings[u, j]
 
-            # Gradient Bi
-            reg_bi = (bias_lmbda/norm_Uj) * bi[j] if norm_Uj > 0 else 0
-            dx_bi = euj + reg_bi
+                    # Store/Compute norms
+                    norm_I[u] = norm_Iu
+                    norm_Tr[u] = norm_Tu
+                    norm_Uj = cache_norms(ratings_T, j, norm_U)
 
-            # Update the gradients Bu, Bi at the same time
-            update_bu(dx_bu, bu, u)
-            update_bj(dx_bi, bi, j)
+                    # Gradient Bu
+                    reg_bu = (bias_lmbda/norm_Iu) * bu[u] if norm_Iu > 0 else 0
+                    dx_bu = euj + reg_bu
 
-            # Gradient P
-            reg_p = (lmbda/norm_Iu) * P[u, :] if norm_Iu > 0 else 0
-            dx_pu = euj * Q[j, :] + reg_p
-            update_pu(dx_pu, P, u)
+                    # Gradient Bi
+                    reg_bi = (bias_lmbda/norm_Uj) * bi[j] if norm_Uj > 0 else 0
+                    dx_bi = euj + reg_bi
 
-            # Gradient Q
-            reg_q = (lmbda/norm_Uj) * Q[j, :] if norm_Uj > 0 else 0
-            dx_qi = euj * (P[u, :] + y_term + w_term) + reg_q
-            update_qj(dx_qi, Q, j)
+                    # Update the gradients Bu, Bi at the same time
+                    update_bu(dx_bu, bu, u)
+                    update_bj(dx_bi, bi, j)
 
-            # Gradient Y
-            if norm_Iu > 0:
-                tempY1 = (euj/norm_Iu) * Q[j, :]
-                norms = cache_norms(ratings_T, items_u, norm_U)
-                norm_b = (lmbda/np.atleast_2d(norms))
-                dx_yi = tempY1 + np.multiply(norm_b.T, Y[items_u, :])
-                update_yi(dx_yi, Y, items_u)
+                    # Gradient P
+                    reg_p = (lmbda/norm_Iu) * P[u, :] if norm_Iu > 0 else 0
+                    dx_pu = euj * Q[j, :] + reg_p
+                    update_pu(dx_pu, P, u)
 
-            # Gradient W
-            if norm_Tu > 0:
-                tempW1 = (euj/norm_Tu) * Q[j, :]  # W: Part 1
-                norms = cache_norms(trust_T, trustees_u, norm_Tc)
-                norm_b = (lmbda/np.atleast_2d(norms))
-                dx_wv = tempW1 + np.multiply(norm_b.T, W[trustees_u, :])
-                update_wv(dx_wv, W, trustees_u)
+                    # Gradient Q
+                    reg_q = (lmbda/norm_Uj) * Q[j, :] if norm_Uj > 0 else 0
+                    dx_qi = euj * (P[u, :] + y_term + w_term) + reg_q
+                    update_qj(dx_qi, Q, j)
 
-        # Optimize trust prediction
-        for u, v in zip(*trust.nonzero()):
+                    # Gradient Y
+                    if norm_Iu > 0:
+                        tempY1 = (euj/norm_Iu) * Q[j, :]
+                        norms = cache_norms(ratings_T, items_u, norm_U)
+                        norm_b = (lmbda/np.atleast_2d(norms))
+                        dx_yi = tempY1 + np.multiply(norm_b.T, Y[items_u, :])
+                        update_yi(dx_yi, Y, items_u)
 
-            # Prediction and error
-            tuv_pred = np.dot(W[v, :], P[u, :])
-            euv = tuv_pred - trust[u, v]
+                    # Gradient W
+                    if norm_Tu > 0:
+                        tempW1 = (euj/norm_Tu) * Q[j, :]  # W: Part 1
+                        norms = cache_norms(trust_T, trustees_u, norm_Tc)
+                        norm_b = (lmbda/np.atleast_2d(norms))
+                        dx_wv = tempW1 + np.multiply(norm_b.T, W[trustees_u, :])
+                        update_wv(dx_wv, W, trustees_u)
 
-            # Gradient P (Part 2)
-            norm_Tu = cache_norms(trust, u, norm_Tr)
-            reg_p = P[u, :]/norm_Tu if norm_Tu > 0 else 0
-            dx_pu = social_lmbda * (euv * W[v, :] + reg_p)
-            update_pu(dx_pu, P, u)
+                # Optimize trust prediction
+                for u, v in zip(*trust.nonzero()):
 
-            # Gradient W (Part 2)
-            dx_wv = social_lmbda * euv * P[u, :]
-            update_wv(dx_wv, W, v)
+                    # Prediction and error
+                    tuv_pred = np.dot(W[v, :], P[u, :])
+                    euv = tuv_pred - trust[u, v]
 
-        # Print process
-        if verbose:
-            print('\t- Time: %.3fs' % (time.time() - start))
+                    # Gradient P (Part 2)
+                    norm_Tu = cache_norms(trust, u, norm_Tr)
+                    reg_p = P[u, :]/norm_Tu if norm_Tu > 0 else 0
+                    dx_pu = social_lmbda * (euv * W[v, :] + reg_p)
+                    update_pu(dx_pu, P, u)
 
-            if verbose > 1:
-                # Set parameters and compute loss
-                data_t = (ratings, trust)
-                bias_t = (global_avg, bu, bi)
-                low_rank_matrices = (P, Q, Y, W)
-                params = (lmbda, bias_lmbda, social_lmbda)
-                objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
+                    # Gradient W (Part 2)
+                    dx_wv = social_lmbda * euv * P[u, :]
+                    update_wv(dx_wv, W, v)
 
-                print('\t- Training loss: %.3f' % objective)
-            print('')
+                # Print process
+                if verbose:
+                    print('\t- Time: %.3fs' % (time.time() - start))
 
-        # Send information about the process
-        if callback:
-            callback(step+1)
+                    if verbose > 1:
+                        # Set parameters and compute loss
+                        data_t = (ratings, trust)
+                        bias_t = (global_avg, bu, bi)
+                        low_rank_matrices = (P, Q, Y, W)
+                        params = (lmbda, bias_lmbda, social_lmbda)
+                        objective = compute_loss(
+                            data_t, bias_t, low_rank_matrices, params)
+
+                        print('\t- Training loss: %.3f' % objective)
+                    print('')
+
+                # Send information about the process
+                if callback:
+                    callback(step+1)
+
+        except RuntimeWarning:
+            callback(num_iter) if callback else None
+            raise RuntimeError('Training diverged and returned NaN.')
 
     return P, Q, Y, W, bu, bi, users_cache
 
@@ -400,6 +412,7 @@ class TrustSVDLearner(Learner):
             numbers predictable. This a debbuging feature.
 
         callback: callable
+            Method that receives the current iteration as an argument.
 
     """
 

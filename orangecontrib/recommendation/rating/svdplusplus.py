@@ -93,65 +93,78 @@ def _matrix_factorization(ratings, feedback, bias, shape, num_factors, num_iter,
         print('\t\t- Verbosity = 2\t->\t[time/iter, loss]')
         print('')
 
-    # Factorize matrix using SGD
-    for step in range(num_iter):
-        if verbose:
-            start = time.time()
-            print('- Step: %d' % (step + 1))
+    # Catch warnings
+    with warnings.catch_warnings():
 
-        # Send information about the process
-        if callback:
-            callback(step + 1)
+        # Turn matching warnings into exceptions
+        warnings.filterwarnings('error')
+        try:
 
-        # Optimize rating prediction
-        for u, j in zip(*ratings.nonzero()):
+            # Factorize matrix using SGD
+            for step in range(num_iter):
+                if verbose:
+                    start = time.time()
+                    print('- Step: %d' % (step + 1))
 
-            # if there is no feedback, infer it from the ratings
+                # Send information about the process
+                if callback:
+                    callback(step + 1)
+
+                # Optimize rating prediction
+                for u, j in zip(*ratings.nonzero()):
+
+                    # if there is no feedback, infer it from the ratings
+                    if feedback is None:
+                        feedback_u = cache_rows(ratings, u, users_cached)
+                    else:
+                        feedback_u = cache_rows(feedback, u, feedback_cached)
+                        feedback_u = feedback_u[feedback_u < num_items]  # For CV
+
+                    # Prediction and error
+                    ruj_pred, y_term, norm_feedback = \
+                        _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback_u)
+                    eij = ratings[u, j] - ruj_pred
+
+                    # Compute gradients
+                    dx_bu = -eij + bias_lmbda * bu[u]
+                    dx_bi = -eij + bias_lmbda * bi[j]
+                    dx_pu = -eij * Q[j, :] + lmbda * P[u, :]
+                    dx_qi = -eij * (P[u, :] + y_term) + lmbda * Q[j, :]
+
+                    # Update the gradients at the same time
+                    update_bu(dx_bu, bu, u)
+                    update_bj(dx_bi, bi, j)
+                    update_pu(dx_pu, P, u)
+                    update_qj(dx_qi, Q, j)
+
+                    if norm_feedback > 0:  # Gradient Y
+                        dx_yi = -eij/norm_feedback * Q[j, :] \
+                                + lmbda * Y[feedback_u, :]
+                        update_yi(dx_yi, Y, feedback_u)
+
+                # Print process
+                if verbose:
+                    print('\t- Time: %.3fs' % (time.time() - start))
+
+                    if verbose > 1:
+                        # Set parameters and compute loss
+                        loss_feedback = feedback if feedback else users_cached
+                        data_t = (ratings, loss_feedback)
+                        bias_t = (global_avg, bu, bi)
+                        low_rank_matrices = (P, Q, Y)
+                        params = (lmbda, bias_lmbda)
+                        objective = compute_loss(
+                            data_t, bias_t, low_rank_matrices, params)
+
+                        print('\t- Training loss: %.3f' % objective)
+                    print('')
+
             if feedback is None:
-                feedback_u = cache_rows(ratings, u, users_cached)
-            else:
-                feedback_u = cache_rows(feedback, u, feedback_cached)
-                feedback_u = feedback_u[feedback_u < num_items]  # For CV
+                feedback = users_cached
 
-            # Prediction and error
-            ruj_pred, y_term, norm_feedback = \
-                _predict(u, j, global_avg, bu, bi, P, Q, Y, feedback_u)
-            eij = ratings[u, j] - ruj_pred
-
-            # Compute gradients
-            dx_bu = -eij + bias_lmbda * bu[u]
-            dx_bi = -eij + bias_lmbda * bi[j]
-            dx_pu = -eij * Q[j, :] + lmbda * P[u, :]
-            dx_qi = -eij * (P[u, :] + y_term) + lmbda * Q[j, :]
-
-            # Update the gradients at the same time
-            update_bu(dx_bu, bu, u)
-            update_bj(dx_bi, bi, j)
-            update_pu(dx_pu, P, u)
-            update_qj(dx_qi, Q, j)
-
-            if norm_feedback > 0:  # Gradient Y
-                dx_yi = -eij/norm_feedback * Q[j, :] + lmbda * Y[feedback_u, :]
-                update_yi(dx_yi, Y, feedback_u)
-
-        # Print process
-        if verbose:
-            print('\t- Time: %.3fs' % (time.time() - start))
-
-            if verbose > 1:
-                # Set parameters and compute loss
-                loss_feedback = feedback if feedback else users_cached
-                data_t = (ratings, loss_feedback)
-                bias_t = (global_avg, bu, bi)
-                low_rank_matrices = (P, Q, Y)
-                params = (lmbda, bias_lmbda)
-                objective = compute_loss(data_t, bias_t, low_rank_matrices, params)
-
-                print('\t- Training loss: %.3f' % objective)
-            print('')
-
-    if feedback is None:
-        feedback = users_cached
+        except RuntimeWarning as e:
+            callback(num_iter) if callback else None
+            raise RuntimeError('Training diverged and returned NaN.')
 
     return P, Q, Y, bu, bi, feedback
 
@@ -267,6 +280,7 @@ class SVDPlusPlusLearner(Learner):
             numbers predictable. This a debbuging feature.
 
         callback: callable
+            Method that receives the current iteration as an argument.
 
     """
 

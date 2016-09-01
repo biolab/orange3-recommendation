@@ -45,6 +45,10 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
         learner = BRISMFLearner(num_factors=2, num_iter=1, learning_rate=0.0)
         super().test_warnings(learner, filename=__dataset__)
 
+    def test_divergence(self, *args):
+        learner = BRISMFLearner(num_factors=2, num_iter=1, learning_rate=1e20)
+        super().test_divergence(learner, filename=__dataset__)
+
     def test_swap_columns(self, *args):
         learner = BRISMFLearner(num_factors=2, num_iter=1, random_state=42)
         super().test_swap_columns(learner, filename1='ratings_dis.tab',
@@ -84,6 +88,7 @@ class TestBRISMF(unittest.TestCase, TestRatingModels):
         self.assertRaises(TypeError, lambda: compute_loss(data, bias_t,
                                                           low_rank_matrices,
                                                           params))
+
     def test_outputs(self):
         # Load data
         data = Orange.data.Table(__dataset__)
@@ -106,7 +111,7 @@ if __name__ == "__main__":
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestBRISMF("test_input_data_continuous"))
+    suite.addTest(TestBRISMF("test_divergence"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

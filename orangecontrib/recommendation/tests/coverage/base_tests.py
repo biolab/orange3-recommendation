@@ -129,6 +129,13 @@ class TestRatingModels:
         # Train recommender and check warns
         self.assertWarns(UserWarning, learner, data)
 
+    def test_divergence(self, learner, filename):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        # Train recommender and check divergence
+        self.assertRaises(RuntimeError, lambda: learner(data))
+
     def test_swap_columns(self, learner, filename1, filename2):
         # Load data
         data1 = Orange.data.Table(filename1)
@@ -232,6 +239,13 @@ class TestRankingModels:
         recommender = learner(data)
         arg = 'Something that is not a table'
         self.assertRaises(TypeError, recommender, arg)
+
+    def test_divergence(self, learner, filename):
+        # Load data
+        data = Orange.data.Table(filename)
+
+        # Train recommender and check divergence
+        self.assertRaises(RuntimeError, lambda: learner(data))
 
 
 if __name__ == "__main__":

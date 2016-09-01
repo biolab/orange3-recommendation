@@ -54,6 +54,11 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
                                      learning_rate=0.0)
         super().test_warnings(learner, filename=__dataset__)
 
+    def test_divergence(self, *args):
+        learner = SVDPlusPlusLearner(num_factors=2, num_iter=1,
+                                     learning_rate=1e20)
+        super().test_divergence(learner, filename=__dataset__)
+
     def test_objective(self):
         from orangecontrib.recommendation.rating.svdplusplus import compute_loss
 
@@ -114,12 +119,12 @@ class TestSVDPlusPlus(unittest.TestCase, TestRatingModels):
 
 
 if __name__ == "__main__":
-    # Test all
+    # # Test all
     # unittest.main()
 
     # Test single test
     suite = unittest.TestSuite()
-    suite.addTest(TestSVDPlusPlus("test_input_data_continuous"))
+    suite.addTest(TestSVDPlusPlus("test_warnings"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

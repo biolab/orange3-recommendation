@@ -38,6 +38,10 @@ class TestCLiMF(unittest.TestCase, TestRankingModels):
         learner = CLiMFLearner(num_factors=2, num_iter=1, learning_rate=0.0)
         super().test_warnings(learner, filename=__dataset__)
 
+    def test_divergence(self, *args):
+        learner = CLiMFLearner(num_factors=2, num_iter=1, learning_rate=1e20)
+        super().test_divergence(learner, filename=__dataset__)
+
     def test_mrr(self, *args):
         learner = CLiMFLearner(num_factors=2, num_iter=1, verbose=0)
         super().test_mrr(learner, filename=__dataset__)

@@ -62,64 +62,73 @@ def _matrix_factorization(ratings, shape, num_factors, num_iter, learning_rate,
             num_samples = min(num_users, 1000)  # max. number to sample
             users_sampled = np.random.choice(np.arange(num_users), num_samples)
 
-    # Factorize matrix using SGD
-    for step in range(num_iter):
-        if verbose:
-            start = time.time()
-            print('- Step: %d' % (step + 1))
+    # Catch warnings
+    with warnings.catch_warnings():
 
-        # Optimize rating prediction
-        for i in range(len(U)):
-            dU = -lmbda * U[i]
+        # Turn matching warnings into exceptions
+        warnings.filterwarnings('error')
+        try:
 
-            # Precompute f (f[j] = <U[i], V[j]>)
-            items = cache_rows(ratings, i, users_cached)
-            f = np.einsum('j,ij->i', U[i], V[items])
+            # Factorize matrix using SGD
+            for step in range(num_iter):
+                if verbose:
+                    start = time.time()
+                    print('- Step: %d' % (step + 1))
 
-            for j in range(len(items)):  # j=items
-                w = items[j]
+                # Send information about the process
+                if callback:
+                    callback(step + 1)
 
-                dV = _g(-f[j]) - lmbda * V[w]
+                # Optimize rating prediction
+                for i in range(len(U)):
+                    dU = -lmbda * U[i]
 
-                # For I
-                vec1 = _dg(f[j] - f) * \
-                       (1 / (1 - _g(f - f[j])) - 1 / (1 - _g(f[j] - f)))
-                dV += np.einsum('i,j->ij', vec1, U[i]).sum(axis=0)
+                    # Precompute f (f[j] = <U[i], V[j]>)
+                    items = cache_rows(ratings, i, users_cached)
+                    f = np.einsum('j,ij->i', U[i], V[items])
 
-                #V[w] += learning_rate * dV
-                update_vw(-dV, V, w)
+                    for j in range(len(items)):  # j=items
+                        w = items[j]
 
-                dU += _g(-f[j]) * V[w]
+                        dV = _g(-f[j]) - lmbda * V[w]
 
-                # For II
-                vec2 = (V[items[j]] - V[items])
-                vec3 = _dg(f - f[j]) / (1 - _g(f - f[j]))
-                dU += np.einsum('ij,i->ij', vec2, vec3).sum(axis=0)
+                        # For I
+                        vec1 = _dg(f[j] - f) * \
+                               (1 / (1 - _g(f - f[j])) - 1 / (1 - _g(f[j] - f)))
+                        dV += np.einsum('i,j->ij', vec1, U[i]).sum(axis=0)
 
-            #U[i] += learning_rate * dU
-            update_ui(-dU, U, i)
+                        update_vw(-dV, V, w)
 
-        # Print process
-        if verbose:
-            print('\t- Time: %.3fs' % (time.time() - start))
+                        dU += _g(-f[j]) * V[w]
 
-            if verbose > 1:
-                # Set parameters and compute loss
-                low_rank_matrices = (U, V)
-                params = lmbda
-                objective = compute_loss(ratings, low_rank_matrices, params)
-                print('\t- Training loss: %.3f' % objective)
+                        # For II
+                        vec2 = (V[items[j]] - V[items])
+                        vec3 = _dg(f - f[j]) / (1 - _g(f - f[j]))
+                        dU += np.einsum('ij,i->ij', vec2, vec3).sum(axis=0)
 
-                if verbose > 2:
-                    model = CLiMFModel(U=U, V=V)
-                    mrr, queries = \
-                        model.compute_mrr(ratings, users_sampled, queries)
-                    print('\t- Train MRR: %.4f' % mrr)
-            print('')
+                    update_ui(-dU, U, i)
 
-        # Send information about the process
-        if callback:
-            callback(step+1)
+                # Print process
+                if verbose:
+                    print('\t- Time: %.3fs' % (time.time() - start))
+
+                    if verbose > 1:
+                        # Set parameters and compute loss
+                        low_rank_matrices = (U, V)
+                        params = lmbda
+                        objective = compute_loss(ratings, low_rank_matrices, params)
+                        print('\t- Training loss: %.3f' % objective)
+
+                        if verbose > 2:
+                            model = CLiMFModel(U=U, V=V)
+                            mrr, queries = \
+                                model.compute_mrr(ratings, users_sampled, queries)
+                            print('\t- Train MRR: %.4f' % mrr)
+                    print('')
+
+        except RuntimeWarning:
+            callback(num_iter) if callback else None
+            raise RuntimeError('Training diverged and returned NaN.')
 
     return U, V
 

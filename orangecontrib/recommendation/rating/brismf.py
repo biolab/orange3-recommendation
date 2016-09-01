@@ -59,47 +59,59 @@ def _matrix_factorization(ratings, bias, shape, num_factors, num_iter,
         print('\t\t- Verbosity = 2\t->\t[time/iter, loss]')
         print('')
 
-    # Factorize matrix using SGD
-    for step in range(num_iter):
-        if verbose:
-            start = time.time()
-            print('- Step: %d' % (step + 1))
+    # Catch warnings
+    with warnings.catch_warnings():
 
-        # Send information about the process
-        if callback:
-            callback(step + 1)
+        # Turn matching warnings into exceptions
+        warnings.filterwarnings('error')
+        try:
 
-        # Optimize rating prediction
-        for u, j in zip(*ratings.nonzero()):
+            # Factorize matrix using SGD
+            for step in range(num_iter):
+                if verbose:
+                    start = time.time()
+                    print('- Step: %d' % (step + 1))
 
-            # Prediction and error
-            rij_pred = _predict(u, j, global_avg, bu, bi, P, Q)
-            eij = ratings[u, j] - rij_pred
+                # Send information about the process
+                if callback:
+                    callback(step + 1)
 
-            # Compute gradients
-            dx_bu = -eij + bias_lmbda * bu[u]
-            dx_bi = -eij + bias_lmbda * bi[j]
-            dx_pu = -eij * Q[j, :] + lmbda * P[u, :]
-            dx_qi = -eij * P[u, :] + lmbda * Q[j, :]
+                # Optimize rating prediction
+                for u, j in zip(*ratings.nonzero()):
 
-            # Update the gradients at the same time
-            update_bu(dx_bu, bu, u)
-            update_bj(dx_bi, bi, j)
-            update_pu(dx_pu, P, u)
-            update_qj(dx_qi, Q, j)
+                    # Prediction and error
+                    rij_pred = _predict(u, j, global_avg, bu, bi, P, Q)
+                    eij = ratings[u, j] - rij_pred
 
-        # Print process
-        if verbose:
-            print('\t- Time: %.3fs' % (time.time() - start))
+                    # Compute gradients
+                    dx_bu = -eij + bias_lmbda * bu[u]
+                    dx_bi = -eij + bias_lmbda * bi[j]
+                    dx_pu = -eij * Q[j, :] + lmbda * P[u, :]
+                    dx_qi = -eij * P[u, :] + lmbda * Q[j, :]
 
-            if verbose > 1:
-                # Set parameters and compute loss
-                bias = (global_avg, bu, bi)
-                low_rank_matrices = (P, Q)
-                params = (lmbda, bias_lmbda)
-                objective = compute_loss(ratings, bias, low_rank_matrices, params)
-                print('\t- Training loss: %.3f' % objective)
-            print('')
+                    # Update the gradients at the same time
+                    update_bu(dx_bu, bu, u)
+                    update_bj(dx_bi, bi, j)
+                    update_pu(dx_pu, P, u)
+                    update_qj(dx_qi, Q, j)
+
+                # Print process
+                if verbose:
+                    print('\t- Time: %.3fs' % (time.time() - start))
+
+                    if verbose > 1:
+                        # Set parameters and compute loss
+                        bias = (global_avg, bu, bi)
+                        low_rank_matrices = (P, Q)
+                        params = (lmbda, bias_lmbda)
+                        objective = compute_loss(
+                            ratings, bias, low_rank_matrices, params)
+                        print('\t- Training loss: %.3f' % objective)
+                    print('')
+
+        except RuntimeWarning:
+            callback(num_iter) if callback else None
+            raise RuntimeError('Training diverged and returned NaN.')
 
     return P, Q, bu, bi
 
@@ -184,6 +196,7 @@ class BRISMFLearner(Learner):
             numbers predictable. This a debbuging feature.
 
         callback: callable
+            Method that receives the current iteration as an argument.
 
     """
 

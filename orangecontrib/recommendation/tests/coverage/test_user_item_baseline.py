@@ -38,6 +38,11 @@ class TestUserItemBaseline(unittest.TestCase, TestRatingModels):
         learner = UserItemBaselineLearner()
         super().test_warnings(learner, filename=__dataset__)
 
+    @unittest.skip("Skipping test")
+    def test_divergence(self, *args):
+        learner = UserItemBaselineLearner()
+        super().test_divergence(learner, filename=__dataset__)
+
 if __name__ == "__main__":
     # Test all
     unittest.main()
