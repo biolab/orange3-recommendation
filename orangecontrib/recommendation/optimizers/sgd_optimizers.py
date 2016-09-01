@@ -7,7 +7,7 @@ __all__ = ['SGD', 'Momentum', 'NesterovMomentum', 'AdaGrad', 'RMSProp',
 
 def create_opt(opt2copy, learning_rate=None):
     opt = copy.copy(opt2copy)  # Shallow copy
-    if learning_rate:
+    if learning_rate is not None:
         opt.learning_rate = learning_rate
     return opt
 
