@@ -10,7 +10,7 @@ NAME = 'Orange3-Recommendation'
 
 VERSION = '0.1.0'
 
-DESCRIPTION = 'Orange3 Recommendation add-on.'
+DESCRIPTION = 'Orange3 add-on for recommender systems'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.pypi')
 LONG_DESCRIPTION = open(README_FILE).read()
 AUTHOR = 'Bioinformatics Laboratory, FRI UL'
