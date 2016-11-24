@@ -8,7 +8,7 @@ from setuptools.command.install import install
 
 NAME = 'Orange3-Recommendation'
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 DESCRIPTION = 'Orange3 add-on for recommender systems'
 README_FILE = os.path.join(os.path.dirname(__file__), 'README.pypi')
