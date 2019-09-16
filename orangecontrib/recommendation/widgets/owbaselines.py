@@ -1,7 +1,6 @@
-from PyQt4.QtGui import QApplication
-
 from Orange.widgets import settings, gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
+from Orange.widgets.utils.widgetpreview import WidgetPreview
 
 from orangecontrib.recommendation import GlobalAvgLearner, ItemAvgLearner, \
     UserAvgLearner, UserItemBaselineLearner
@@ -87,8 +86,6 @@ class OWBaselines(OWBaseLearner):
         self._check_data()
         super().update_model()
 
+
 if __name__ == '__main__':
-    app = QApplication([])
-    widget = OWBaselines()
-    widget.show()
-    app.exec()
+    WidgetPreview(OWBaselines).run()
