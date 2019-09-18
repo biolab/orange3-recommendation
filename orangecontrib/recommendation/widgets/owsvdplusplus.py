@@ -1,9 +1,9 @@
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication
+from AnyQt.QtCore import Qt
 
 from Orange.data import Table
 from Orange.widgets import settings, gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
+from Orange.widgets.utils.widgetpreview import WidgetPreview
 
 from orangecontrib.recommendation import SVDPlusPlusLearner
 from orangecontrib.recommendation.utils import format_data
@@ -267,8 +267,6 @@ class OWSVDPlusPlus(OWBaseLearner):
         self.feedback = feedback
         self.update_learner()
 
+
 if __name__ == '__main__':
-    app = QApplication([])
-    widget = OWSVDPlusPlus()
-    widget.show()
-    app.exec()
+    WidgetPreview(OWSVDPlusPlus).run()

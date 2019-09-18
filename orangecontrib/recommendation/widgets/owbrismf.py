@@ -1,9 +1,9 @@
-from PyQt4.QtCore import Qt
-from PyQt4.QtGui import QApplication
+from AnyQt.QtCore import Qt
 
 from Orange.data import Table
 from Orange.widgets import settings, gui
 from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
+from Orange.widgets.utils.widgetpreview import WidgetPreview
 
 from orangecontrib.recommendation import BRISMFLearner
 from orangecontrib.recommendation.utils import format_data
@@ -256,8 +256,6 @@ class OWBRISMF(OWBaseLearner):
         if self.num_iter > 0:
             self.progressBarSet(int(iter/self.num_iter * 100))
 
+
 if __name__ == '__main__':
-    app = QApplication([])
-    widget = OWBRISMF()
-    widget.show()
-    app.exec()
+    WidgetPreview(OWBRISMF).run()

@@ -13,14 +13,6 @@ matrix:
     - python: '3.6'
       env: ORANGE="master"
 
-addons:
-    apt:
-        packages:
-            - gfortran
-            - libblas-dev
-            - liblapack-dev
-            - libqt4-dev
-
 cache:
     apt: true   # does not work for public repos
     pip: true
