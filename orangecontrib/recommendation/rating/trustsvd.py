@@ -137,7 +137,9 @@ def _matrix_factorization(ratings, trust, bias, shape, shape_t, num_factors,
 
                 # Send information about the process
                 if callback:
-                    callback(step + 1)
+                    if callback(step + 1):
+                        # requested interrupt
+                        return P, Q, Y, W, bu, bi, users_cache
 
                 # Optimize rating prediction
                 for u, j in zip(*ratings.nonzero()):

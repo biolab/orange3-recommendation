@@ -1,16 +1,39 @@
+import copy
+from types import SimpleNamespace as namespace
+
 from AnyQt.QtCore import Qt
 
 from Orange.data import Table
 from Orange.widgets import settings, gui
-from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
+from Orange.widgets.utils.signals import Output, Input
 from Orange.widgets.utils.widgetpreview import WidgetPreview
+from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
+from Orange.widgets.utils.concurrent import TaskState, ConcurrentWidgetMixin
 
 from orangecontrib.recommendation import TrustSVDLearner
 from orangecontrib.recommendation.utils import format_data
 import orangecontrib.recommendation.optimizers as opt
 
 
-class OWTrustSVD(OWBaseLearner):
+class Result(namespace):
+    model = None
+
+
+def run(data, learner, max_iter, state: TaskState):
+    def callback(iter):
+        nonlocal max_iter
+        nonlocal state
+        state.set_progress_value(int(iter / max_iter * 100))
+        return state.is_interruption_requested()
+
+    _learner = copy.copy(learner)
+    _learner.callback = callback
+
+    model = _learner(data)
+    return Result(model=model)
+
+
+class OWTrustSVD(OWBaseLearner, ConcurrentWidgetMixin):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "TrustSVD"
@@ -23,12 +46,14 @@ class OWTrustSVD(OWBaseLearner):
 
     MISSING_DATA_WARNING = 0
 
-    inputs = [("Trust information ", Table, "set_trust")]
+    class Inputs(OWBaseLearner.Inputs):
+        trust = Input("Trust information", Table)
 
-    outputs = [("P", Table),
-               ("Q", Table),
-               ("Y", Table),
-               ("W", Table)]
+    class Outputs(OWBaseLearner.Outputs):
+        p = Output("P", Table, explicit=True)
+        q = Output("Q", Table, explicit=True)
+        y = Output("Y", Table, explicit=True)
+        w = Output("W", Table, explicit=True)
 
     # Parameters (general)
     num_factors = settings.Setting(10)
@@ -56,6 +81,10 @@ class OWTrustSVD(OWBaseLearner):
     rho = settings.Setting(0.9)
     beta1 = settings.Setting(0.9)
     beta2 = settings.Setting(0.999)
+
+    def __init__(self, preprocessors=None):
+        ConcurrentWidgetMixin.__init__(self)
+        OWBaseLearner.__init__(self, preprocessors=preprocessors)
 
     def add_main_layout(self):
         # hbox = gui.hBox(self.controlArea, "Settings")
@@ -138,6 +167,10 @@ class OWTrustSVD(OWBaseLearner):
                                       callback=self.settings_changed)
         self.settings_changed()  # Update (extra) settings
 
+    def setup_layout(self):
+        super().setup_layout()
+        gui.button(self.apply_button, self, "Cancel", callback=self.cancel)
+
     def settings_changed(self):
         # Enable/Disable Fixed seed control
         self.spin_rnd_seed.setEnabled(self.seed_type == self.FIXED_SEED)
@@ -203,8 +236,7 @@ class OWTrustSVD(OWBaseLearner):
             bias_lmbda=self.bias_lmbda,
             trust=self.trust,
             optimizer=self.select_optimizer(),
-            random_state=seed,
-            callback=self.progress_callback
+            random_state=seed
         )
 
     def get_learner_parameters(self):
@@ -267,43 +299,53 @@ class OWTrustSVD(OWBaseLearner):
             super().update_learner()
 
     def update_model(self):
-        self._check_data()
-        super().update_model()
+        self.show_fitting_failed(None)
+        self.model = None
+        if self.check_data() and self._check_data():
+            self.start(run, self.data, self.learner, self.num_iter)
+
+    def cancel(self):
+        super().cancel()
+        self.model = None
+        self.commit()
+
+    def on_done(self, result: Result):
+        self.model = result.model
+        self.model.name = self.learner_name or self.name
+        self.model.instances = self.data
+        self.commit()
+
+    def on_exception(self, ex: Exception):
+        self.show_fitting_failed(ex)
+        self.commit()
+
+    def commit(self):
+        self.Outputs.model.send(self.model)
 
         P = None
         Q = None
         Y = None
         W = None
-        if self.valid_data:
+        if self.valid_data and self.model is not None:
             P = self.model.getPTable()
             Q = self.model.getQTable()
             Y = self.model.getYTable()
             W = self.model.getWTable()
 
-        self.send("P", P)
-        self.send("Q", Q)
-        self.send("Y", Y)
-        self.send("W", W)
+        self.Outputs.p.send(P)
+        self.Outputs.q.send(Q)
+        self.Outputs.y.send(Y)
+        self.Outputs.w.send(W)
 
-    def progress_callback(self, *args, **kwargs):
-        iter = args[0]
-
-        # Start/Finish progress bar
-        if iter == 1:  # Start it
-            self.progressBarInit()
-
-        if iter == self.num_iter:  # Finish
-            self.progressBarFinished()
-            return
-
-        if self.num_iter > 0:
-            self.progressBarSet(int(iter/self.num_iter * 100))
-
+    @Inputs.trust
     def set_trust(self, trust):
         self.trust = trust
-
         if self.auto_apply:
             self.apply()
+
+    def onDeleteWidget(self):
+        self.shutdown()
+        super().onDeleteWidget()
 
 
 if __name__ == '__main__':
