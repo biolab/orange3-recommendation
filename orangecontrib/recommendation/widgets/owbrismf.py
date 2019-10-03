@@ -1,39 +1,17 @@
-import copy
-from types import SimpleNamespace as namespace
-
 from AnyQt.QtCore import Qt
 
 from Orange.data import Table
 from Orange.widgets import settings, gui
 from Orange.widgets.utils.signals import Output
 from Orange.widgets.utils.widgetpreview import WidgetPreview
-from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
-from Orange.widgets.utils.concurrent import TaskState, ConcurrentWidgetMixin
 
 from orangecontrib.recommendation import BRISMFLearner
 from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.widgets.utils.owconcurrentlearner import OWConcurrentLearner
 import orangecontrib.recommendation.optimizers as opt
 
 
-class Result(namespace):
-    model = None
-
-
-def run(data, learner, max_iter, state: TaskState):
-    def callback(iter):
-        nonlocal max_iter
-        nonlocal state
-        state.set_progress_value(int(iter / max_iter * 100))
-        return state.is_interruption_requested()
-
-    _learner = copy.copy(learner)
-    _learner.callback = callback
-
-    model = _learner(data)
-    return Result(model=model)
-
-
-class OWBRISMF(OWBaseLearner, ConcurrentWidgetMixin):
+class OWBRISMF(OWConcurrentLearner):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "BRISMF"
@@ -44,7 +22,7 @@ class OWBRISMF(OWBaseLearner, ConcurrentWidgetMixin):
 
     LEARNER = BRISMFLearner
 
-    class Outputs(OWBaseLearner.Outputs):
+    class Outputs(OWConcurrentLearner.Outputs):
         p = Output("P", Table, explicit=True)
         q = Output("Q", Table, explicit=True)
 
@@ -72,10 +50,6 @@ class OWBRISMF(OWBaseLearner, ConcurrentWidgetMixin):
     rho = settings.Setting(0.9)
     beta1 = settings.Setting(0.9)
     beta2 = settings.Setting(0.999)
-
-    def __init__(self, preprocessors=None):
-        ConcurrentWidgetMixin.__init__(self)
-        OWBaseLearner.__init__(self, preprocessors=preprocessors)
 
     def add_main_layout(self):
         #hbox = gui.hBox(self.controlArea, "Settings")
@@ -152,10 +126,6 @@ class OWBRISMF(OWBaseLearner, ConcurrentWidgetMixin):
                                  label="Seed:", alignment=Qt.AlignRight,
                                  callback=self.settings_changed)
         self.settings_changed()  # Update (extra) settings
-
-    def setup_layout(self):
-        super().setup_layout()
-        gui.button(self.apply_button, self, "Cancel", callback=self.cancel)
 
     def settings_changed(self):
         # Enable/Disable Fixed seed control
@@ -260,27 +230,6 @@ class OWBRISMF(OWBaseLearner, ConcurrentWidgetMixin):
         if self.valid_data or self.data is None:
             super().update_learner()
 
-    def update_model(self):
-        self.show_fitting_failed(None)
-        self.model = None
-        if self.check_data() and self._check_data():
-            self.start(run, self.data, self.learner, self.num_iter)
-
-    def cancel(self):
-        super().cancel()
-        self.model = None
-        self.commit()
-
-    def on_done(self, result: Result):
-        self.model = result.model
-        self.model.name = self.learner_name or self.name
-        self.model.instances = self.data
-        self.commit()
-
-    def on_exception(self, ex: Exception):
-        self.show_fitting_failed(ex)
-        self.commit()
-
     def commit(self):
         self.Outputs.model.send(self.model)
 
@@ -292,10 +241,6 @@ class OWBRISMF(OWBaseLearner, ConcurrentWidgetMixin):
 
         self.Outputs.p.send(P)
         self.Outputs.q.send(Q)
-
-    def onDeleteWidget(self):
-        self.shutdown()
-        super().onDeleteWidget()
 
 
 if __name__ == '__main__':
