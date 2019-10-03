@@ -2,15 +2,16 @@ from AnyQt.QtCore import Qt
 
 from Orange.data import Table
 from Orange.widgets import settings, gui
-from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
+from Orange.widgets.utils.signals import Output, Input
 from Orange.widgets.utils.widgetpreview import WidgetPreview
 
 from orangecontrib.recommendation import SVDPlusPlusLearner
 from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.widgets.utils.owconcurrentlearner import OWConcurrentLearner
 import orangecontrib.recommendation.optimizers as opt
 
 
-class OWSVDPlusPlus(OWBaseLearner):
+class OWSVDPlusPlus(OWConcurrentLearner):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "SVD++"
@@ -21,11 +22,13 @@ class OWSVDPlusPlus(OWBaseLearner):
 
     LEARNER = SVDPlusPlusLearner
 
-    inputs = [("Feedback information", Table, "set_feedback")]
+    class Inputs(OWConcurrentLearner.Inputs):
+        feedback = Input("Feedback information", Table)
 
-    outputs = [("P", Table),
-               ("Q", Table),
-               ("Y", Table)]
+    class Outputs(OWConcurrentLearner.Outputs):
+        p = Output("P", Table, explicit=True)
+        q = Output("Q", Table, explicit=True)
+        y = Output("Y", Table, explicit=True)
 
     # Parameters (general)
     num_factors = settings.Setting(10)
@@ -193,8 +196,7 @@ class OWSVDPlusPlus(OWBaseLearner):
             bias_lmbda=self.bias_lmbda,
             feedback=self.feedback,
             optimizer=self.select_optimizer(),
-            random_state=seed,
-            callback=self.progress_callback
+            random_state=seed
         )
 
     def get_learner_parameters(self):
@@ -233,39 +235,26 @@ class OWSVDPlusPlus(OWBaseLearner):
         if self.valid_data or self.data is None:
             super().update_learner()
 
-    def update_model(self):
-        self._check_data()
-        super().update_model()
+    def commit(self):
+        self.Outputs.model.send(self.model)
 
         P = None
         Q = None
         Y = None
-        if self.valid_data:
+        if self.valid_data and self.model is not None:
             P = self.model.getPTable()
             Q = self.model.getQTable()
             Y = self.model.getYTable()
 
-        self.send("P", P)
-        self.send("Q", Q)
-        self.send("Y", Y)
+        self.Outputs.p.send(P)
+        self.Outputs.q.send(Q)
+        self.Outputs.y.send(Y)
 
-    def progress_callback(self, *args, **kwargs):
-        iter = args[0]
-
-        # Start/Finish progress bar
-        if iter == 1:  # Start it
-            self.progressBarInit()
-
-        if iter == self.num_iter:  # Finish
-            self.progressBarFinished()
-            return
-
-        if self.num_iter > 0:
-            self.progressBarSet(int(iter/self.num_iter * 100))
-
+    @Inputs.feedback
     def set_feedback(self, feedback):
         self.feedback = feedback
-        self.update_learner()
+        if self.auto_apply:
+            self.apply()
 
 
 if __name__ == '__main__':

@@ -2,15 +2,16 @@ from AnyQt.QtCore import Qt
 
 from Orange.data import Table
 from Orange.widgets import settings, gui
-from Orange.widgets.utils.owlearnerwidget import OWBaseLearner
+from Orange.widgets.utils.signals import Output, Input
 from Orange.widgets.utils.widgetpreview import WidgetPreview
 
 from orangecontrib.recommendation import TrustSVDLearner
 from orangecontrib.recommendation.utils import format_data
+from orangecontrib.recommendation.widgets.utils.owconcurrentlearner import OWConcurrentLearner
 import orangecontrib.recommendation.optimizers as opt
 
 
-class OWTrustSVD(OWBaseLearner):
+class OWTrustSVD(OWConcurrentLearner):
     # Widget needs a name, or it is considered an abstract widget
     # and not shown in the menu.
     name = "TrustSVD"
@@ -23,12 +24,14 @@ class OWTrustSVD(OWBaseLearner):
 
     MISSING_DATA_WARNING = 0
 
-    inputs = [("Trust information ", Table, "set_trust")]
+    class Inputs(OWConcurrentLearner.Inputs):
+        trust = Input("Trust information", Table)
 
-    outputs = [("P", Table),
-               ("Q", Table),
-               ("Y", Table),
-               ("W", Table)]
+    class Outputs(OWConcurrentLearner.Outputs):
+        p = Output("P", Table, explicit=True)
+        q = Output("Q", Table, explicit=True)
+        y = Output("Y", Table, explicit=True)
+        w = Output("W", Table, explicit=True)
 
     # Parameters (general)
     num_factors = settings.Setting(10)
@@ -203,8 +206,7 @@ class OWTrustSVD(OWBaseLearner):
             bias_lmbda=self.bias_lmbda,
             trust=self.trust,
             optimizer=self.select_optimizer(),
-            random_state=seed,
-            callback=self.progress_callback
+            random_state=seed
         )
 
     def get_learner_parameters(self):
@@ -266,42 +268,27 @@ class OWTrustSVD(OWBaseLearner):
         if self.valid_data or self.data is None:
             super().update_learner()
 
-    def update_model(self):
-        self._check_data()
-        super().update_model()
+    def commit(self):
+        self.Outputs.model.send(self.model)
 
         P = None
         Q = None
         Y = None
         W = None
-        if self.valid_data:
+        if self.valid_data and self.model is not None:
             P = self.model.getPTable()
             Q = self.model.getQTable()
             Y = self.model.getYTable()
             W = self.model.getWTable()
 
-        self.send("P", P)
-        self.send("Q", Q)
-        self.send("Y", Y)
-        self.send("W", W)
+        self.Outputs.p.send(P)
+        self.Outputs.q.send(Q)
+        self.Outputs.y.send(Y)
+        self.Outputs.w.send(W)
 
-    def progress_callback(self, *args, **kwargs):
-        iter = args[0]
-
-        # Start/Finish progress bar
-        if iter == 1:  # Start it
-            self.progressBarInit()
-
-        if iter == self.num_iter:  # Finish
-            self.progressBarFinished()
-            return
-
-        if self.num_iter > 0:
-            self.progressBarSet(int(iter/self.num_iter * 100))
-
+    @Inputs.trust
     def set_trust(self, trust):
         self.trust = trust
-
         if self.auto_apply:
             self.apply()
 
